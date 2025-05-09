@@ -1,8 +1,0 @@
-        # wrangler.toml
-        name = "web"
-        pages_build_output_dir = "dist"
-
-        [[kv_namespaces]]
-        binding = "VM_WEB_PROFILE"
-        id = "VM_WEB_PROFILE"
-        preview_id = "VM_WEB_PROFILE"
