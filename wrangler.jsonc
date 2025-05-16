@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vm-web-profiles",
-  "main": "src/index.tsx",
   "compatibility_date": "2025-02-04",
   "pages_build_output_dir": "dist",
   "observability": {
@@ -11,7 +10,7 @@
   "kv_namespaces": [
     {
       "binding": "VM_WEB_PROFILES",
-      "id": "VM_WEB_PROFILES"
+      "id": "KV_NAMESPACE_ID"
     }
   ]
 }
