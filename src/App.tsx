@@ -16,25 +16,24 @@ const App: React.FC = () => {
         onError={(error) => console.error('Wallet error:', error)}
         mainButtonStyle={{
           position: 'absolute',
-          top: '20px',
-          left: '20px',
-          background: 'rgba(31, 41, 55, 0.9)',
+          top: '0.5rem',
+          right: '1rem',
+          background: '#1A1A1A',
           color: 'white',
-          padding: '12px 24px',
+          padding: '0.5rem 1rem',
           borderRadius: '12px',
-          zIndex: '50',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          zIndex: '100',
+          maxWidth: '10rem',
+          maxHeight: '2rem',
           transition: 'all 0.2s ease-in-out',
           cursor: 'pointer',
         }}
       >
         <NavigationMenuDemo />
         <Routes>
+          <Route path="/preferences" element={<Preferences />} />
           <Route path="/" element={<Home />} />
           <Route path="/history" element={<History />} />
-          <Route path="/preferences" element={<Preferences />} />
         </Routes>
       </WalletProviderWithUI>
     </BrowserRouter>

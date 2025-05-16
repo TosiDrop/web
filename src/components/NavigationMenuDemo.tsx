@@ -17,19 +17,21 @@ const navigationItems = [
 
 export function NavigationMenuDemo() {
   return (
-    <NavigationMenu>
-      <NavigationMenuList >
-        {navigationItems.map((item) => (
-          <NavigationMenuItem key={item.path}>
-            <Link to={item.path}>
-              <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                {item.label}
-              </NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
-        ))}
-      </NavigationMenuList>
-    </NavigationMenu>
+    <div className="absolute top-0 left-0 w-full z-50">
+      <NavigationMenu className="w-full">
+        <NavigationMenuList>
+          {navigationItems.map((item) => (
+            <NavigationMenuItem key={item.path}>
+              <Link to={item.path}>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  {item.label}
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          ))}
+        </NavigationMenuList>
+      </NavigationMenu>
+    </div>
   )
 }
 
