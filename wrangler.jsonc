@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "VM_WEB_PROFILES",
+  "name": "vm-web-profiles",
   "main": "src/index.tsx",
   "compatibility_date": "2025-02-04",
   "pages_build_output_dir": "dist",
