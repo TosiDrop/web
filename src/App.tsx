@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { WalletProviderWithUI } from './providers/WalletProvider';
-import { NavigationMenuDemo } from './components/NavigationMenuDemo';
+import { NavigationMenu } from './components/NavigationMenu';
 import Home from './components/Home';
 import History from './components/History';
 import Preferences from './components/Preferences';
@@ -18,7 +18,7 @@ const App: React.FC = () => {
           position: 'absolute',
           top: '0.5rem',
           right: '1rem',
-          background: '#1A1A1A',
+          background: 'transparent',
           color: 'white',
           padding: '0.5rem 1rem',
           borderRadius: '12px',
@@ -29,7 +29,7 @@ const App: React.FC = () => {
           cursor: 'pointer',
         }}
       >
-        <NavigationMenuDemo />
+        <NavigationMenu />
         <Routes>
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/" element={<Home />} />

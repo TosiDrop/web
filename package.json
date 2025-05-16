@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.3",
+    "@heroicons/react": "^2.2.0",
     "@newm.io/cardano-dapp-wallet-connector": "^1.5.1",
     "@radix-ui/react-menubar": "^1.1.12",
     "@radix-ui/react-navigation-menu": "^1.2.5",
