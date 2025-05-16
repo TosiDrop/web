@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useWalletState } from '../store/wallet-state';
+import { signProfileUpdateMessage, saveProfileData } from '../utils/profile-helpers';
 
 const Preferences = () => {
   const { wallet, walletAddress } = useWalletState();
@@ -19,40 +20,10 @@ const Preferences = () => {
     setMessage('');
 
     try {
-      const messageToSign = `Update profile for ${walletAddress} with name: ${name}`;
-      const encoder = new TextEncoder();
-      const messageBytes = encoder.encode(messageToSign);
-      const hexMessage = Array.from(messageBytes)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
+      const { signature, message: signedMessage } = await signProfileUpdateMessage(wallet, walletAddress, name);
+      const data = await saveProfileData(walletAddress, name, signature, signedMessage);
 
-      const signature = await new Promise<string>((resolve, reject) => {
-        try {
-          wallet.signData(walletAddress, hexMessage)
-            .then((result: { signature: string }) => resolve(result.signature))
-            .catch(reject);
-        } catch (error) {
-          reject(error);
-        }
-      });
-
-      // Send the request with signature
-      const response = await fetch('/api/profileData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletId: walletAddress,
-          value: { name },
-          signature,
-          message: messageToSign
-        }),
-      });
-
-      const data = await response.json() as { error?: string };
-
-      if (response.ok) {
+      if (data.success) {
         setMessage('Profile saved successfully!');
         setName('');
       } else {
@@ -69,9 +40,9 @@ const Preferences = () => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl max-w-4xl w-full p-8 border border-white/20">
+        <div className="max-w-4xl w-full">
           <h1 className="text-4xl font-bold text-center text-white mb-6">Preferences</h1>
-
+          {name && <p className="text-center text-white mb-6">Welcome {name}</p>}
           <form onSubmit={handleSubmit} className="mt-8">
             <div className="mb-4">
               <label htmlFor="name" className="block text-white text-sm font-medium mb-2">
