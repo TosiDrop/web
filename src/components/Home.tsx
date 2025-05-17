@@ -6,7 +6,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-2xl max-w-4xl w-full p-8 border border-white/20">
+        <div className="max-w-4xl w-full">
           <h1 className="text-4xl font-bold text-center text-white mb-6">TosiDrop</h1>
 
           <div className="gap-6 mt-8">

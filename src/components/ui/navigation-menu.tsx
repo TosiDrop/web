@@ -13,41 +13,20 @@ function NavigationMenu({
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean
 }) {
-  const [isVisible, setIsVisible] = React.useState(true);
-
-  React.useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      setIsVisible(true);
-      timeoutId = setTimeout(() => setIsVisible(false), 5000);
-    };
-
-    window.addEventListener('mousemove', resetTimer);
-    window.addEventListener('keypress', resetTimer);
-    resetTimer();
-
-    return () => {
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keypress', resetTimer);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, []);
-
   return (
     <NavigationMenuPrimitive.Root
       data-slot="navigation-menu"
       data-viewport={viewport}
       className={cn(
-        "group/navigation-menu fixed bottom-10 left-1/2 -translate-x-1/2 flex min-w-[300px] flex-1 items-center justify-center transition-opacity duration-300 backdrop-blur-sm bg-black/50 rounded-full px-6 py-3 text-white shadow-lg",
-        isVisible ? "opacity-100" : "opacity-0 pointer-events-none",
+        "group/navigation-menu w-full flex items-center justify-between bg-black/90 backdrop-blur-sm shadow-md px-6 py-3 text-white overflow-x-hidden",
         className
       )}
       {...props}
     >
-      {children}
-      {viewport && <NavigationMenuViewport />}
+      <div className="flex items-center justify-center w-full">
+        {children}
+        {viewport && <NavigationMenuViewport />}
+      </div>
     </NavigationMenuPrimitive.Root>
   )
 }
@@ -60,7 +39,7 @@ function NavigationMenuList({
     <NavigationMenuPrimitive.List
       data-slot="navigation-menu-list"
       className={cn(
-        "group flex flex-1 list-none items-center justify-center gap-1 text-white",
+        "group flex list-none items-center gap-1 text-white",
         className
       )}
       {...props}
