@@ -6,6 +6,9 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "VITE_VM_API_KEY": "VITE_VM_API_KEY"
+  },
 
   "kv_namespaces": [
     {

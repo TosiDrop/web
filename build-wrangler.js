@@ -5,10 +5,10 @@ dotenv.config();
 
 const wranglerContent = fs.readFileSync('./wrangler.jsonc', 'utf8');
 
-const updatedContent = wranglerContent.replace(
-  '"id": "KV_NAMESPACE_ID"',
-  `"id": "${process.env.KV_NAMESPACE_ID}"`
-);
+const updatedContent = wranglerContent
+  .replace('"id": "KV_NAMESPACE_ID"', `"id": "${process.env.KV_NAMESPACE_ID}"`)
+  .replace('"VITE_VM_API_KEY": "VITE_VM_API_KEY"', 
+           `"VITE_VM_API_KEY": "${process.env.VITE_VM_API_KEY}"`);
 
 fs.writeFileSync('./wrangler.jsonc', updatedContent);
 
