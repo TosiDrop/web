@@ -12,25 +12,25 @@ export default defineConfig({
     wasm(),
     topLevelAwait(),
     react(), 
-    tailwindcss()
+    tailwindcss(),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@cardano-sdk/util/node_modules/serialize-error": "serialize-error",
     },
-  },
-  define: {
-    global: 'globalThis',
   },
   optimizeDeps: {
     esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      },
       plugins: [
         NodeGlobalsPolyfillPlugin({
-          process: true,
-          buffer: true,
-        }),
-      ],
-    },
+          buffer: true
+        })
+      ]
+    }
   },
   server: {
     proxy: {

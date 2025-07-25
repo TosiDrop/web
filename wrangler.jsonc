@@ -6,14 +6,13 @@
   "observability": {
     "enabled": true
   },
-  "vars": {
-    "VITE_VM_API_KEY": "VITE_VM_API_KEY"
-  },
-
   "kv_namespaces": [
     {
       "binding": "VM_WEB_PROFILES",
-      "id": "2377fd40bf354398b360eeffb675160d"
+      "id": "7a6e9597aa6d4e708c3e100c63ab2881"
     }
-  ]
+  ],
+  "vars": {
+    "VITE_VM_API_KEY": "{{VITE_VM_API_KEY}}"
+  }
 }

@@ -13,8 +13,6 @@
   "dependencies": {
     "@blaze-cardano/sdk": "^0.2.31",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
-    "@utxorpc/blaze-provider": "^0.3.5",
-    "buffer": "^6.0.3",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@newm.io/cardano-dapp-wallet-connector": "^1.5.4",
@@ -22,6 +20,8 @@
     "@radix-ui/react-navigation-menu": "^1.2.13",
     "@tabler/icons-react": "^3.34.0",
     "@tailwindcss/vite": "^4.1.11",
+    "@utxorpc/blaze-provider": "^0.3.5",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.525.0",
