@@ -24,8 +24,8 @@ export function NavigationMenu() {
   }));
 
   return (
-    <Disclosure as="nav" className="bg-gray-800">
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+    <Disclosure as="nav" className="bg-gray-800 absolute top-0 left-0 right-0 z-10">
+      <div className="mx-auto px-4">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
