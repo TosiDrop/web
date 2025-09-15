@@ -13,7 +13,7 @@
   "dependencies": {
     "@blaze-cardano/sdk": "^0.2.31",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
-    "@headlessui/react": "^2.2.4",
+    "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
     "@newm.io/cardano-dapp-wallet-connector": "^1.5.4",
     "@radix-ui/react-menubar": "^1.1.16",
