@@ -11,7 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@blaze-cardano/sdk": "^0.2.31",
+    "@blaze-cardano/sdk": "^0.2.43",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
