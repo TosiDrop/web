@@ -15,7 +15,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
-    "@newm.io/cardano-dapp-wallet-connector": "^1.5.4",
+    "@newm.io/cardano-dapp-wallet-connector": "^1.5.5",
     "@radix-ui/react-menubar": "^1.1.16",
     "@radix-ui/react-navigation-menu": "^1.2.13",
     "@tabler/icons-react": "^3.35.0",
