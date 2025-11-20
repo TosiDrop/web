@@ -6,26 +6,18 @@ interface Env {
   VITE_VM_API_KEY: string;
 }
 
-/**
- * Enhanced getRewards function that processes rewards data
- * Similar to the reference implementation from another repo
- */
 async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToken[]> {
-  // Import vm-sdk functions
   const { getRewards: getRewardsFromVM, getTokens: getTokensFromVM, setApiToken } = await import('vm-sdk');
   setApiToken(env.VITE_VM_API_KEY);
 
-  // Fetch all data in parallel
   const [getRewardsResponse, tokensRaw, priceInfoMap] = await Promise.all([
     getRewardsFromVM(stakeAddress) as Promise<GetRewardsDto | null>,
     getTokensFromVM(),
     getPrices(),
   ]);
 
-  // Convert tokens to the expected format (handle type conversion)
   let tokens = tokensRaw as unknown as Record<string, TokenInfo> | null;
 
-  // Convert PriceInfoMap to simple prices format for getTokenValue
   const prices = convertToSimplePrices(priceInfoMap);
 
   const claimableTokens: ClaimableToken[] = [];
@@ -36,7 +28,6 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   const consolidatedAvailableReward: { [key: string]: number } = {};
   const consolidatedAvailableRewardPremium: { [key: string]: number } = {};
 
-  /** handle regular tokens */
   const regularRewards: Record<string, number> = {
     ...getRewardsResponse.consolidated_promises,
     ...getRewardsResponse.consolidated_rewards,
@@ -50,7 +41,6 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     }
   });
 
-  /** handle premium tokens */
   const premiumRewards: Record<string, number> = {
     ...(getRewardsResponse.project_locked_rewards?.consolidated_promises ?? {}),
     ...(getRewardsResponse.project_locked_rewards?.consolidated_rewards ?? {}),
@@ -64,7 +54,6 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     }
   });
 
-  /** if there is no token info in the map, flush the cache and re-fetch token info */
   for (const assetId of [
     ...Object.keys(consolidatedAvailableReward),
     ...Object.keys(consolidatedAvailableRewardPremium),
@@ -81,7 +70,6 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
 
   Object.keys(consolidatedAvailableReward).forEach((assetId) => {
     const token = tokens[assetId];
-    /** add default values just to be safe */
     const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
     const decimals = Number(tokenDecimals);
     const amount = consolidatedAvailableReward[assetId] / Math.pow(10, decimals);
@@ -104,7 +92,6 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
 
   Object.keys(consolidatedAvailableRewardPremium).forEach((assetId) => {
     const token = tokens[assetId];
-    /** add default values just to be safe */
     const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
     const decimals = Number(tokenDecimals);
     const amount = consolidatedAvailableRewardPremium[assetId] / Math.pow(10, decimals);
