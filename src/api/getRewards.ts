@@ -1,7 +1,8 @@
 import { Core } from '@blaze-cardano/sdk'
+import type { ClaimableToken } from '../types/rewards'
 
 interface RewardsResponse {
-  rewards: unknown;
+  rewards: ClaimableToken[];
   error?: string;
 }
 
@@ -38,7 +39,7 @@ const convertToStakeAddress = (walletAddress: string): string => {
   }
 };
 
-export const getRewards = async (walletId: string) => {
+export const getRewards = async (walletId: string): Promise<ClaimableToken[]> => {
   try {
     const stakeAddress = convertToStakeAddress(walletId);
     console.log('Converted to stake address:', stakeAddress);
@@ -56,7 +57,7 @@ export const getRewards = async (walletId: string) => {
     }
 
     console.log('rewards', rewards);
-    return rewards;
+    return rewards || [];
   } catch (error) {
     console.error('Error fetching rewards:', error);
     throw error;
