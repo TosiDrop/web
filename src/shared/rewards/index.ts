@@ -26,12 +26,11 @@ export interface TokenInfo {
   [key: string]: unknown;
 }
 
-export interface TokenPrices {
-  [assetId: string]: number;
-}
+export type TokenPrices = Record<string, number>;
 
 export function isNativeToken(assetId: string): boolean {
-  return assetId === '' || assetId === 'lovelace' || assetId.toLowerCase() === 'ada';
+  const normalized = assetId.trim().toLowerCase();
+  return normalized === "" || normalized === "lovelace" || normalized === "ada";
 }
 
 export function getTokenValue(
@@ -39,8 +38,12 @@ export function getTokenValue(
   amount: number,
   prices: TokenPrices
 ): { price: number; total: number } {
-  const price = prices[assetId] || 0;
+  const price = prices[assetId] ?? 0;
   const total = amount * price;
   return { price, total };
+}
+
+export function getPortfolioTotal(tokens: ClaimableToken[]): number {
+  return tokens.reduce((sum, token) => sum + token.total, 0);
 }
 

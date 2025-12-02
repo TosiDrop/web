@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { WalletProviderWithUI } from './providers/WalletProvider';
-import { NavigationMenu } from './components/NavigationMenu';
-import Home from './components/Home';
-import History from './components/History';
-import Preferences from './components/Preferences';
+import { MainLayout } from './layouts/MainLayout';
+import ClaimPage from './pages/ClaimPage';
+import HistoryPage from './pages/HistoryPage';
+import PreferencesPage from './pages/PreferencesPage';
 
 const App: React.FC = () => {
   return (
@@ -15,26 +15,27 @@ const App: React.FC = () => {
         onDisconnect={() => console.log('Wallet disconnected')}
         onError={(error) => console.error('Wallet error:', error)}
         mainButtonStyle={{
-          position: 'absolute',
-          top: '0.5rem',
+          position: 'fixed',
+          top: '0.75rem',
           right: '1rem',
           background: 'transparent',
           color: 'white',
           padding: '0.5rem 1rem',
           borderRadius: '12px',
           zIndex: '100',
-          maxWidth: '10rem',
-          maxHeight: '2rem',
+          maxWidth: '12rem',
+          maxHeight: '2.5rem',
           transition: 'all 0.2s ease-in-out',
           cursor: 'pointer',
         }}
       >
-        <NavigationMenu />
-        <Routes>
-          <Route path="/preferences" element={<Preferences />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/history" element={<History />} />
-        </Routes>
+        <MainLayout>
+          <Routes>
+            <Route path="/" element={<ClaimPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/preferences" element={<PreferencesPage />} />
+          </Routes>
+        </MainLayout>
       </WalletProviderWithUI>
     </BrowserRouter>
   );

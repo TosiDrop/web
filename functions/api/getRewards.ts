@@ -1,6 +1,10 @@
-import type { GetRewardsDto, ClaimableToken, TokenInfo } from '../utils/rewards-helpers';
-import { isNativeToken, getTokenValue } from '../utils/rewards-helpers';
-import { getPrices, convertToSimplePrices } from '../services/MinswapService';
+import {
+  isNativeToken,
+  getTokenValue,
+  type ClaimableToken,
+  type GetRewardsDto,
+  type TokenInfo,
+} from '../../src/shared/rewards';
 
 interface Env {
   VITE_VM_API_KEY: string;
@@ -10,15 +14,12 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   const { getRewards: getRewardsFromVM, getTokens: getTokensFromVM, setApiToken } = await import('vm-sdk');
   setApiToken(env.VITE_VM_API_KEY);
 
-  const [getRewardsResponse, tokensRaw, priceInfoMap] = await Promise.all([
+  const [getRewardsResponse, tokensRaw] = await Promise.all([
     getRewardsFromVM(stakeAddress) as Promise<GetRewardsDto | null>,
     getTokensFromVM(),
-    getPrices(),
   ]);
 
   let tokens = tokensRaw as unknown as Record<string, TokenInfo> | null;
-
-  const prices = convertToSimplePrices(priceInfoMap);
 
   const claimableTokens: ClaimableToken[] = [];
 
@@ -73,7 +74,7 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
     const decimals = Number(tokenDecimals);
     const amount = consolidatedAvailableReward[assetId] / Math.pow(10, decimals);
-    const { price, total } = getTokenValue(assetId, amount, prices);
+    const { price, total } = getTokenValue(assetId, amount, {});
 
     if (token) {
       claimableTokens.push({
@@ -95,7 +96,7 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
     const decimals = Number(tokenDecimals);
     const amount = consolidatedAvailableRewardPremium[assetId] / Math.pow(10, decimals);
-    const { price, total } = getTokenValue(assetId, amount, prices);
+    const { price, total } = getTokenValue(assetId, amount, {});
 
     if (token) {
       claimableTokens.push({
