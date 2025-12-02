@@ -1,17 +1,29 @@
-import { EnabledWallet } from '@newm.io/cardano-dapp-wallet-connector';
+import type { CardanoWalletApi } from '@/types/wallet';
 
-export const signProfileUpdateMessage = async (wallet: EnabledWallet, address: string, name: string) => {
-  const messageToSign = `Update profile for ${address} with name: ${name}`;
+interface SignProfilePayload {
+  wallet: CardanoWalletApi;
+  address: string;
+  displayAddress: string;
+  name: string;
+}
+
+export const signProfileUpdateMessage = async ({
+  wallet,
+  address,
+  displayAddress,
+  name,
+}: SignProfilePayload) => {
+  const messageToSign = `Update profile for ${displayAddress} with name: ${name}`;
   const encoder = new TextEncoder();
   const messageBytes = encoder.encode(messageToSign);
   const hexMessage = Array.from(messageBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
   const result = await wallet.signData(address, hexMessage);
   return {
     signature: result.signature,
-    message: messageToSign
+    message: messageToSign,
   };
 };
 

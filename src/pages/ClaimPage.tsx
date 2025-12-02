@@ -8,7 +8,7 @@ import { useRewards } from '@/features/rewards/hooks/useRewards';
 import { useWalletState } from '@/store/wallet-state';
 
 const ClaimPage = () => {
-  const { walletAddress } = useWalletState();
+  const { stakeAddress } = useWalletState();
 
   const {
     addressInput,
@@ -18,7 +18,7 @@ const ClaimPage = () => {
     error,
     fetchRewards,
     hasResults,
-  } = useRewards(walletAddress);
+  } = useRewards(stakeAddress ?? undefined);
 
   const showEmptyState = !isLoading && !hasResults && !error;
 
@@ -34,7 +34,7 @@ const ClaimPage = () => {
 
       <WalletAddressForm
         value={addressInput}
-        fallbackAddress={walletAddress}
+        fallbackAddress={stakeAddress ?? undefined}
         onChange={setAddressInput}
         onSubmit={() => fetchRewards()}
         isLoading={isLoading}

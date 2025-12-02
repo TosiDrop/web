@@ -3,7 +3,7 @@ import { ProfileForm } from '@/features/preferences/components/ProfileForm';
 import { useWalletState } from '@/store/wallet-state';
 
 const PreferencesPage = () => {
-  const { wallet, walletAddress } = useWalletState();
+  const { walletApi, stakeAddress, signingAddress } = useWalletState();
 
   return (
     <div className="space-y-8">
@@ -22,7 +22,11 @@ const PreferencesPage = () => {
         title="Profile"
         description="We only store the display name you provide."
       >
-        <ProfileForm wallet={wallet} walletAddress={walletAddress} />
+        <ProfileForm
+          walletApi={walletApi}
+          walletAddress={stakeAddress}
+          signingAddress={signingAddress}
+        />
       </SectionCard>
     </div>
   );

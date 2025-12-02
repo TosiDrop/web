@@ -1,11 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import type { EnabledWallet } from '@newm.io/cardano-dapp-wallet-connector';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { saveProfileData, signProfileUpdateMessage } from '@/utils/profile-helpers';
+import {
+  saveProfileData,
+  signProfileUpdateMessage,
+} from '@/utils/profile-helpers';
+import type { CardanoWalletApi } from '@/types/wallet';
 
 interface ProfileFormProps {
-  wallet: EnabledWallet | null;
-  walletAddress: string;
+  walletApi: CardanoWalletApi | null;
+  walletAddress: string | null;
+  signingAddress: string | null;
 }
 
 interface StatusState {
@@ -13,7 +17,11 @@ interface StatusState {
   message: string;
 }
 
-export const ProfileForm = ({ wallet, walletAddress }: ProfileFormProps) => {
+export const ProfileForm = ({
+  walletApi,
+  walletAddress,
+  signingAddress,
+}: ProfileFormProps) => {
   const [name, setName] = useState('');
   const [status, setStatus] = useState<StatusState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +29,7 @@ export const ProfileForm = ({ wallet, walletAddress }: ProfileFormProps) => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!wallet || !walletAddress) {
+    if (!walletApi || !walletAddress || !signingAddress) {
       setStatus({
         tone: 'error',
         message: 'Please connect your wallet before saving preferences.',
@@ -33,11 +41,12 @@ export const ProfileForm = ({ wallet, walletAddress }: ProfileFormProps) => {
     setStatus(null);
 
     try {
-      const { signature, message } = await signProfileUpdateMessage(
-        wallet,
-        walletAddress,
-        name
-      );
+      const { signature, message } = await signProfileUpdateMessage({
+        wallet: walletApi,
+        address: signingAddress,
+        displayAddress: walletAddress,
+        name,
+      });
       const response = await saveProfileData(
         walletAddress,
         name,
@@ -92,7 +101,7 @@ export const ProfileForm = ({ wallet, walletAddress }: ProfileFormProps) => {
       <div className="space-y-2">
         <button
           type="submit"
-          disabled={isLoading || !walletAddress}
+          disabled={isLoading || !walletApi || !walletAddress}
           className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-600"
         >
           {isLoading ? 'Saving...' : 'Save profile'}

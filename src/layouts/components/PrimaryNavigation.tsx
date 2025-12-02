@@ -3,6 +3,7 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
+import CardanoWalletConnector from '@/components/wallet/CardanoWalletConnector';
 
 const NAV_LINKS = [
   { name: 'Claim', href: '/' },
@@ -27,7 +28,7 @@ export const PrimaryNavigation = () => {
       className="sticky top-0 z-30 border-b border-white/10 bg-gray-900/90 backdrop-blur"
     >
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-6">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
               <img
@@ -59,12 +60,17 @@ export const PrimaryNavigation = () => {
             </div>
           </div>
 
-          <div className="sm:hidden">
-            <DisclosureButton className="rounded-md p-2 text-gray-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon className="block size-6 data-open:hidden" />
-              <XMarkIcon className="hidden size-6 data-open:block" />
-            </DisclosureButton>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block">
+              <CardanoWalletConnector />
+            </div>
+            <div className="sm:hidden">
+              <DisclosureButton className="rounded-md p-2 text-gray-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
+                <span className="sr-only">Open main menu</span>
+                <Bars3Icon className="block size-6 data-open:hidden" />
+                <XMarkIcon className="hidden size-6 data-open:block" />
+              </DisclosureButton>
+            </div>
           </div>
         </div>
       </div>
@@ -87,6 +93,9 @@ export const PrimaryNavigation = () => {
               {link.name}
             </DisclosureButton>
           ))}
+          <div className="pt-4">
+            <CardanoWalletConnector listLayout="flex" />
+          </div>
         </div>
       </DisclosurePanel>
     </Disclosure>

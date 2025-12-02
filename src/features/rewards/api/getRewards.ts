@@ -1,5 +1,6 @@
 import { Core } from '@blaze-cardano/sdk';
 import type { ClaimableToken } from '@/shared/rewards';
+import { rewardAddressToBech32 } from '@/utils/cardano-address';
 
 interface RewardsResponse {
   rewards: ClaimableToken[];
@@ -7,6 +8,10 @@ interface RewardsResponse {
 }
 
 const convertToStakeAddress = (walletAddress: string): string => {
+  const normalized = rewardAddressToBech32(walletAddress);
+  if (normalized.startsWith('stake')) {
+    return normalized;
+  }
   try {
     const address = Core.addressFromBech32(walletAddress);
     const addressDetails = address.asBase();
