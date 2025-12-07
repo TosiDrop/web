@@ -20,6 +20,16 @@ export default defineConfig({
       "@cardano-sdk/util/node_modules/serialize-error": "serialize-error",
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          cardano: ['@blaze-cardano/sdk', '@cardano-foundation/cardano-connect-with-wallet', '@cardano-foundation/cardano-connect-with-wallet-core'],
+          ui: ['@headlessui/react', '@heroicons/react'],
+        }
+      }
+    }
+  },
   optimizeDeps: {
     esbuildOptions: {
       define: {
