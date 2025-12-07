@@ -84,7 +84,7 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
         decimals,
         amount,
         premium: false,
-        native: false,
+        native: isNativeToken(assetId),
         price,
         total,
       });
@@ -165,12 +165,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
     
     return new Response(
       JSON.stringify({ 
         error: `Failed to process request: ${errorMessage}`,
-        details: errorStack || 'No additional error details available',
+        details: 'Internal server error',
         stakeAddress: stakeAddress
       }),
       { 

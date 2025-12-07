@@ -9,6 +9,5 @@ setApiToken(MY_API_KEY as string)
 
 export const getTokens = async () => {
   const tokens = await getTokensFromVMSDK()
-  console.log('tokens', tokens)
   return tokens
 }

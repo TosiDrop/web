@@ -23,6 +23,12 @@ export function useRewards(initialAddress?: string): UseRewardsResult {
     setAddressInput((current) => (current ? current : initialAddress));
   }, [initialAddress]);
 
+  useEffect(() => {
+    if (initialAddress && !addressInput) {
+      setAddressInput(initialAddress);
+    }
+  }, [initialAddress, addressInput]);
+
   const fetchRewards = useCallback(
     async (explicitAddress?: string) => {
       const targetAddress =

@@ -4,7 +4,8 @@ export interface CardanoWalletApi {
   getChangeAddress: () => Promise<string>;
   getUsedAddresses: () => Promise<string[]>;
   getUnusedAddresses: () => Promise<string[]>;
-  getUtxos: () => Promise<string[] | null>;
+  getUtxos: () => Promise<string[] | undefined>;
+  getCollateral: () => Promise<string[]>;
   getBalance: () => Promise<string>;
   signTx: (tx: string, partialSign?: boolean) => Promise<string>;
   signData: (
@@ -12,6 +13,12 @@ export interface CardanoWalletApi {
     payload: string
   ) => Promise<{ signature: string; key: string }>;
   submitTx: (tx: string) => Promise<string>;
+  getExtensions: () => Promise<Extension[]>;
+}
+
+interface Extension {
+  cip: number;
+  [key: string]: unknown;
 }
 
 export interface WalletStateSnapshot {

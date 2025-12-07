@@ -13,8 +13,8 @@ const convertToStakeAddress = (walletAddress: string): string => {
     return normalized;
   }
   try {
-    const address = Core.addressFromBech32(walletAddress);
-    const addressDetails = address.asBase();
+    const addr = Core.addressFromBech32(walletAddress);
+    const addressDetails = addr.asBase();
     if (!addressDetails) {
       throw new Error("Address is not a base address with stake credentials");
     }
@@ -24,12 +24,12 @@ const convertToStakeAddress = (walletAddress: string): string => {
       throw new Error("Address does not contain stake credentials");
     }
 
-    const networkId = address.getNetworkId();
+    const networkId = addr.getNetworkId();
     const rewardAddress = Core.RewardAccount.fromCredential(
       stakeCredential,
       networkId
     );
-    return rewardAddress;
+    return (rewardAddress as any).toBech32();
   } catch (error) {
     console.error('Error converting address with Blaze:', error);
     throw new Error(
