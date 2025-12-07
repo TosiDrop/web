@@ -29,31 +29,25 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   const consolidatedAvailableReward: { [key: string]: number } = {};
   const consolidatedAvailableRewardPremium: { [key: string]: number } = {};
 
-  const regularRewards: Record<string, number> = {
-    ...getRewardsResponse.consolidated_promises,
-    ...getRewardsResponse.consolidated_rewards,
+  // Accumulate regular rewards from consolidated_promises and consolidated_rewards
+  const addToConsolidated = (target: { [key: string]: number }, source: Record<string, number> | undefined) => {
+    if (!source) return;
+    Object.entries(source).forEach(([assetId, amount]) => {
+      const numAmount = Number(amount);
+      if (!isNaN(numAmount)) {
+        target[assetId] = (target[assetId] || 0) + numAmount;
+      }
+    });
   };
 
-  Object.entries(regularRewards).forEach(([assetId, amount]) => {
-    if (consolidatedAvailableReward[assetId]) {
-      consolidatedAvailableReward[assetId] += amount;
-    } else {
-      consolidatedAvailableReward[assetId] = amount;
-    }
-  });
+  addToConsolidated(consolidatedAvailableReward, getRewardsResponse.consolidated_promises);
+  addToConsolidated(consolidatedAvailableReward, getRewardsResponse.consolidated_rewards);
 
-  const premiumRewards: Record<string, number> = {
-    ...(getRewardsResponse.project_locked_rewards?.consolidated_promises ?? {}),
-    ...(getRewardsResponse.project_locked_rewards?.consolidated_rewards ?? {}),
-  };
-
-  Object.entries(premiumRewards).forEach(([assetId, amount]) => {
-    if (consolidatedAvailableRewardPremium[assetId]) {
-      consolidatedAvailableRewardPremium[assetId] += amount;
-    } else {
-      consolidatedAvailableRewardPremium[assetId] = amount;
-    }
-  });
+  // Accumulate premium rewards from project_locked counterparts
+  if (getRewardsResponse.project_locked_rewards) {
+    addToConsolidated(consolidatedAvailableRewardPremium, getRewardsResponse.project_locked_rewards.consolidated_promises);
+    addToConsolidated(consolidatedAvailableRewardPremium, getRewardsResponse.project_locked_rewards.consolidated_rewards);
+  }
 
   const allAssetIds = [
     ...Object.keys(consolidatedAvailableReward),
@@ -72,51 +66,35 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     if (tokens == null) return claimableTokens;
   }
 
-  if (tokens == null) return claimableTokens;
+  const addTokensToClaimable = (rewardsByAsset: Record<string, number>, premium: boolean) => {
+    Object.keys(rewardsByAsset).forEach((assetId) => {
+      const token = tokens[assetId];
+      if (!token) {
+        console.warn(`Token metadata missing for asset: ${assetId}`);
+        return;
+      }
+      const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
+      const decimals = Number(tokenDecimals);
+      const amount = rewardsByAsset[assetId] / Math.pow(10, decimals);
+      // TODO: Integrate real pricing when available - currently using empty prices map for minimal implementation
+      const { price, total } = getTokenValue(assetId, amount, {});
 
-  Object.keys(consolidatedAvailableReward).forEach((assetId) => {
-    const token = tokens[assetId];
-    const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
-    const decimals = Number(tokenDecimals);
-    const amount = consolidatedAvailableReward[assetId] / Math.pow(10, decimals);
-    const { price, total } = getTokenValue(assetId, amount, {});
-
-    if (token) {
       claimableTokens.push({
         assetId,
         ticker: ticker as string,
         logo: logo as string,
         decimals,
         amount,
-        premium: false,
+        premium,
         native: isNativeToken(assetId),
         price,
         total,
       });
-    }
-  });
+    });
+  };
 
-  Object.keys(consolidatedAvailableRewardPremium).forEach((assetId) => {
-    const token = tokens[assetId];
-    const { decimals: tokenDecimals = 0, logo = "", ticker = "" } = token || {};
-    const decimals = Number(tokenDecimals);
-    const amount = consolidatedAvailableRewardPremium[assetId] / Math.pow(10, decimals);
-    const { price, total } = getTokenValue(assetId, amount, {});
-
-    if (token) {
-      claimableTokens.push({
-        assetId,
-        ticker: ticker as string,
-        logo: logo as string,
-        decimals,
-        amount,
-        premium: true,
-        native: isNativeToken(assetId),
-        price,
-        total,
-      });
-    }
-  });
+  addTokensToClaimable(consolidatedAvailableReward, false);
+  addTokensToClaimable(consolidatedAvailableRewardPremium, true);
 
   return claimableTokens;
 }
@@ -133,7 +111,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!stakeAddress) {
     return new Response(
       JSON.stringify({ error: "stakeAddress is required" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 400, 
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Content-Type"
+        } 
+      }
     );
   }
 
@@ -143,7 +129,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         error: "API key not available in environment. Please set VITE_VM_API_KEY in .dev.vars file",
         details: "The API key is missing or set to a placeholder value"
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Content-Type"
+        } 
+      }
     );
   }
 
@@ -169,11 +163,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     console.error("Error message:", error instanceof Error ? error.message : 'Unknown error');
     console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
     return new Response(
       JSON.stringify({ 
-        error: `Failed to process request: ${errorMessage}`,
+        error: 'Failed to process request',
         details: 'Internal server error',
         stakeAddress: stakeAddress
       }),
@@ -181,7 +173,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         status: 500, 
         headers: { 
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Content-Type"
         } 
       }
     );

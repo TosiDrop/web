@@ -6,7 +6,7 @@ interface SectionCardProps {
   description?: string;
   actions?: ReactNode;
   className?: string;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export const SectionCard = ({

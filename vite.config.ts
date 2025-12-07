@@ -24,6 +24,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          react: ['react', 'react-dom'],
           cardano: ['@blaze-cardano/sdk', '@cardano-foundation/cardano-connect-with-wallet', '@cardano-foundation/cardano-connect-with-wallet-core'],
           ui: ['@headlessui/react', '@heroicons/react'],
         }

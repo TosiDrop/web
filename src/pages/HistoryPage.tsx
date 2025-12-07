@@ -15,11 +15,7 @@ const HistoryPage = () => {
       <SectionCard
         title="No history yet"
         description="Your claim history will appear here once you start claiming rewards."
-      >
-        <p className="text-gray-400">
-          Start claiming rewards to see your history.
-        </p>
-      </SectionCard>
+      />
     </div>
   );
 };
