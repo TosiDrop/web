@@ -1,3 +1,5 @@
+import { SectionCard } from '@/components/common/SectionCard';
+
 const HistoryPage = () => {
   return (
     <div className="space-y-8">
@@ -10,9 +12,14 @@ const HistoryPage = () => {
           View your past claims and transactions.
         </p>
       </header>
-      <div className="text-center text-gray-400">
-        History feature coming soon.
-      </div>
+      <SectionCard
+        title="No history yet"
+        description="Your claim history will appear here once you start claiming rewards."
+      >
+        <p className="text-gray-400">
+          Start claiming rewards to see your history.
+        </p>
+      </SectionCard>
     </div>
   );
 };

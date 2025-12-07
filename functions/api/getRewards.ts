@@ -55,16 +55,21 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
     }
   });
 
-  for (const assetId of [
+  const allAssetIds = [
     ...Object.keys(consolidatedAvailableReward),
     ...Object.keys(consolidatedAvailableRewardPremium),
-  ]) {
-    const token = tokens[assetId];
-    if (token == null) {
-      const refreshedTokens = await getTokensFromVM();
-      tokens = refreshedTokens as unknown as Record<string, TokenInfo> | null;
-      if (tokens == null) break;
-    }
+  ];
+
+  let hasMissingToken = false;
+  if (tokens) {
+    hasMissingToken = allAssetIds.some((id) => !(tokens as Record<string, TokenInfo>)[id]);
+  } else {
+    hasMissingToken = true;
+  }
+  if (hasMissingToken) {
+    const refreshedTokens = await getTokensFromVM();
+    tokens = refreshedTokens as unknown as Record<string, TokenInfo> | null;
+    if (tokens == null) return claimableTokens;
   }
 
   if (tokens == null) return claimableTokens;
