@@ -20,7 +20,7 @@
     "@newm.io/cardano-dapp-wallet-connector": "^1.5.5",
     "@radix-ui/react-menubar": "^1.1.16",
     "@radix-ui/react-navigation-menu": "^1.2.14",
-    "@tabler/icons-react": "^3.35.0",
+    "@tabler/icons-react": "^3.36.0",
     "@tailwindcss/vite": "^4.1.16",
     "@utxorpc/blaze-provider": "^0.3.7",
     "buffer": "^6.0.3",
