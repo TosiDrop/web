@@ -1,25 +1,24 @@
-import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MainLayout } from './layouts/MainLayout';
+import { AppProviders } from '@/app/providers';
+import { MainLayout } from '@/layouts/MainLayout';
+import ClaimPage from '@/pages/ClaimPage';
+import HistoryPage from '@/pages/HistoryPage';
+import PreferencesPage from '@/pages/PreferencesPage';
+import ApiTesterPage from '@/pages/ApiTesterPage';
 
-const ClaimPage = lazy(() => import('./pages/ClaimPage'));
-const HistoryPage = lazy(() => import('./pages/HistoryPage'));
-const PreferencesPage = lazy(() => import('./pages/PreferencesPage'));
-
-const App: React.FC = () => {
+export default function App() {
   return (
-    <BrowserRouter>
-      <MainLayout>
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-white">Loading...</div></div>}>
+    <AppProviders>
+      <BrowserRouter>
+        <MainLayout>
           <Routes>
             <Route path="/" element={<ClaimPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/preferences" element={<PreferencesPage />} />
+            <Route path="/api-tester" element={<ApiTesterPage />} />
           </Routes>
-        </Suspense>
-      </MainLayout>
-    </BrowserRouter>
+        </MainLayout>
+      </BrowserRouter>
+    </AppProviders>
   );
-};
-
-export default App;
+}

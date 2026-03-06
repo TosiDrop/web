@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
 import { PrimaryNavigation } from './components/PrimaryNavigation';
+import { useWalletSync } from '@/features/wallet/hooks/useWalletSync';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
+  useWalletSync();
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-950 text-white">
       <PrimaryNavigation />
@@ -15,4 +18,3 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     </div>
   );
 };
-

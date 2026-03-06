@@ -41,7 +41,6 @@ export async function storeProfileData(
     throw new Error(`API error! status: ${response.status}, message: ${error}`);
   }
 
-  // parse the JSON success payload
   return await response.json();
 }
 

@@ -2,13 +2,14 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { ConnectWallet } from '@/components/common/ConnectWallet';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
-import CardanoWalletConnector from '@/components/wallet/CardanoWalletConnector';
 
 const NAV_LINKS = [
   { name: 'Claim', href: '/' },
   { name: 'History', href: '/history' },
   { name: 'Preferences', href: '/preferences' },
+  { name: 'API Tester', href: '/api-tester' },
 ];
 
 export const PrimaryNavigation = () => {
@@ -31,11 +32,7 @@ export const PrimaryNavigation = () => {
         <div className="flex h-16 items-center justify-between gap-6">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
-              <img
-                src={TosiDropLogo}
-                alt="TosiDrop"
-                className="h-8 w-auto"
-              />
+              <img src={TosiDropLogo} alt="TosiDrop" className="h-8 w-auto" />
               <span className="hidden text-lg font-semibold text-white sm:inline">
                 TosiDrop
               </span>
@@ -62,7 +59,7 @@ export const PrimaryNavigation = () => {
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:block">
-              <CardanoWalletConnector />
+              <ConnectWallet />
             </div>
             <div className="sm:hidden">
               <DisclosureButton className="rounded-md p-2 text-gray-300 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
@@ -94,11 +91,10 @@ export const PrimaryNavigation = () => {
             </DisclosureButton>
           ))}
           <div className="pt-4">
-            <CardanoWalletConnector listLayout="flex" />
+            <ConnectWallet />
           </div>
         </div>
       </DisclosurePanel>
     </Disclosure>
   );
 };
-
