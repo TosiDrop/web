@@ -1,31 +1,19 @@
-import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../../services/vmClient';
+import type { Env } from '../../types/env';
+import { errorResponse, optionsResponse } from '../../services/vmClient';
 
-interface Env {
-  VITE_VM_API_KEY: string;
-}
-
+// TODO: Integrate with VM backend for actual claim validation
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
-
   try {
-    const body = await request.json<{ stakeAddress: string; assets: string[] }>();
+    const body = await context.request.json() as { stakeAddress: string; assets: string[] };
 
     if (!body.stakeAddress || !body.assets?.length) {
       return errorResponse('stakeAddress and assets are required', 400);
     }
 
-    await initVmSdk(env);
-
-    return jsonResponse({
-      valid: true,
-      transactionCount: 1,
-      airdropHash: `claim_${Date.now()}`,
-    });
+    return errorResponse('Claim validation not yet integrated with VM backend', 501);
   } catch (error) {
     console.error('Claim validate error:', error);
-    return errorResponse(
-      `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
+    return errorResponse('Validation failed');
   }
 };
 

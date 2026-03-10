@@ -10,8 +10,9 @@ export interface SaveProfileRequest {
   value: {
     name: string;
   };
-  signature?: string;
-  message?: string;
+  signature: string;
+  key: string;
+  message: string;
 }
 
 export interface SaveProfileResponse {

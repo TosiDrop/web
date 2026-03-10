@@ -14,6 +14,7 @@ export default function ClaimPage() {
   const { data: rewards, isLoading, error, refetch } = useRewards(stakeAddress);
   const claimFlow = useClaimFlow();
 
+  const walletReady = connected && !!stakeAddress;
   const hasRewards = rewards && rewards.length > 0;
 
   const handleClaim = () => {
@@ -32,7 +33,7 @@ export default function ClaimPage() {
         </p>
       </header>
 
-      {!connected && (
+      {!walletReady && (
         <SectionCard title="Get started">
           <p className="text-gray-300">
             Connect your wallet using the button in the navigation bar to see your claimable rewards.
@@ -40,7 +41,7 @@ export default function ClaimPage() {
         </SectionCard>
       )}
 
-      {connected && isLoading && (
+      {walletReady && isLoading && (
         <SectionCard>
           <p className="animate-pulse text-gray-400">Loading rewards...</p>
         </SectionCard>
@@ -64,7 +65,7 @@ export default function ClaimPage() {
               <ClaimButton
                 state={claimFlow.state}
                 onClaim={handleClaim}
-                disabled={!connected || claimFlow.state.step === 'completed'}
+                disabled={!walletReady || claimFlow.state.step === 'completed'}
               />
             }
           >
@@ -74,19 +75,18 @@ export default function ClaimPage() {
         </>
       )}
 
-      {connected && !isLoading && !hasRewards && !error && (
-        <RewardsEmptyState show />
-      )}
-
-      {connected && !isLoading && !hasRewards && (
-        <div className="text-center">
-          <button
-            onClick={() => refetch()}
-            className="text-sm text-gray-400 underline hover:text-white"
-          >
-            Refresh rewards
-          </button>
-        </div>
+      {walletReady && !isLoading && !hasRewards && (
+        <>
+          {!error && <RewardsEmptyState />}
+          <div className="text-center">
+            <button
+              onClick={() => refetch()}
+              className="text-sm text-gray-400 underline hover:text-white"
+            >
+              Refresh rewards
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

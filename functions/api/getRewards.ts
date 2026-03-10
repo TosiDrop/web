@@ -4,11 +4,8 @@ import {
   type GetRewardsDto,
   type TokenInfo,
 } from '../../src/shared/rewards';
-import { jsonResponse, errorResponse } from '../services/vmClient';
-
-interface Env {
-  VITE_VM_API_KEY: string;
-}
+import type { Env } from '../types/env';
+import { initVmSdk, jsonResponse, errorResponse } from '../services/vmClient';
 
 function mergeAmounts(...sources: (Record<string, number> | undefined)[]): Record<string, number> {
   const merged: Record<string, number> = {};
@@ -33,8 +30,8 @@ function toClaimableTokens(
       const decimals = Number(tokenDecimals);
       return {
         assetId,
-        ticker: ticker as string,
-        logo: logo as string,
+        ticker,
+        logo,
         decimals,
         amount: rawAmount / Math.pow(10, decimals),
         premium,
@@ -44,8 +41,7 @@ function toClaimableTokens(
 }
 
 async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToken[]> {
-  const { getRewards: getRewardsFromVM, getTokens: getTokensFromVM, setApiToken } = await import('vm-sdk');
-  setApiToken(env.VITE_VM_API_KEY);
+  const { getRewards: getRewardsFromVM, getTokens: getTokensFromVM } = await initVmSdk(env);
 
   const [rewardsResponse, tokensRaw] = await Promise.all([
     getRewardsFromVM(stakeAddress) as Promise<GetRewardsDto | null>,
@@ -53,7 +49,10 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   ]);
 
   let tokens = tokensRaw as unknown as Record<string, TokenInfo> | null;
-  if (!rewardsResponse || !tokens) return [];
+  if (!rewardsResponse || !tokens) {
+    console.warn('getRewards: SDK returned null for', !rewardsResponse ? 'rewards' : 'tokens', { stakeAddress });
+    return [];
+  }
 
   const regular = mergeAmounts(rewardsResponse.consolidated_promises, rewardsResponse.consolidated_rewards);
   const premium = mergeAmounts(
@@ -65,7 +64,10 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   for (const assetId of allAssetIds) {
     if (!tokens[assetId]) {
       tokens = (await getTokensFromVM()) as unknown as Record<string, TokenInfo> | null;
-      if (!tokens) return [];
+      if (!tokens) {
+        console.warn('getRewards: token re-fetch returned null', { stakeAddress });
+        return [];
+      }
       break;
     }
   }
@@ -81,11 +83,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const stakeAddress = new URL(request.url).searchParams.get('walletId');
 
   if (!stakeAddress) {
-    return errorResponse('stakeAddress is required', 400);
+    return errorResponse('walletId is required', 400);
   }
 
   if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('VITE_VM_API_KEY is not configured', 500);
+    return errorResponse('Server configuration error', 500);
   }
 
   try {
@@ -93,7 +95,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return jsonResponse({ rewards: claimableTokens });
   } catch (error) {
     console.error('getRewards error:', error);
-    const message = error instanceof Error ? error.message : String(error);
-    return errorResponse(`Failed to process request: ${message}`);
+    return errorResponse('Failed to process request');
   }
 };

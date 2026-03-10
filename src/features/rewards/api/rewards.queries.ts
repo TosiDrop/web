@@ -16,6 +16,5 @@ export function useRewards(stakeAddress: string | null) {
       return data.rewards;
     },
     enabled: !!stakeAddress,
-    staleTime: 1000 * 60 * 2,
   });
 }

@@ -16,6 +16,7 @@ const initialState: WalletState = {
 
 export const useWalletStore = create<WalletStore>((set) => ({
   ...initialState,
-  setWalletState: (partial) => set((state) => ({ ...state, ...partial })),
+  setWalletState: (partial) =>
+    set((state) => (partial.connected === false ? { ...initialState } : { ...state, ...partial })),
   resetWallet: () => set(initialState),
 }));

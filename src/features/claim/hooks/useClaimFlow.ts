@@ -11,9 +11,9 @@ export function useClaimFlow() {
   const queryClient = useQueryClient();
   const [state, setState] = useState<ClaimFlowStep>({ step: 'idle' });
 
-  const validateMutation = useClaimValidate();
-  const submitMutation = useClaimSubmit();
-  const submitTxMutation = useClaimSubmitTx();
+  const { mutateAsync: validateAsync } = useClaimValidate();
+  const { mutateAsync: submitAsync } = useClaimSubmit();
+  const { mutateAsync: submitTxAsync } = useClaimSubmitTx();
 
   const startClaim = useCallback(
     async (assets: string[]) => {
@@ -24,7 +24,7 @@ export function useClaimFlow() {
 
       try {
         setState({ step: 'validating' });
-        const validation = await validateMutation.mutateAsync({
+        const validation = await validateAsync({
           stakeAddress,
           assets,
         });
@@ -34,7 +34,7 @@ export function useClaimFlow() {
           return;
         }
 
-        const submitResult = await submitMutation.mutateAsync({
+        const submitResult = await submitAsync({
           stakeAddress,
           assets,
           airdropHash: validation.airdropHash,
@@ -44,11 +44,12 @@ export function useClaimFlow() {
         const signedTx = await wallet.signTx(submitResult.unsignedTx, false);
 
         setState({ step: 'submitting' });
-        const txResult = await submitTxMutation.mutateAsync({
+        const txResult = await submitTxAsync({
           signedTx,
           airdropHash: submitResult.airdropHash,
         });
 
+        // TODO: Enable polling step once backend supports claim status endpoint
         setState({ step: 'completed', txHash: txResult.txHash });
         queryClient.invalidateQueries({ queryKey: ['rewards', stakeAddress] });
       } catch (error) {
@@ -56,7 +57,7 @@ export function useClaimFlow() {
         setState({ step: 'error', message });
       }
     },
-    [stakeAddress, wallet, validateMutation, submitMutation, submitTxMutation, queryClient]
+    [stakeAddress, wallet, validateAsync, submitAsync, submitTxAsync, queryClient]
   );
 
   const reset = useCallback(() => {

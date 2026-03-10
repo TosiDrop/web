@@ -1,15 +1,10 @@
-/// <reference types="@cloudflare/workers-types" />
-
-import { jsonResponse, errorResponse } from '../services/vmClient';
-
-interface Env {
-  VM_WEB_PROFILES: KVNamespace;
-}
+import type { Env } from '../types/env';
+import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
-  if (request.headers.get('Content-Type') !== 'application/json') {
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) {
     return errorResponse('Request body must be JSON', 415);
   }
 
@@ -52,3 +47,5 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('Error fetching data');
   }
 };
+
+export const onRequestOptions: PagesFunction = async () => optionsResponse();

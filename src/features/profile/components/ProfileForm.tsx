@@ -10,14 +10,16 @@ export function ProfileForm() {
   const { stakeAddress, changeAddress } = useWalletStore();
   const saveProfile = useSaveProfile();
   const [name, setName] = useState('');
+  const [signError, setSignError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!wallet || !stakeAddress || !changeAddress) return;
 
+    setSignError(null);
     try {
-      const { signature, message } = await signProfileUpdateMessage({
+      const { signature, key, message } = await signProfileUpdateMessage({
         wallet,
         address: changeAddress,
         displayAddress: stakeAddress,
@@ -28,12 +30,14 @@ export function ProfileForm() {
         walletId: stakeAddress,
         value: { name },
         signature,
+        key,
         message,
       });
 
       setName('');
     } catch (error) {
       console.error('Profile save error:', error);
+      setSignError(error instanceof Error ? error.message : 'Failed to sign or save profile');
     }
   };
 
@@ -58,10 +62,10 @@ export function ProfileForm() {
         <FeedbackBanner tone="success" message="Profile saved successfully!" />
       )}
 
-      {saveProfile.isError && (
+      {(saveProfile.isError || signError) && (
         <FeedbackBanner
           tone="error"
-          message={saveProfile.error?.message || 'Error saving profile.'}
+          message={saveProfile.error?.message || signError || 'Error saving profile.'}
         />
       )}
 

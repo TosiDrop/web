@@ -62,7 +62,7 @@ export default function ApiTesterPage() {
         fetchApi(setClaimValidate, () =>
           apiClient.post('/api/claim/validate', {
             stakeAddress,
-            assets: [],
+            assets: ['lovelace'],
           })
         ),
     },
@@ -87,7 +87,7 @@ export default function ApiTesterPage() {
 
       <div className="grid gap-4">
         {apis.map((api) => {
-          const disabled = api.requiresWallet && !connected;
+          const disabled = api.requiresWallet && (!connected || !stakeAddress);
           return (
             <div
               key={api.name}

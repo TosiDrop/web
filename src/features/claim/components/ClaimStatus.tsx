@@ -37,5 +37,22 @@ export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
     );
   }
 
+  const stepMessages: Record<string, string> = {
+    validating: 'Validating your claim...',
+    signing: 'Waiting for wallet signature...',
+    submitting: 'Submitting transaction...',
+    polling: 'Waiting for confirmation...',
+  };
+
+  if (state.step in stepMessages) {
+    return (
+      <FeedbackBanner
+        tone="info"
+        title="Claim in progress"
+        message={stepMessages[state.step]}
+      />
+    );
+  }
+
   return null;
 }

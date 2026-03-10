@@ -1,18 +1,16 @@
-/// <reference types="@cloudflare/workers-types" />
-
+import type { Env } from '../types/env';
 import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
-interface Env {
-  VITE_VM_API_KEY: string;
-  VM_WEB_PROFILES: KVNamespace;
-}
-
 const VM_URL = 'https://vmprev.adaseal.eu';
-const CACHE_KEY = 'settings_cache';
+const CACHE_KEY = '__internal:settings_cache';
 const CACHE_TTL = 3600;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
+
+  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
+    return errorResponse('Server configuration error', 500);
+  }
 
   try {
     const cached = await env.VM_WEB_PROFILES.get(CACHE_KEY, { type: 'json' });
@@ -26,7 +24,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     });
 
     if (!response.ok) {
-      return errorResponse(`VM API returned ${response.status}`, response.status);
+      return errorResponse('Upstream service error', 502);
     }
 
     const settings = await response.json();
@@ -38,8 +36,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return jsonResponse(settings);
   } catch (error) {
     console.error('getSettings error:', error);
-    const message = error instanceof Error ? error.message : JSON.stringify(error);
-    return errorResponse(`Failed to fetch settings: ${message}`);
+    return errorResponse('Failed to fetch settings');
   }
 };
 
