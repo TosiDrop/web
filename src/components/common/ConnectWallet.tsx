@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useWallet, useWalletList } from '@meshsdk/react';
-import type { ICardanoWallet } from '@meshsdk/react';
+import type { Wallet } from '@meshsdk/common';
 
 export function ConnectWallet() {
   const { connect, disconnect, connected, connecting } = useWallet();
@@ -53,7 +53,7 @@ export function ConnectWallet() {
               <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                 Select wallet
               </p>
-              {wallets.map((w: ICardanoWallet) => (
+              {wallets.map((w: Wallet) => (
                 <button
                   key={w.name}
                   onClick={() => handleConnect(w.name)}

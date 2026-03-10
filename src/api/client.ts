@@ -1,6 +1,6 @@
 import { ApiError } from '@/types/api';
 
-async function throwApiError(res: Response): never {
+async function throwApiError(res: Response): Promise<never> {
   let message: string;
   try {
     const body = (await res.json()) as Record<string, string>;
