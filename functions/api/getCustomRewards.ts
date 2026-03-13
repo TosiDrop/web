@@ -33,7 +33,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       staking_address,
       session_id,
       selected,
-      ...(overhead_fee_raw != null ? { overhead_fee: Number(overhead_fee_raw) } : {}),
+      ...(overhead_fee_raw != null && !isNaN(Number(overhead_fee_raw))
+        ? { overhead_fee: Number(overhead_fee_raw) }
+        : {}),
     });
 
     return jsonResponse({

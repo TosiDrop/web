@@ -19,6 +19,7 @@ export function useWalletSync() {
     }
 
     prevConnected.current = true;
+    let cancelled = false;
 
     const sync = async () => {
       try {
@@ -27,6 +28,8 @@ export function useWalletSync() {
           ? rewardAddressToBech32(rewardAddresses[0])
           : null;
         const changeAddress = await wallet.getChangeAddress();
+
+        if (cancelled) return;
 
         setWalletState({
           connected: true,
@@ -41,5 +44,7 @@ export function useWalletSync() {
     };
 
     sync();
+
+    return () => { cancelled = true; };
   }, [connected, wallet, name, network, setWalletState, resetWallet]);
 }

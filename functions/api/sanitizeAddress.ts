@@ -1,5 +1,7 @@
 import type { Env } from '../types/env';
-import { initVmSdk, jsonResponse, errorResponse } from '../services/vmClient';
+import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+
+export const onRequestOptions: PagesFunction<Env> = async () => optionsResponse();
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
