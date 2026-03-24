@@ -10,6 +10,7 @@ export function useRewards(stakeAddress: string | null) {
   return useQuery<ClaimableToken[], Error>({
     queryKey: ['rewards', stakeAddress],
     queryFn: async () => {
+      if (!stakeAddress) return [];
       const data = await apiClient.get<RewardsResponse>(
         `/api/getRewards?walletId=${encodeURIComponent(stakeAddress!)}`
       );
