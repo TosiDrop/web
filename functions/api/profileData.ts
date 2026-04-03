@@ -1,90 +1,51 @@
-/// <reference types="@cloudflare/workers-types" />
-
-interface Env {
-  VM_WEB_PROFILES: KVNamespace;
-}
-
-interface WalletPostRequest {
-  walletId: string;
-  value: {
-    name: string;
-  };
-}
+import type { Env } from '../types/env';
+import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
-  if (request.headers.get("Content-Type") !== "application/json") {
-    return new Response(
-      JSON.stringify({ error: "Request body must be JSON" }),
-      { status: 415, headers: { "Content-Type": "application/json" } }
-    );
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) {
+    return errorResponse('Request body must be JSON', 415);
   }
 
-  let body: WalletPostRequest;
+  let body: { walletId: string; value: { name: string } };
   try {
-    body = await request.json<WalletPostRequest>();
+    body = await request.json();
   } catch {
-    return new Response(
-      JSON.stringify({ error: "Invalid JSON" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return errorResponse('Invalid JSON', 400);
   }
 
-  const { walletId, value } = body;
-  if (!walletId) {
-    return new Response(
-      JSON.stringify({ error: "Missing walletId" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+  if (!body.walletId) {
+    return errorResponse('Missing walletId', 400);
   }
 
   try {
-    await env.VM_WEB_PROFILES.put(walletId, JSON.stringify(value));
-    return new Response(
-      JSON.stringify({ success: true, walletId }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    await env.VM_WEB_PROFILES.put(body.walletId, JSON.stringify(body.value));
+    return jsonResponse({ success: true, walletId: body.walletId });
   } catch (err) {
-    console.error("KV PUT Error:", err);
-    return new Response(
-      JSON.stringify({ error: "Error storing data" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error('KV PUT Error:', err);
+    return errorResponse('Error storing data');
   }
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
-  const url = new URL(request.url);
-  const walletId = url.searchParams.get("walletId");
+  const walletId = new URL(request.url).searchParams.get('walletId');
 
   if (!walletId) {
-    return new Response(
-      JSON.stringify({ error: "walletId is required" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return errorResponse('walletId is required', 400);
   }
 
   try {
-
-    const stored = await env.VM_WEB_PROFILES.get(walletId, { type: "json" });
+    const stored = await env.VM_WEB_PROFILES.get(walletId, { type: 'json' });
     if (stored === null) {
-      return new Response(
-        JSON.stringify({ error: "Not found", walletId }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return errorResponse('Not found', 404);
     }
-
-    return new Response(
-      JSON.stringify({ walletId, value: stored }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ walletId, value: stored });
   } catch (err) {
-    console.error("KV GET Error:", err);
-    return new Response(
-      JSON.stringify({ error: "Error fetching data" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    console.error('KV GET Error:', err);
+    return errorResponse('Error fetching data');
   }
 };
+
+export const onRequestOptions: PagesFunction = async () => optionsResponse();

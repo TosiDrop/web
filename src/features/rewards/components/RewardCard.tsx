@@ -5,8 +5,6 @@ interface RewardCardProps {
 }
 
 export const RewardCard = ({ token }: RewardCardProps) => {
-  const hasValue = token.price > 0 && token.total > 0;
-
   return (
     <article
       className={`flex flex-col gap-4 rounded-2xl border p-4 ${
@@ -53,20 +51,6 @@ export const RewardCard = ({ token }: RewardCardProps) => {
             {token.amount.toLocaleString()}
           </dd>
         </div>
-        {hasValue && (
-          <>
-            <div className="flex items-center justify-between">
-              <dt className="text-gray-400">Price</dt>
-              <dd className="text-gray-200">{token.price.toFixed(6)} ADA</dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-gray-400">Total</dt>
-              <dd className="font-semibold text-green-400">
-                {token.total.toFixed(6)} ADA
-              </dd>
-            </div>
-          </>
-        )}
       </dl>
     </article>
   );
