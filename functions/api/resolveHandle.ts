@@ -4,7 +4,7 @@ import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClie
 const CACHE_TTL = 3600;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+  const { request } = context;
   const url = new URL(request.url);
   const handle = url.searchParams.get('handle');
 
@@ -20,12 +20,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (cleanHandle.length > 28 || !/^[a-z0-9_.-]+$/i.test(cleanHandle)) {
     return errorResponse('Invalid handle format', 400);
   }
-
-  if (cleanHandle.length > 28 || !/^[a-z0-9_.-]+$/i.test(cleanHandle)) {
-    return errorResponse('Invalid handle format', 400);
-  }
-
-  try {
 
   try {
     const cache = caches.default;
