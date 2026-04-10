@@ -12,7 +12,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   const count = Number(tokenCount);
-  if (!Number.isFinite(count) || count < 0) {
+  if (!Number.isInteger(count) || count < 0) {
     return errorResponse('token_count must be a valid non-negative number', 400);
   }
 
