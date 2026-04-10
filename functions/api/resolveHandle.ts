@@ -21,9 +21,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('Invalid handle format', 400);
   }
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
+  if (cleanHandle.length > 28 || !/^[a-z0-9_.-]+$/i.test(cleanHandle)) {
+    return errorResponse('Invalid handle format', 400);
   }
+
+  try {
 
   try {
     const cache = caches.default;
