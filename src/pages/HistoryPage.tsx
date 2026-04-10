@@ -1,14 +1,14 @@
-const HistoryPage = () => {
+import { HistoryPageHeader } from '@/features/history/components/HistoryPageHeader';
+import { HistoryInfoBanner } from '@/features/history/components/HistoryInfoBanner';
+
+export default function HistoryPage() {
   return (
     <div className="space-y-8">
-      <header className="space-y-4 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-blue-300">
-          History
-        </p>
-      </header>
+      <HistoryPageHeader />
+      <p className="py-12 text-center text-sm text-gray-400">
+        Claim history will appear here once the history API is available.
+      </p>
+      <HistoryInfoBanner />
     </div>
   );
-};
-
-export default HistoryPage;
-
+}

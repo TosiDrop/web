@@ -31,14 +31,6 @@ export interface ClaimSubmitTxResponse {
   txHash: string;
 }
 
-export interface ClaimStatus {
-  hash: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  transactionCount: number;
-  completedTransactions: number;
-  error?: string;
-}
-
 export type ClaimFlowStep =
   | { step: 'idle' }
   | { step: 'validating' }

@@ -10,9 +10,9 @@ export function useRewards(stakeAddress: string | null) {
   return useQuery<ClaimableToken[], Error>({
     queryKey: ['rewards', stakeAddress],
     queryFn: async () => {
-      if (!stakeAddress) return [];
+      if (!stakeAddress) throw new Error('stakeAddress is required');
       const data = await apiClient.get<RewardsResponse>(
-        `/api/getRewards?walletId=${encodeURIComponent(stakeAddress!)}`
+        `/api/getRewards?walletId=${encodeURIComponent(stakeAddress)}`
       );
       return data.rewards;
     },

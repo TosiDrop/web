@@ -1,1 +1,44 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Surface system — blue-tinted depth layers */
+  --color-surface-base: #0B1120;
+  --color-surface-raised: #161B2E;
+  --color-surface-overlay: #1C2237;
+  --color-surface-inset: #0F1524;
+  --color-surface-sidebar: #070D1A;
+
+  /* Borders — blue-tinted, not white */
+  --color-border-subtle: rgba(56, 78, 128, 0.25);
+  --color-border-default: rgba(56, 78, 128, 0.35);
+
+  /* Brand colors */
+  --color-brand-primary: #C6B6D4;
+  --color-brand-secondary: #4F46E5;
+  --color-brand-cyan: #22D3EE;
+  --color-brand-teal: #14B8A6;
+
+  /* Status */
+  --color-status-success: #22C55E;
+  --color-status-error: #EF4444;
+  --color-status-pending: #F59E0B;
+}
+
+html, body {
+  background-color: #0B1120;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+a {
+  cursor: pointer;
+}

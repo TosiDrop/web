@@ -1,20 +1,27 @@
 import type { ReactNode } from 'react';
-import { PrimaryNavigation } from './components/PrimaryNavigation';
+import { Sidebar } from './components/Sidebar';
+import { TopBar } from './components/TopBar';
+import { MobileMenuProvider } from './MobileMenuContext';
 import { useWalletSync } from '@/features/wallet/hooks/useWalletSync';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export function MainLayout({ children }: MainLayoutProps) {
   useWalletSync();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-950 text-white">
-      <PrimaryNavigation />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-12 pt-10">
-        {children}
-      </main>
-    </div>
+    <MobileMenuProvider>
+      <div className="min-h-screen bg-surface-base text-slate-200">
+        <Sidebar />
+        <div className="lg:ml-56">
+          <TopBar />
+          <main className="mx-auto w-full max-w-5xl px-4 py-8 lg:px-8">
+            {children}
+          </main>
+        </div>
+      </div>
+    </MobileMenuProvider>
   );
-};
+}

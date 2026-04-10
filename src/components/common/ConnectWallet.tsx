@@ -9,27 +9,32 @@ export function ConnectWallet() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, []);
 
-  const handleConnect = async (walletName: string) => {
-    try {
-      await connect(walletName);
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-    }
-    setOpen(false);
-  };
+  function handleConnect(walletName: string): void {
+    connect(walletName)
+      .catch((error) => console.error('Failed to connect wallet:', error))
+      .finally(() => setOpen(false));
+  }
 
   if (connected) {
     return (
       <button
         onClick={disconnect}
-        className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+        aria-label="Disconnect wallet"
+        className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-slate-400 transition hover:bg-surface-overlay hover:text-white"
       >
         Disconnect
       </button>
@@ -41,29 +46,31 @@ export function ConnectWallet() {
       <button
         onClick={() => setOpen(!open)}
         disabled={connecting}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-500 disabled:bg-gray-600"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className="rounded-lg bg-brand-cyan px-3.5 py-1.5 text-xs font-medium text-surface-base transition hover:bg-cyan-300 disabled:opacity-40"
       >
         {connecting ? 'Connecting...' : 'Connect Wallet'}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-white/10 bg-gray-900 p-3 shadow-2xl">
+        <div className="absolute right-0 z-50 mt-2 w-60 rounded-xl border border-border-default bg-surface-raised p-2 shadow-2xl shadow-black/40">
           {wallets.length === 0 ? (
-            <p className="py-4 text-center text-sm text-gray-400">
-              No Cardano wallets found. Install a wallet extension to continue.
+            <p className="px-3 py-4 text-center text-sm text-slate-500">
+              No Cardano wallets found.
             </p>
           ) : (
-            <div className="space-y-1">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+            <div className="space-y-0.5">
+              <p className="px-3 py-1.5 text-[11px] font-medium text-slate-500">
                 Select wallet
               </p>
               {wallets.map((w: Wallet) => (
                 <button
                   key={w.name}
                   onClick={() => handleConnect(w.name)}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white transition hover:bg-white/10"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-300 transition hover:bg-surface-overlay hover:text-white"
                 >
-                  <img src={w.icon} alt={w.name} className="h-6 w-6 rounded" />
+                  <img src={w.icon} alt={w.name} className="h-5 w-5 rounded" />
                   {w.name}
                 </button>
               ))}

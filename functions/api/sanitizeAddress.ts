@@ -11,6 +11,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('address is required', 400);
   }
 
+  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
+    return errorResponse('Server configuration error', 500);
+  }
+
   try {
     const sdk = await initVmSdk(env);
     const response = await sdk.getSanitizedAddress(address);
