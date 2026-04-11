@@ -17,6 +17,13 @@ export default function ApiTesterPage() {
   const [profile, setProfile] = useState<ApiResult>(initialResult);
   const [claimValidate, setClaimValidate] = useState<ApiResult>(initialResult);
   const [settings, setSettings] = useState<ApiResult>(initialResult);
+  const [tokens, setTokens] = useState<ApiResult>(initialResult);
+  const [pools, setPools] = useState<ApiResult>(initialResult);
+  const [distributions, setDistributions] = useState<ApiResult>(initialResult);
+  const [resolveHandle, setResolveHandle] = useState<ApiResult>(initialResult);
+  const [statistics, setStatistics] = useState<ApiResult>(initialResult);
+  const [systemInfo, setSystemInfo] = useState<ApiResult>(initialResult);
+  const [handleInput, setHandleInput] = useState('');
 
   const fetchApi = async (
     setter: (r: ApiResult) => void,
@@ -74,6 +81,56 @@ export default function ApiTesterPage() {
       action: () =>
         fetchApi(setSettings, () => apiClient.get('/api/getSettings')),
     },
+    {
+      name: 'Get Tokens',
+      endpoint: '/api/getTokens',
+      requiresWallet: false,
+      result: tokens,
+      action: () =>
+        fetchApi(setTokens, () => apiClient.get('/api/getTokens')),
+    },
+    {
+      name: 'Get Pools',
+      endpoint: '/api/getPools',
+      requiresWallet: false,
+      result: pools,
+      action: () =>
+        fetchApi(setPools, () => apiClient.get('/api/getPools')),
+    },
+    {
+      name: 'Get Distributions',
+      endpoint: '/api/getDistributions',
+      requiresWallet: false,
+      result: distributions,
+      action: () =>
+        fetchApi(setDistributions, () => apiClient.get('/api/getDistributions')),
+    },
+    {
+      name: 'Resolve Handle',
+      endpoint: `/api/resolveHandle?handle=${handleInput || '$handle'}`,
+      requiresWallet: false,
+      result: resolveHandle,
+      action: () =>
+        fetchApi(setResolveHandle, () =>
+          apiClient.get(`/api/resolveHandle?handle=${encodeURIComponent(handleInput || '$handle')}`)
+        ),
+    },
+    {
+      name: 'Get Statistics',
+      endpoint: '/api/getStatistics',
+      requiresWallet: false,
+      result: statistics,
+      action: () =>
+        fetchApi(setStatistics, () => apiClient.get('/api/getStatistics')),
+    },
+    {
+      name: 'Get System Info',
+      endpoint: '/api/getSystemInfo',
+      requiresWallet: false,
+      result: systemInfo,
+      action: () =>
+        fetchApi(setSystemInfo, () => apiClient.get('/api/getSystemInfo')),
+    },
   ];
 
   return (
@@ -94,9 +151,18 @@ export default function ApiTesterPage() {
               className="rounded-xl border border-white/10 bg-white/5 p-4"
             >
               <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-white">{api.name}</p>
                   <p className="truncate text-xs text-gray-500">{api.endpoint}</p>
+                  {api.name === 'Resolve Handle' && (
+                    <input
+                      type="text"
+                      placeholder="$handle (e.g. $adahandle)"
+                      value={handleInput}
+                      onChange={(e) => setHandleInput(e.target.value)}
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                    />
+                  )}
                 </div>
                 <button
                   onClick={api.action}
