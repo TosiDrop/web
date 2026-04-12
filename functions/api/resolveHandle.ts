@@ -27,7 +27,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
 
-    const res = await fetch(`https://api.handle.me/handles/${encodeURIComponent(cleanHandle)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`https://api.handle.me/handles/${encodeURIComponent(cleanHandle)}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
     if (!res.ok) {
       if (res.status === 404) {
