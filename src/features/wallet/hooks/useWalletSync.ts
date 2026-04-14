@@ -29,15 +29,15 @@ export function useWalletSync() {
           : null;
         const changeAddress = await wallet.getChangeAddress();
 
-        if (cancelled) return;
-
-        setWalletState({
-          connected: true,
-          walletName: name,
-          stakeAddress,
-          changeAddress,
-          networkId: network ?? null,
-        });
+        if (!cancelled) {
+          setWalletState({
+            connected: true,
+            walletName: name,
+            stakeAddress,
+            changeAddress,
+            networkId: network ?? null,
+          });
+        }
       } catch (error) {
         console.error('Failed to sync wallet state:', error);
       }
@@ -45,6 +45,8 @@ export function useWalletSync() {
 
     sync();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [connected, wallet, name, network, setWalletState, resetWallet]);
 }

@@ -19,10 +19,10 @@ export function ConnectWallet() {
   const handleConnect = async (walletName: string) => {
     try {
       await connect(walletName);
-      setOpen(false);
     } catch (error) {
-      console.error('Wallet connection failed:', error);
+      console.error('Failed to connect wallet:', error);
     }
+    setOpen(false);
   };
 
   if (connected) {
