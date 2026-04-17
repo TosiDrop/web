@@ -17,7 +17,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return jsonResponse(cached, 200, origin);
     }
 
-    const baseUrl = env.VM_BASE_URL || 'https://vmprev.adaseal.eu';
+    let baseUrl = env.VM_BASE_URL;
+    if (!baseUrl) {
+      console.warn('VM_BASE_URL unset; falling back to preview host vmprev.adaseal.eu');
+      baseUrl = 'https://vmprev.adaseal.eu';
+    }
     const url = `${baseUrl}/api.php?action=get_settings`;
     const response = await fetch(url, {
       headers: { 'X-API-Token': env.VITE_VM_API_KEY },

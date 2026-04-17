@@ -46,6 +46,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={onLinkClick}
                 className="flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-slate-500 transition hover:text-slate-300"
               >
                 <Icon size={18} stroke={1.5} />

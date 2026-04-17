@@ -23,7 +23,7 @@ export function DistributionCard({ token, onClaim, disabled }: DistributionCardP
     >
       <div className="flex items-center gap-2.5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
-          {imgFailed ? (
+          {imgFailed || !token.logo ? (
             token.ticker.slice(0, 2)
           ) : (
             <img
