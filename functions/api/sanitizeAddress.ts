@@ -1,5 +1,5 @@
 import type { Env } from '../types/env';
-import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { initVmSdk, requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 export const onRequestOptions: PagesFunction<Env> = async () => optionsResponse();
 
@@ -11,9 +11,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('address is required', 400);
   }
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
-  }
+  const keyError = requireApiKey(env);
+  if (keyError) return keyError;
 
   try {
     const sdk = await initVmSdk(env);

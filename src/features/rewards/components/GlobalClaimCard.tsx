@@ -14,11 +14,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress }: GlobalCl
   const [manualInput, setManualInput] = useState('');
 
   useEffect(() => {
-    if (stakeAddress) {
-      setManualInput(stakeAddress);
-    } else {
-      setManualInput('');
-    }
+    setManualInput(stakeAddress ?? '');
   }, [stakeAddress]);
 
   const handleManualLookup = () => {

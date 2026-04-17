@@ -31,6 +31,13 @@ export interface ClaimSubmitTxResponse {
   txHash: string;
 }
 
+export interface DepositInfo {
+  deposit: number;
+  overheadFee: number;
+  isWhitelisted: boolean;
+  withdrawalAddress: string;
+}
+
 export type ClaimFlowStep =
   | { step: 'idle' }
   | { step: 'validating' }

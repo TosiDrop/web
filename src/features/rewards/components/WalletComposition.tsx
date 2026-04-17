@@ -4,7 +4,7 @@ import { DonutChart, type DonutSegment } from '@/components/charts/DonutChart';
 
 const MAX_TOKENS = 5;
 
-const PALETTE = ['#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#10B981', '#64748B'];
+const PALETTE = ['#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#10B981', '#22D3EE', '#8B5CF6', '#F97316', '#64748B'];
 
 export function WalletComposition() {
   const { connected } = useWalletStore();
@@ -34,13 +34,22 @@ export function WalletComposition() {
   const remaining = tokenList.length - visible.length;
 
   visible.forEach((token, i) => {
-    const ticker = token.assetName
-      ? new TextDecoder().decode(
-          new Uint8Array(
-            token.assetName.match(/.{1,2}/g)?.map((b: string) => parseInt(b, 16)) ?? []
-          )
-        ).slice(0, 8)
-      : `Token ${i + 1}`;
+    let ticker = `Token ${i + 1}`;
+    if (token.assetName) {
+      try {
+        if (/^[0-9a-fA-F]+$/.test(token.assetName)) {
+          ticker = new TextDecoder().decode(
+            new Uint8Array(
+              token.assetName.match(/.{1,2}/g)!.map((b) => parseInt(b, 16))
+            )
+          ).slice(0, 8);
+        } else {
+          ticker = token.assetName.slice(0, 8);
+        }
+      } catch {
+        ticker = token.assetName.slice(0, 8);
+      }
+    }
     segments.push({
       label: ticker,
       value: tokenSliceValue,

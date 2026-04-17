@@ -7,8 +7,10 @@ import ClaimPage from '@/pages/ClaimPage';
 import HistoryPage from '@/pages/HistoryPage';
 
 const PreferencesPage = lazy(() => import('@/pages/PreferencesPage'));
-const ApiTesterPage = lazy(() => import('@/pages/ApiTesterPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const ApiTesterPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/ApiTesterPage'))
+  : null;
 
 export default function App() {
   return (
@@ -21,7 +23,7 @@ export default function App() {
                 <Route path="/" element={<ClaimPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/preferences" element={<PreferencesPage />} />
-                <Route path="/api-tester" element={<ApiTesterPage />} />
+                {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>

@@ -18,6 +18,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   const name = handle.startsWith('$') ? handle.slice(1) : handle;
+
+  if (name.length === 0 || name.length > 15 || !/^[a-zA-Z0-9_.-]+$/.test(name)) {
+    return errorResponse('Invalid handle format', 400);
+  }
   const hexName = textToHex(name.toLowerCase());
 
   try {

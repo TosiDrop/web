@@ -1,5 +1,5 @@
 import type { Env } from '../types/env';
-import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { initVmSdk, requireApiKey, withCache, errorResponse, optionsResponse } from '../services/vmClient';
 
 const CACHE_TTL = 300;
 
@@ -12,27 +12,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   const count = Number(tokenCount);
-  if (!Number.isInteger(count) || count < 0) {
-    return errorResponse('token_count must be a valid non-negative number', 400);
+  if (!Number.isInteger(count) || count < 1) {
+    return errorResponse('token_count must be a positive integer', 400);
   }
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
-  }
+  const keyError = requireApiKey(env);
+  if (keyError) return keyError;
 
   try {
-    const cache = caches.default;
-    const cacheKey = new Request(new URL(request.url).toString());
-    const cached = await cache.match(cacheKey);
-    if (cached) return cached;
-
-    const sdk = await initVmSdk(env);
-    const data = await sdk.getEstimateFees(count);
-
-    const response = jsonResponse(data);
-    response.headers.set('Cache-Control', `s-maxage=${CACHE_TTL}`);
-    await cache.put(cacheKey, response.clone());
-    return response;
+    return await withCache(request, CACHE_TTL, async () => {
+      const sdk = await initVmSdk(env);
+      return sdk.getEstimateFees(count);
+    });
   } catch (error) {
     console.error('estimateFees error:', error);
     return errorResponse('Failed to estimate fees');

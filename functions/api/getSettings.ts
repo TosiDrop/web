@@ -1,16 +1,14 @@
 import type { Env } from '../types/env';
-import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
-const VM_URL = 'https://vmprev.adaseal.eu';
 const CACHE_KEY = '__internal:settings_cache';
 const CACHE_TTL = 3600;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { env } = context;
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
-  }
+  const keyError = requireApiKey(env);
+  if (keyError) return keyError;
 
   try {
     const cached = await env.VM_WEB_PROFILES.get(CACHE_KEY, { type: 'json' });
@@ -18,7 +16,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return jsonResponse(cached);
     }
 
-    const url = `${VM_URL}/api.php?action=get_settings`;
+    const baseUrl = env.VM_BASE_URL || 'https://vmprev.adaseal.eu';
+    const url = `${baseUrl}/api.php?action=get_settings`;
     const response = await fetch(url, {
       headers: { 'X-API-Token': env.VITE_VM_API_KEY },
     });

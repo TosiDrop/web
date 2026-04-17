@@ -6,6 +6,7 @@ import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useClaimFlow } from '@/features/claim/hooks/useClaimFlow';
 import { useWalletStore } from '@/store/wallet-state';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
+import type { ClaimableToken } from '@/shared/rewards';
 
 import { ClaimPageHeader } from '@/features/rewards/components/ClaimPageHeader';
 import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
@@ -62,9 +63,9 @@ export default function ClaimPage() {
     }
   }, [lookupAddress, refetch]);
 
-  const handleClaim = () => {
+  const handleClaim = (token?: ClaimableToken) => {
     if (!rewards) return;
-    const assetIds = rewards.map((r) => r.assetId);
+    const assetIds = token ? [token.assetId] : rewards.map((r) => r.assetId);
     claimFlow.startClaim(assetIds);
   };
 

@@ -34,6 +34,11 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
   server: {
     proxy: {
       '/api': {
