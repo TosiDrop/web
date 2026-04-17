@@ -43,7 +43,7 @@ export function WalletComposition() {
     if (remaining > 0) {
       result.push({
         label: `+${remaining} more`,
-        value: tokenSliceValue * remaining,
+        value: tokenSliceValue,
         color: PALETTE[PALETTE.length - 1],
       });
     }

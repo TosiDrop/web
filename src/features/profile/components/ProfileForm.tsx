@@ -28,17 +28,18 @@ export function ProfileForm({ currentName }: ProfileFormProps) {
 
     setSignError(null);
     setShowSuccess(false);
+    const trimmedName = name.trim();
     try {
       const { signature, key, message } = await signProfileUpdateMessage({
         wallet,
         address: changeAddress,
         displayAddress: stakeAddress,
-        name,
+        name: trimmedName,
       });
 
       await saveProfile.mutateAsync({
         walletId: stakeAddress,
-        value: { name: name.trim() },
+        value: { name: trimmedName },
         signature,
         key,
         message,

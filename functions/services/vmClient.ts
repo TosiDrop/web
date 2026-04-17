@@ -38,17 +38,43 @@ export async function withCache(
 ): Promise<Response> {
   const cache = caches.default;
   const cacheKey = new Request(new URL(request.url).toString());
+  const origin = request.headers.get('Origin');
+
+  // Cache stores body + Cache-Control only (no CORS headers). The Cloudflare
+  // Cache API does not honor Vary, so per-origin ACAO must be applied fresh
+  // on every response to avoid leaking one caller's origin to another.
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    const body = await cached.text();
+    return new Response(body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `s-maxage=${ttl}`,
+        ...corsHeaders(origin),
+      },
+    });
+  }
 
   const data = await fetchFn();
-  const origin = request.headers.get('Origin');
-  const response = jsonResponse(data, 200, origin);
-  response.headers.set('Cache-Control', `s-maxage=${ttl}`);
-  const put = cache.put(cacheKey, response.clone());
+  const body = JSON.stringify(data);
+  const cacheable = new Response(body, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': `s-maxage=${ttl}`,
+    },
+  });
+  const put = cache.put(cacheKey, cacheable);
   if (waitUntil) waitUntil(put);
   else await put;
-  return response;
+
+  return new Response(body, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': `s-maxage=${ttl}`,
+      ...corsHeaders(origin),
+    },
+  });
 }
 
 function corsHeaders(requestOrigin?: string | null): Record<string, string> {
