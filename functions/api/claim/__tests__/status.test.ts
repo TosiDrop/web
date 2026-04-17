@@ -17,13 +17,13 @@ function makeContext(url: string, env?: Partial<Env>): CFContext {
   } as unknown as CFContext;
 }
 
-function mockFetchOnce(body: unknown, ok = true, status = 200) {
-  global.fetch = vi.fn(async () =>
+function mockFetch(body: unknown, ok = true, status = 200) {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
     new Response(JSON.stringify(body), {
       status: ok ? status : status || 500,
       headers: { 'Content-Type': 'application/json' },
     }),
-  ) as unknown as typeof fetch;
+  );
 }
 
 describe('GET /api/claim/status', () => {
@@ -36,28 +36,37 @@ describe('GET /api/claim/status', () => {
   });
 
   it('maps code 0 to waiting', async () => {
-    mockFetchOnce({ status: 0 });
+    mockFetch({ status: 0 });
     const res = await onRequestGet(makeContext(url()));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ kind: 'waiting' });
   });
 
   it('maps code 1 to processing with optional txHash', async () => {
-    mockFetchOnce({ status: 1, tx_hash: 'abc' });
+    mockFetch({ status: 1, tx_hash: 'abc' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'processing', txHash: 'abc' });
   });
 
   it('maps code 2 to failure with a reason', async () => {
-    mockFetchOnce({ status: 2, reason: 'oops' });
+    mockFetch({ status: 2, reason: 'oops' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'failure', reason: 'oops' });
   });
 
   it('maps code 3 to success with txHash', async () => {
-    mockFetchOnce({ status: 3, tx_hash: 'final' });
+    mockFetch({ status: 3, tx_hash: 'final' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'success', txHash: 'final' });
+  });
+
+  it('maps unknown status codes to failure', async () => {
+    mockFetch({ status: 9, tx_hash: 'abc' });
+    const res = await onRequestGet(makeContext(url()));
+    expect(await res.json()).toEqual({
+      kind: 'failure',
+      reason: 'Unknown status code: 9 (tx: abc)',
+    });
   });
 
   it('returns 400 when requestId is missing', async () => {
@@ -82,9 +91,7 @@ describe('GET /api/claim/status', () => {
   });
 
   it('returns 502 when upstream fetch fails', async () => {
-    global.fetch = vi.fn(async () =>
-      new Response('bad', { status: 500 }),
-    ) as unknown as typeof fetch;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('bad', { status: 500 }));
     const res = await onRequestGet(makeContext(url()));
     expect(res.status).toBe(502);
   });

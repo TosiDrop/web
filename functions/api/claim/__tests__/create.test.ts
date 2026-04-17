@@ -85,6 +85,20 @@ describe('POST /api/claim/create', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 400 when overheadFee is not a number', async () => {
+    const res = await onRequestPost(
+      makeContext({ stakeAddress: 'stake_test1x', assetIds: ['a'], overheadFee: '10' }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when unlocksSpecial is not a boolean', async () => {
+    const res = await onRequestPost(
+      makeContext({ stakeAddress: 'stake_test1x', assetIds: ['a'], unlocksSpecial: 1 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it('returns 500 when API key is missing', async () => {
     const res = await onRequestPost(
       makeContext(

@@ -98,6 +98,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
   );
 
   const sendDepositFromWallet = useCallback(async () => {
+    if (inFlight.current) return;
     if (state.step !== 'awaiting_deposit') return;
     if (!canSend) {
       setState({ step: 'error', message: 'Connect a wallet to send the deposit' });
@@ -105,6 +106,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
     }
 
     const { info } = state;
+    inFlight.current = true;
     try {
       setState({ step: 'signing', info });
       const txHash = await sendDeposit({
@@ -117,6 +119,8 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
         step: 'error',
         message: friendlyError(error, 'Wallet rejected or failed to broadcast the deposit.'),
       });
+    } finally {
+      inFlight.current = false;
     }
   }, [state, canSend, sendDeposit]);
 

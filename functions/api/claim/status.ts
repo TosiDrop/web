@@ -32,7 +32,10 @@ function normalizeStatus(raw: unknown): {
     case 3:
       return { kind: 'success', txHash: txHash ?? '' };
     default:
-      return { kind: 'processing', txHash };
+      return {
+        kind: 'failure',
+        reason: `Unknown status code: ${code ?? 'missing'}${txHash ? ` (tx: ${txHash})` : ''}`,
+      };
   }
 }
 

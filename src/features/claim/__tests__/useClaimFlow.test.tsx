@@ -31,11 +31,13 @@ const DEPOSIT: DepositInfo = {
   isWhitelisted: false,
 };
 
-function wrapper({ children }: { children: ReactNode }) {
+function makeWrapper() {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+  };
 }
 
 describe('useClaimFlow', () => {
@@ -55,7 +57,7 @@ describe('useClaimFlow', () => {
 
   it('transitions idle → creating → awaiting_deposit on success', async () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['asset1']);
@@ -70,7 +72,7 @@ describe('useClaimFlow', () => {
 
   it('surfaces a friendly error if create fails', async () => {
     apiPost.mockRejectedValueOnce(new Error('boom'));
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['asset1']);
@@ -87,7 +89,7 @@ describe('useClaimFlow', () => {
       changeAddress: null,
       networkId: null,
     });
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['asset1']);
@@ -97,7 +99,7 @@ describe('useClaimFlow', () => {
   });
 
   it('refuses to start with empty assets', async () => {
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim([]);
@@ -113,7 +115,7 @@ describe('useClaimFlow', () => {
     const waiting: ClaimStatus = { kind: 'waiting' };
     apiGet.mockResolvedValue(waiting);
 
-    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 60_000 }), { wrapper });
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 60_000 }), { wrapper: makeWrapper() });
     await act(async () => {
       await result.current.startClaim(['a']);
     });
@@ -136,7 +138,7 @@ describe('useClaimFlow', () => {
   it('blocks wallet-send when wallet cannot send', async () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
     canSendMock = false;
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['a']);
@@ -153,7 +155,7 @@ describe('useClaimFlow', () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
     const waiting: ClaimStatus = { kind: 'waiting' };
     apiGet.mockResolvedValue(waiting);
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['a']);
@@ -170,7 +172,7 @@ describe('useClaimFlow', () => {
     const success: ClaimStatus = { kind: 'success', txHash: 'final_hash' };
     apiGet.mockResolvedValue(success);
 
-    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper });
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper: makeWrapper() });
     await act(async () => {
       await result.current.startClaim(['a']);
     });
@@ -189,7 +191,7 @@ describe('useClaimFlow', () => {
     const failure: ClaimStatus = { kind: 'failure', reason: 'rejected by network' };
     apiGet.mockResolvedValue(failure);
 
-    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper });
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper: makeWrapper() });
     await act(async () => {
       await result.current.startClaim(['a']);
     });
@@ -205,7 +207,7 @@ describe('useClaimFlow', () => {
 
   it('reset returns to idle from any state', async () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
     await act(async () => {
       await result.current.startClaim(['a']);
     });
@@ -224,7 +226,7 @@ describe('useClaimFlow', () => {
     // Second claim succeeds at create.
     apiPost.mockResolvedValueOnce(DEPOSIT);
 
-    const { result } = renderHook(() => useClaimFlow(), { wrapper });
+    const { result } = renderHook(() => useClaimFlow(), { wrapper: makeWrapper() });
 
     await act(async () => {
       await result.current.startClaim(['a']);
@@ -248,7 +250,7 @@ describe('useClaimFlow', () => {
     const waiting: ClaimStatus = { kind: 'waiting' };
     apiGet.mockResolvedValue(waiting);
 
-    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper });
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper: makeWrapper() });
     await act(async () => {
       await result.current.startClaim(['a']);
     });

@@ -33,6 +33,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (body.assetIds.some((id) => typeof id !== 'string' || id.length === 0)) {
     return errorResponse('assetIds must contain non-empty strings', 400, origin);
   }
+  if (
+    body.overheadFee !== undefined &&
+    (typeof body.overheadFee !== 'number' || !Number.isFinite(body.overheadFee))
+  ) {
+    return errorResponse('overheadFee must be a number', 400, origin);
+  }
+  if (body.unlocksSpecial !== undefined && typeof body.unlocksSpecial !== 'boolean') {
+    return errorResponse('unlocksSpecial must be a boolean', 400, origin);
+  }
 
   const keyError = requireApiKey(env, origin);
   if (keyError) return keyError;
