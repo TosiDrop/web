@@ -23,9 +23,9 @@ export async function initVmSdk(env: Env) {
   return sdk;
 }
 
-export function requireApiKey(env: Env): Response | null {
+export function requireApiKey(env: Env, requestOrigin?: string | null): Response | null {
   if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
+    return errorResponse('Server configuration error', 500, requestOrigin);
   }
   return null;
 }
@@ -34,6 +34,7 @@ export async function withCache(
   request: Request,
   ttl: number,
   fetchFn: () => Promise<unknown>,
+  waitUntil?: (promise: Promise<unknown>) => void,
 ): Promise<Response> {
   const cache = caches.default;
   const cacheKey = new Request(new URL(request.url).toString());
@@ -41,9 +42,12 @@ export async function withCache(
   if (cached) return cached;
 
   const data = await fetchFn();
-  const response = jsonResponse(data);
+  const origin = request.headers.get('Origin');
+  const response = jsonResponse(data, 200, origin);
   response.headers.set('Cache-Control', `s-maxage=${ttl}`);
-  await cache.put(cacheKey, response.clone());
+  const put = cache.put(cacheKey, response.clone());
+  if (waitUntil) waitUntil(put);
+  else await put;
   return response;
 }
 
@@ -52,6 +56,7 @@ function corsHeaders(requestOrigin?: string | null): Record<string, string> {
     'Access-Control-Allow-Origin': getCorsOrigin(requestOrigin),
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin',
   };
 }
 

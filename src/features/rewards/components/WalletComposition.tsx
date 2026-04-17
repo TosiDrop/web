@@ -1,15 +1,54 @@
+import { useMemo } from 'react';
 import { useLovelace, useAssets } from '@meshsdk/react';
 import { useWalletStore } from '@/store/wallet-state';
 import { DonutChart, type DonutSegment } from '@/components/charts/DonutChart';
 
 const MAX_TOKENS = 5;
-
+const HEX_PAIR_RE = /^(?:[0-9a-fA-F]{2})+$/;
 const PALETTE = ['#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#10B981', '#22D3EE', '#8B5CF6', '#F97316', '#64748B'];
+const decoder = new TextDecoder();
+
+function decodeAssetName(assetName: string): string {
+  if (!HEX_PAIR_RE.test(assetName)) return assetName.slice(0, 8);
+  const pairs = assetName.match(/.{2}/g)!;
+  return decoder.decode(new Uint8Array(pairs.map((b) => parseInt(b, 16)))).slice(0, 8);
+}
 
 export function WalletComposition() {
   const { connected } = useWalletStore();
   const lovelace = useLovelace();
   const assets = useAssets();
+
+  const adaBalance = lovelace ? Number(lovelace) / 1_000_000 : 0;
+  const tokenList = useMemo(() => assets ?? [], [assets]);
+
+  const { segments, totalTokens } = useMemo(() => {
+    const result: DonutSegment[] = [];
+    if (adaBalance > 0) {
+      result.push({ label: 'ADA', value: adaBalance, color: PALETTE[0] });
+    }
+    const tokenSliceValue = adaBalance > 0 ? adaBalance * 0.1 : 1;
+    const visible = tokenList.slice(0, MAX_TOKENS);
+    const remaining = tokenList.length - visible.length;
+
+    visible.forEach((token, i) => {
+      const ticker = token.assetName ? decodeAssetName(token.assetName) : `Token ${i + 1}`;
+      result.push({
+        label: ticker,
+        value: tokenSliceValue,
+        color: PALETTE[(i + 1) % PALETTE.length],
+      });
+    });
+
+    if (remaining > 0) {
+      result.push({
+        label: `+${remaining} more`,
+        value: tokenSliceValue * remaining,
+        color: PALETTE[PALETTE.length - 1],
+      });
+    }
+    return { segments: result, totalTokens: tokenList.length };
+  }, [adaBalance, tokenList]);
 
   if (!connected) {
     return (
@@ -18,51 +57,6 @@ export function WalletComposition() {
         <p className="mt-3 text-center text-xs text-slate-500">Connect wallet to view</p>
       </div>
     );
-  }
-
-  const adaBalance = lovelace ? Number(lovelace) / 1_000_000 : 0;
-  const tokenList = assets ?? [];
-
-  const segments: DonutSegment[] = [];
-
-  if (adaBalance > 0) {
-    segments.push({ label: 'ADA', value: adaBalance, color: PALETTE[0] });
-  }
-
-  const tokenSliceValue = adaBalance > 0 ? adaBalance * 0.1 : 1;
-  const visible = tokenList.slice(0, MAX_TOKENS);
-  const remaining = tokenList.length - visible.length;
-
-  visible.forEach((token, i) => {
-    let ticker = `Token ${i + 1}`;
-    if (token.assetName) {
-      try {
-        if (/^[0-9a-fA-F]+$/.test(token.assetName)) {
-          ticker = new TextDecoder().decode(
-            new Uint8Array(
-              token.assetName.match(/.{1,2}/g)!.map((b) => parseInt(b, 16))
-            )
-          ).slice(0, 8);
-        } else {
-          ticker = token.assetName.slice(0, 8);
-        }
-      } catch {
-        ticker = token.assetName.slice(0, 8);
-      }
-    }
-    segments.push({
-      label: ticker,
-      value: tokenSliceValue,
-      color: PALETTE[(i + 1) % PALETTE.length],
-    });
-  });
-
-  if (remaining > 0) {
-    segments.push({
-      label: `+${remaining} more`,
-      value: tokenSliceValue * remaining,
-      color: PALETTE[PALETTE.length - 1],
-    });
   }
 
   if (segments.length === 0) {
@@ -83,7 +77,7 @@ export function WalletComposition() {
           size={130}
           strokeWidth={16}
           centerLabel={`₳ ${adaBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          centerSub={`${tokenList.length} tokens`}
+          centerSub={`${totalTokens} tokens`}
         />
       </div>
     </div>
