@@ -5,7 +5,7 @@ import {
   type TokenInfo,
 } from '../../src/shared/rewards';
 import type { Env } from '../types/env';
-import { initVmSdk, jsonResponse, errorResponse } from '../services/vmClient';
+import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 function mergeAmounts(...sources: (Record<string, number> | undefined)[]): Record<string, number> {
   const merged: Record<string, number> = {};
@@ -98,3 +98,5 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('Failed to process request');
   }
 };
+
+export const onRequestOptions: PagesFunction = async () => optionsResponse();

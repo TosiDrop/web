@@ -1,93 +1,142 @@
-import { SectionCard } from '@/components/common/SectionCard';
+import { useState, useEffect, useCallback } from 'react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
-import { RewardsGrid } from '@/features/rewards/components/RewardsGrid';
-import { RewardsEmptyState } from '@/features/rewards/components/RewardsEmptyState';
 import { ClaimButton } from '@/features/claim/components/ClaimButton';
 import { ClaimStatusDisplay } from '@/features/claim/components/ClaimStatus';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useClaimFlow } from '@/features/claim/hooks/useClaimFlow';
 import { useWalletStore } from '@/store/wallet-state';
+import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
+import type { ClaimableToken } from '@/shared/rewards';
+
+import { ClaimPageHeader } from '@/features/rewards/components/ClaimPageHeader';
+import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
+import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
+import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
+import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocation';
+import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 
 export default function ClaimPage() {
   const { stakeAddress, connected } = useWalletStore();
-  const { data: rewards, isLoading, error, refetch } = useRewards(stakeAddress);
+  const [lookupAddress, setLookupAddress] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
   const claimFlow = useClaimFlow();
+
+  // Sync lookup address with wallet connection state
+  useEffect(() => {
+    if (stakeAddress) {
+      setLookupAddress(stakeAddress);
+    } else if (!connected) {
+      setLookupAddress(null);
+      setResolveError(null);
+    }
+  }, [stakeAddress, connected]);
+
+  const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
 
   const walletReady = connected && !!stakeAddress;
   const hasRewards = rewards && rewards.length > 0;
+  const claimInProgress = !['idle', 'completed', 'error'].includes(claimFlow.state.step);
+  const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
 
-  const handleClaim = () => {
+  const handleLookup = useCallback(async (input: string) => {
+    setResolveError(null);
+
+    let resolved = input;
+    if (isAdaHandle(input)) {
+      setResolving(true);
+      try {
+        resolved = await resolveAdaHandle(input);
+      } catch (e) {
+        setResolveError(e instanceof Error ? e.message : 'Failed to resolve handle');
+        setResolving(false);
+        return;
+      }
+      setResolving(false);
+    }
+
+    // If same address, force refetch. Otherwise update triggers a new query.
+    if (resolved === lookupAddress) {
+      refetch();
+    } else {
+      setLookupAddress(resolved);
+    }
+  }, [lookupAddress, refetch]);
+
+  const handleClaim = (token?: ClaimableToken) => {
     if (!rewards) return;
-    const assetIds = rewards.map((r) => r.assetId);
+    const assetIds = token ? [token.assetId] : rewards.map((r) => r.assetId);
     claimFlow.startClaim(assetIds);
   };
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-4 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-blue-300">TosiDrop</p>
-        <h1 className="text-4xl font-bold text-white">Claim rewards effortlessly</h1>
-        <p className="text-gray-300">
-          Connect your Cardano wallet to discover and claim your tokens.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <ClaimPageHeader />
 
-      {!walletReady && (
-        <SectionCard title="Get started">
-          <p className="text-gray-300">
-            Connect your wallet using the button in the navigation bar to see your claimable rewards.
-          </p>
-        </SectionCard>
-      )}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="space-y-5 lg:col-span-2">
+          <GlobalClaimCard
+            onLookup={handleLookup}
+            isLoading={isLoading || resolving}
+            activeAddress={lookupAddress}
+          />
 
-      {walletReady && isLoading && (
-        <SectionCard>
-          <p className="animate-pulse text-gray-400">Loading rewards...</p>
-        </SectionCard>
-      )}
+          {resolveError && (
+            <FeedbackBanner
+              tone="error"
+              title="Handle resolution failed"
+              message={resolveError}
+            />
+          )}
 
-      {error && (
-        <FeedbackBanner
-          tone="error"
-          title="Unable to fetch rewards"
-          message={error.message}
-        />
-      )}
+          {error && (
+            <FeedbackBanner
+              tone="error"
+              title="Unable to fetch rewards"
+              message={error.message}
+            />
+          )}
 
-      {hasRewards && (
-        <>
-          <RewardsSummary tokens={rewards} />
-          <SectionCard
-            title="Claimable tokens"
-            description="All amounts are displayed using the token's precision."
-            actions={
-              <ClaimButton
-                state={claimFlow.state}
-                onClaim={handleClaim}
-                disabled={!walletReady || claimFlow.state.step === 'completed'}
-              />
-            }
-          >
-            <RewardsGrid tokens={rewards} />
-          </SectionCard>
-          <ClaimStatusDisplay state={claimFlow.state} onReset={claimFlow.reset} />
-        </>
-      )}
+          {hasRewards && canClaim && (
+            <ClaimButton
+              state={claimFlow.state}
+              onClaim={handleClaim}
+              disabled={claimFlow.state.step === 'completed'}
+            />
+          )}
 
-      {walletReady && !isLoading && !hasRewards && (
-        <>
-          {!error && <RewardsEmptyState />}
-          <div className="text-center">
-            <button
-              onClick={() => refetch()}
-              className="text-sm text-gray-400 underline hover:text-white"
-            >
-              Refresh rewards
-            </button>
-          </div>
-        </>
-      )}
+          {hasRewards && !canClaim && (
+            <p className="text-sm text-slate-500">
+              Connect this wallet to claim rewards.
+            </p>
+          )}
+
+          {isLoading ? (
+            <div className="space-y-3">
+              <h2 className="text-sm font-medium text-white">Claimable Tokens</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-28 animate-pulse rounded-xl border border-border-subtle bg-surface-raised" />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <AvailableDistributions
+              tokens={rewards ?? []}
+              onClaim={handleClaim}
+              claimDisabled={claimInProgress || !canClaim}
+            />
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <RewardsAllocation tokens={rewards ?? []} />
+          <WalletComposition />
+          <NetworkStatusWidget />
+        </div>
+      </div>
+
+      <ClaimStatusDisplay state={claimFlow.state} onReset={claimFlow.reset} />
     </div>
   );
 }

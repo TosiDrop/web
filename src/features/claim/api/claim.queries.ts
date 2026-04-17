@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import type {
   ClaimValidateRequest,
@@ -7,7 +7,6 @@ import type {
   ClaimSubmitResponse,
   ClaimSubmitTxRequest,
   ClaimSubmitTxResponse,
-  ClaimStatus,
 } from '@/types/claim';
 
 export function useClaimValidate() {
@@ -25,18 +24,5 @@ export function useClaimSubmit() {
 export function useClaimSubmitTx() {
   return useMutation<ClaimSubmitTxResponse, Error, ClaimSubmitTxRequest>({
     mutationFn: (data) => apiClient.post<ClaimSubmitTxResponse>('/api/claim/submitTransaction', data),
-  });
-}
-
-export function useClaimStatus(hash: string | null) {
-  return useQuery<ClaimStatus, Error>({
-    queryKey: ['claimStatus', hash],
-    queryFn: () => apiClient.get<ClaimStatus>(`/api/claim/status?hash=${encodeURIComponent(hash!)}`),
-    enabled: !!hash,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (status === 'completed' || status === 'failed') return false;
-      return 3000;
-    },
   });
 }

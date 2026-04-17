@@ -1,43 +1,48 @@
 import type { Env } from '../types/env';
-import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
-const VM_URL = 'https://vmprev.adaseal.eu';
 const CACHE_KEY = '__internal:settings_cache';
 const CACHE_TTL = 3600;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { env } = context;
+  const { request, env } = context;
+  const origin = request.headers.get('Origin');
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
-  }
+  const keyError = requireApiKey(env, origin);
+  if (keyError) return keyError;
 
   try {
     const cached = await env.VM_WEB_PROFILES.get(CACHE_KEY, { type: 'json' });
     if (cached !== null) {
-      return jsonResponse(cached);
+      return jsonResponse(cached, 200, origin);
     }
 
-    const url = `${VM_URL}/api.php?action=get_settings`;
+    let baseUrl = env.VM_BASE_URL;
+    if (!baseUrl) {
+      console.warn('VM_BASE_URL unset; falling back to preview host vmprev.adaseal.eu');
+      baseUrl = 'https://vmprev.adaseal.eu';
+    }
+    const url = `${baseUrl}/api.php?action=get_settings`;
     const response = await fetch(url, {
       headers: { 'X-API-Token': env.VITE_VM_API_KEY },
     });
 
     if (!response.ok) {
-      return errorResponse('Upstream service error', 502);
+      return errorResponse('Upstream service error', 502, origin);
     }
 
     const settings = await response.json();
 
-    await env.VM_WEB_PROFILES.put(CACHE_KEY, JSON.stringify(settings), {
+    context.waitUntil(env.VM_WEB_PROFILES.put(CACHE_KEY, JSON.stringify(settings), {
       expirationTtl: CACHE_TTL,
-    });
+    }));
 
-    return jsonResponse(settings);
+    return jsonResponse(settings, 200, origin);
   } catch (error) {
     console.error('getSettings error:', error);
-    return errorResponse('Failed to fetch settings');
+    return errorResponse('Failed to fetch settings', 500, origin);
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => optionsResponse();
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) =>
+  optionsResponse(request.headers.get('Origin'));

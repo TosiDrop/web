@@ -34,6 +34,19 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      output: {
+        // Shim a global `exports` object so CJS polyfills
+        // (e.g. randomfill inside crypto-browserify) that write
+        // `exports.foo = ...` don't throw ReferenceError at runtime.
+        banner: 'globalThis.exports=globalThis.exports||{};',
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

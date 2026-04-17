@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useWallet } from '@meshsdk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletStore } from '@/store/wallet-state';
@@ -10,6 +10,7 @@ export function useClaimFlow() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const queryClient = useQueryClient();
   const [state, setState] = useState<ClaimFlowStep>({ step: 'idle' });
+  const inFlight = useRef(false);
 
   const { mutateAsync: validateAsync } = useClaimValidate();
   const { mutateAsync: submitAsync } = useClaimSubmit();
@@ -17,11 +18,13 @@ export function useClaimFlow() {
 
   const startClaim = useCallback(
     async (assets: string[]) => {
+      if (inFlight.current) return;
       if (!stakeAddress || !wallet) {
         setState({ step: 'error', message: 'Wallet not connected' });
         return;
       }
 
+      inFlight.current = true;
       try {
         setState({ step: 'validating' });
         const validation = await validateAsync({
@@ -55,6 +58,8 @@ export function useClaimFlow() {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         setState({ step: 'error', message });
+      } finally {
+        inFlight.current = false;
       }
     },
     [stakeAddress, wallet, validateAsync, submitAsync, submitTxAsync, queryClient]

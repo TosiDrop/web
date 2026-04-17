@@ -1,16 +1,25 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useWallet } from '@meshsdk/react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useSaveProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { signProfileUpdateMessage } from '@/utils/profile-helpers';
 
-export function ProfileForm() {
+interface ProfileFormProps {
+  currentName?: string;
+}
+
+export function ProfileForm({ currentName }: ProfileFormProps) {
   const { wallet, connected } = useWallet();
   const { stakeAddress, changeAddress } = useWalletStore();
   const saveProfile = useSaveProfile();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(currentName ?? '');
   const [signError, setSignError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    setName(currentName ?? '');
+  }, [currentName]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -18,33 +27,36 @@ export function ProfileForm() {
     if (!wallet || !stakeAddress || !changeAddress) return;
 
     setSignError(null);
+    setShowSuccess(false);
+    const trimmedName = name.trim();
     try {
       const { signature, key, message } = await signProfileUpdateMessage({
         wallet,
         address: changeAddress,
         displayAddress: stakeAddress,
-        name,
+        name: trimmedName,
       });
 
       await saveProfile.mutateAsync({
         walletId: stakeAddress,
-        value: { name },
+        value: { name: trimmedName },
         signature,
         key,
         message,
       });
-
-      setName('');
+      setShowSuccess(true);
     } catch (error) {
       console.error('Profile save error:', error);
       setSignError(error instanceof Error ? error.message : 'Failed to sign or save profile');
     }
   };
 
+  const hasChanged = name.trim() !== (currentName ?? '');
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="space-y-2">
-        <label htmlFor="display-name" className="block text-sm font-medium text-gray-200">
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div>
+        <label htmlFor="display-name" className="block text-xs text-slate-400 mb-1">
           Display name
         </label>
         <input
@@ -52,14 +64,14 @@ export function ProfileForm() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter a friendly name"
-          className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          placeholder="Enter a name"
+          className="w-full rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none"
           required
         />
       </div>
 
-      {saveProfile.isSuccess && (
-        <FeedbackBanner tone="success" message="Profile saved successfully!" />
+      {showSuccess && (
+        <FeedbackBanner tone="success" message="Profile saved." />
       )}
 
       {(saveProfile.isError || signError) && (
@@ -69,18 +81,18 @@ export function ProfileForm() {
         />
       )}
 
-      <div className="space-y-2">
+      <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={saveProfile.isPending || !connected}
-          className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-600"
+          disabled={saveProfile.isPending || !connected || !hasChanged || !name.trim()}
+          className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-surface-base transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {saveProfile.isPending ? 'Saving...' : 'Save profile'}
+          {saveProfile.isPending ? 'Saving...' : 'Save'}
         </button>
         {!connected && (
-          <p className="text-sm text-yellow-400">
-            Connect a wallet to update your preferences.
-          </p>
+          <span className="text-xs text-slate-500">
+            Connect a wallet first.
+          </span>
         )}
       </div>
     </form>

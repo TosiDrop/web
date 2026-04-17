@@ -31,12 +31,11 @@ export interface ClaimSubmitTxResponse {
   txHash: string;
 }
 
-export interface ClaimStatus {
-  hash: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  transactionCount: number;
-  completedTransactions: number;
-  error?: string;
+export interface DepositInfo {
+  deposit: number;
+  overheadFee: number;
+  isWhitelisted: boolean;
+  withdrawalAddress: string;
 }
 
 export type ClaimFlowStep =
