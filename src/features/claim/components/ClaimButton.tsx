@@ -8,13 +8,15 @@ interface ClaimButtonProps {
 
 const STEP_LABELS: Record<ClaimFlowStep['step'], string> = {
   idle: 'Claim All Rewards',
-  validating: 'Validating...',
+  creating: 'Preparing claim...',
+  awaiting_deposit: 'Deposit required',
   signing: 'Sign in wallet...',
-  submitting: 'Submitting...',
   polling: 'Processing...',
-  completed: 'Claimed!',
+  success: 'Claimed',
   error: 'Retry Claim',
 };
+
+const WORKING_STEPS = new Set<ClaimFlowStep['step']>(['creating', 'signing', 'polling']);
 
 function Spinner() {
   return (
@@ -26,12 +28,13 @@ function Spinner() {
 }
 
 export function ClaimButton({ state, onClaim, disabled }: ClaimButtonProps) {
-  const isWorking = ['validating', 'signing', 'submitting', 'polling'].includes(state.step);
+  const isWorking = WORKING_STEPS.has(state.step);
+  const isAwaitingDeposit = state.step === 'awaiting_deposit';
 
   return (
     <button
       onClick={onClaim}
-      disabled={disabled || isWorking}
+      disabled={disabled || isWorking || isAwaitingDeposit}
       className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-8 py-3 text-base font-semibold text-surface-base shadow-lg shadow-brand-cyan/25 transition hover:bg-cyan-300 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
     >
       {isWorking && <Spinner />}

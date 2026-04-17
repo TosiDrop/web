@@ -1,5 +1,11 @@
 import type { Env } from '../types/env';
-import { requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  DEFAULT_VM_BASE_URL,
+  requireApiKey,
+  jsonResponse,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 
 const CACHE_KEY = '__internal:settings_cache';
 const CACHE_TTL = 3600;
@@ -17,11 +23,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return jsonResponse(cached, 200, origin);
     }
 
-    let baseUrl = env.VM_BASE_URL;
-    if (!baseUrl) {
-      console.warn('VM_BASE_URL unset; falling back to preview host vmprev.adaseal.eu');
-      baseUrl = 'https://vmprev.adaseal.eu';
-    }
+    const baseUrl = env.VM_BASE_URL || DEFAULT_VM_BASE_URL;
     const url = `${baseUrl}/api.php?action=get_settings`;
     const response = await fetch(url, {
       headers: { 'X-API-Token': env.VITE_VM_API_KEY },

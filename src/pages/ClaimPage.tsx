@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { ClaimButton } from '@/features/claim/components/ClaimButton';
 import { ClaimStatusDisplay } from '@/features/claim/components/ClaimStatus';
+import { DepositInfoDisplay } from '@/features/claim/components/DepositInfo';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useClaimFlow } from '@/features/claim/hooks/useClaimFlow';
 import { useWalletStore } from '@/store/wallet-state';
@@ -16,7 +17,7 @@ import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocati
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 
 export default function ClaimPage() {
-  const { stakeAddress, connected } = useWalletStore();
+  const { stakeAddress, connected, networkId } = useWalletStore();
   const [lookupAddress, setLookupAddress] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
@@ -36,8 +37,12 @@ export default function ClaimPage() {
 
   const walletReady = connected && !!stakeAddress;
   const hasRewards = rewards && rewards.length > 0;
-  const claimInProgress = !['idle', 'completed', 'error'].includes(claimFlow.state.step);
+  const claimInProgress = !['idle', 'success', 'error'].includes(claimFlow.state.step);
   const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
+  const depositInfo = 'info' in claimFlow.state ? claimFlow.state.info : null;
+  const depositBusy = claimFlow.state.step === 'signing' || claimFlow.state.step === 'polling';
+  const showDeposit =
+    !!depositInfo && claimFlow.state.step !== 'success' && claimFlow.state.step !== 'error';
 
   const handleLookup = useCallback(async (input: string) => {
     setResolveError(null);
@@ -97,11 +102,11 @@ export default function ClaimPage() {
             />
           )}
 
-          {hasRewards && canClaim && (
+          {hasRewards && canClaim && claimFlow.state.step !== 'awaiting_deposit' && (
             <ClaimButton
               state={claimFlow.state}
               onClaim={handleClaim}
-              disabled={claimFlow.state.step === 'completed'}
+              disabled={claimFlow.state.step === 'success'}
             />
           )}
 
@@ -109,6 +114,17 @@ export default function ClaimPage() {
             <p className="text-sm text-slate-500">
               Connect this wallet to claim rewards.
             </p>
+          )}
+
+          {showDeposit && depositInfo && (
+            <DepositInfoDisplay
+              depositInfo={depositInfo}
+              canSendFromWallet={claimFlow.canSendFromWallet}
+              onSendFromWallet={claimFlow.sendDepositFromWallet}
+              onMarkDeposited={claimFlow.markDepositedExternally}
+              onCancel={claimFlow.reset}
+              busy={depositBusy}
+            />
           )}
 
           {isLoading ? (
@@ -136,7 +152,11 @@ export default function ClaimPage() {
         </div>
       </div>
 
-      <ClaimStatusDisplay state={claimFlow.state} onReset={claimFlow.reset} />
+      <ClaimStatusDisplay
+        state={claimFlow.state}
+        networkId={networkId}
+        onReset={claimFlow.reset}
+      />
     </div>
   );
 }

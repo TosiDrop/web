@@ -1,11 +1,37 @@
 import type { Env } from '../types/env';
 
+export const DEFAULT_VM_BASE_URL = 'https://vmprev.adaseal.eu';
+
 const ALLOWED_ORIGINS = [
   'https://tosidrop.io',
   'https://www.tosidrop.io',
   'http://localhost:5173',
   'http://localhost:8788',
 ];
+
+function vmBaseUrl(env: Env): string {
+  return env.VM_BASE_URL || DEFAULT_VM_BASE_URL;
+}
+
+// vm-sdk ships `checkStatusCustomRequest` but does not re-export it from its
+// index, so we call the VM API's generic `api.php?action=` entrypoint directly.
+// Remove this shim if a future SDK release exports the function.
+export async function vmApiGet(
+  env: Env,
+  action: string,
+  params: Record<string, string | number | boolean | undefined>,
+): Promise<unknown> {
+  const qs = new URLSearchParams({ action });
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined) continue;
+    qs.append(k, String(v));
+  }
+  const res = await fetch(`${vmBaseUrl(env)}/api.php?${qs.toString()}`, {
+    headers: { 'X-API-Token': env.VITE_VM_API_KEY },
+  });
+  if (!res.ok) throw new Error(`VM API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
 
 function getCorsOrigin(requestOrigin?: string | null): string {
   if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {

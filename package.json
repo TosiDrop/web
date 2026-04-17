@@ -8,7 +8,9 @@
     "prebuild": "node build-wrangler.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.8",
@@ -35,6 +37,9 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250922.0",
     "@eslint/js": "^9.39.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.3.0",
     "@types/react": "^18.2.10",
     "@types/react-dom": "^18.2.10",
@@ -44,9 +49,11 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.3.0",
+    "jsdom": "^29.0.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "^7.1.11",
-    "vite-plugin-node-polyfills": "^0.25.0"
+    "vite-plugin-node-polyfills": "^0.25.0",
+    "vitest": "^4.1.4"
   }
 }
