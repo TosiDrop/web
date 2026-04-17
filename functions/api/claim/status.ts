@@ -5,6 +5,7 @@ import {
   jsonResponse,
   errorResponse,
   optionsResponse,
+  sessionIdFor,
 } from '../../services/vmClient';
 
 // VM backend status codes: 0=waiting, 1=processing, 2=failure, 3=success.
@@ -65,7 +66,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const raw = await vmApiGet(env, 'check_status_custom_request', {
       staking_address: stakeAddress,
       request_id: Number(requestIdParam),
-      session_id: stakeAddress.slice(0, 40),
+      session_id: sessionIdFor(stakeAddress),
     });
     return jsonResponse(normalizeStatus(raw), 200, origin);
   } catch (error) {

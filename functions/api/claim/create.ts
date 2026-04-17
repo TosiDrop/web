@@ -1,15 +1,18 @@
 import type { Env } from '../../types/env';
-import { initVmSdk, requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../../services/vmClient';
+import {
+  initVmSdk,
+  requireApiKey,
+  jsonResponse,
+  errorResponse,
+  optionsResponse,
+  sessionIdFor,
+} from '../../services/vmClient';
 
 interface CreateRequestBody {
   stakeAddress?: string;
   assetIds?: string[];
   overheadFee?: number;
   unlocksSpecial?: boolean;
-}
-
-function sessionIdFor(stakeAddress: string): string {
-  return stakeAddress.slice(0, 40);
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {

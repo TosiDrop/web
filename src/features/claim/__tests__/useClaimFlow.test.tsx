@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useClaimFlow } from '../hooks/useClaimFlow';
 import { useWalletStore } from '@/store/wallet-state';
-import type { ClaimStatus, DepositInfo } from '@/types/claim';
+import type { ClaimFlowStep, ClaimStatus, DepositInfo } from '@/types/claim';
 
 const sendDepositMock = vi.fn<(args: { toAddress: string; lovelace: number }) => Promise<string>>();
 let canSendMock = true;
@@ -130,9 +130,8 @@ describe('useClaimFlow', () => {
       lovelace: 6_000_000,
     });
     expect(result.current.state.step).toBe('polling');
-    if (result.current.state.step === 'polling') {
-      expect(result.current.state.txHash).toBe('tx_hash_1');
-    }
+    const pollingState = result.current.state as Extract<ClaimFlowStep, { step: 'polling' }>;
+    expect(pollingState.txHash).toBe('tx_hash_1');
   });
 
   it('blocks wallet-send when wallet cannot send', async () => {
@@ -181,9 +180,8 @@ describe('useClaimFlow', () => {
     });
 
     await waitFor(() => expect(result.current.state.step).toBe('success'));
-    if (result.current.state.step === 'success') {
-      expect(result.current.state.txHash).toBe('final_hash');
-    }
+    const successState = result.current.state as Extract<ClaimFlowStep, { step: 'success' }>;
+    expect(successState.txHash).toBe('final_hash');
   });
 
   it('polling transitions to error on a failure status', async () => {
@@ -200,9 +198,8 @@ describe('useClaimFlow', () => {
     });
 
     await waitFor(() => expect(result.current.state.step).toBe('error'));
-    if (result.current.state.step === 'error') {
-      expect(result.current.state.message).toBe('rejected by network');
-    }
+    const errorState = result.current.state as Extract<ClaimFlowStep, { step: 'error' }>;
+    expect(errorState.message).toBe('rejected by network');
   });
 
   it('reset returns to idle from any state', async () => {
