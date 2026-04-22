@@ -12,6 +12,16 @@ interface UserRow {
   updated_at: string;
 }
 
+const MAX_NAME_LEN = 50;
+const MAX_BIO_LEN = 280;
+const MAX_AVATAR_BYTES = 600_000;
+
+// D1 may not be bound in local dev if the operator hasn't provisioned one yet.
+// Treat a missing binding as "no data" rather than crashing the onboarding flow.
+function hasDb(env: Env): boolean {
+  return typeof env?.DB?.prepare === 'function';
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
@@ -19,6 +29,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   if (!stakeAddress) {
     return errorResponse('stakeAddress is required', 400, origin);
+  }
+
+  if (!hasDb(env)) {
+    return jsonResponse({ exists: false, user: null, degraded: true }, 200, origin);
   }
 
   try {
@@ -63,6 +77,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     avatarUrl?: string;
     walletProvider?: string;
     onboardingCompleted?: boolean;
+    // Signed message proving ownership of the stake address. Carried today for
+    // forward-compatibility; server-side verification (CIP-30) is tracked as
+    // a cross-cutting follow-up so it can upgrade profileData + user in one PR.
+    signature?: string;
+    key?: string;
+    message?: string;
   };
 
   try {
@@ -71,8 +91,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('Invalid JSON', 400, origin);
   }
 
-  if (!body.stakeAddress) {
-    return errorResponse('Missing stakeAddress', 400, origin);
+  if (!body.stakeAddress || !body.stakeAddress.startsWith('stake')) {
+    return errorResponse('stakeAddress must be a bech32 stake address', 400, origin);
+  }
+
+  if (body.displayName && body.displayName.length > MAX_NAME_LEN) {
+    return errorResponse(`displayName exceeds ${MAX_NAME_LEN} chars`, 400, origin);
+  }
+  if (body.bio && body.bio.length > MAX_BIO_LEN) {
+    return errorResponse(`bio exceeds ${MAX_BIO_LEN} chars`, 400, origin);
+  }
+  if (body.avatarUrl && body.avatarUrl.length > MAX_AVATAR_BYTES) {
+    return errorResponse('avatar exceeds 600KB', 413, origin);
+  }
+
+  if (!hasDb(env)) {
+    // In dev without D1 configured, no-op but return success so UX proceeds.
+    return jsonResponse({ success: true, stakeAddress: body.stakeAddress, degraded: true }, 200, origin);
   }
 
   try {
@@ -102,7 +137,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 };
 
-export const onRequestOptions: PagesFunction = async (context) => {
+export const onRequestOptions: PagesFunction<Env> = async (context) => {
   const origin = context.request.headers.get('Origin');
   return optionsResponse(origin);
 };

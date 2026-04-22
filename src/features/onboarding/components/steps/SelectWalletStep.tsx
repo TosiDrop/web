@@ -1,25 +1,30 @@
 import { useWallet, useWalletList } from '@meshsdk/react';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
 import type { Wallet } from '@meshsdk/common';
 import { useOnboardingStore } from '@/store/onboarding-state';
+
+const WALLET_FALLBACK_ICON =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="1.5"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>';
 
 export function SelectWalletStep() {
   const { connect } = useWallet();
   const wallets = useWalletList();
-  const { setStep } = useOnboardingStore();
+  const { setStep, setConnectError, connectError } = useOnboardingStore();
 
   function handleSelect(walletName: string) {
+    setConnectError(null);
     setStep('connecting');
-    connect(walletName)
-      .then(() => {
-        // useWalletSync will populate the store; we proceed after a short delay
-        // to let the sync happen, then check if user is first-time
-        setTimeout(() => setStep('profile-setup'), 1500);
-      })
-      .catch((err) => {
-        console.error('Wallet connect failed:', err);
-        setStep('select-wallet');
-      });
+    connect(walletName).catch((err) => {
+      console.error('Wallet connect failed:', err);
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : 'Connection rejected. Try again or pick a different wallet.';
+      setConnectError(msg);
+      setStep('select-wallet');
+    });
+    // Advancement to 'profile-setup' happens reactively in ConnectingStep
+    // once useWalletSync populates the store.
   }
 
   return (
@@ -36,8 +41,15 @@ export function SelectWalletStep() {
         Choose your wallet
       </h2>
       <p className="mb-6 text-sm text-slate-400">
-        Select a Cardano wallet provider to continue.
+        Select a Cardano wallet provider. Your keys never leave the extension.
       </p>
+
+      {connectError && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-status-error/30 bg-status-error/10 px-3 py-2.5">
+          <IconAlertCircle size={16} className="mt-0.5 shrink-0 text-status-error" />
+          <p className="text-xs text-status-error">{connectError}</p>
+        </div>
+      )}
 
       {wallets.length === 0 ? (
         <div className="rounded-xl border border-border-subtle bg-surface-inset p-6 text-center">
@@ -52,21 +64,31 @@ export function SelectWalletStep() {
             <button
               key={w.name}
               onClick={() => handleSelect(w.name)}
-              className="flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3.5 transition-all hover:border-brand-cyan/30 hover:bg-surface-overlay hover:shadow-sm hover:shadow-brand-cyan/5"
+              className="group flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3.5 transition-all hover:border-brand-cyan/40 hover:bg-surface-overlay hover:shadow-lg hover:shadow-brand-cyan/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40"
             >
               <img
                 src={w.icon}
                 alt={w.name}
                 className="h-8 w-8 rounded-lg"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = WALLET_FALLBACK_ICON;
+                }}
               />
               <span className="text-sm font-medium text-slate-200">
                 {w.name}
               </span>
-              <span className="ml-auto text-xs text-slate-500">Connect</span>
+              <span className="ml-auto text-xs text-slate-500 transition group-hover:text-brand-cyan">
+                Connect →
+              </span>
             </button>
           ))}
         </div>
       )}
+
+      <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600">
+        By connecting, you agree that Tosi can read your stake address.
+        We never request signing rights over your assets.
+      </p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   IconMapPin,
   IconCoin,
@@ -6,6 +7,7 @@ import {
   IconCheck,
   IconArrowRight,
   IconArrowLeft,
+  IconAlertCircle,
 } from '@tabler/icons-react';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { useWalletStore } from '@/store/wallet-state';
@@ -16,32 +18,40 @@ const tourSlides = [
     icon: IconMapPin,
     title: 'Enter your address',
     description:
-      'Paste your Cardano wallet or stake address to check available rewards from your staked pools.',
-    color: 'from-brand-cyan/20 to-cyan-500/10',
+      'Paste your Cardano wallet or stake address to check available rewards from pools you stake with.',
+    gradient: 'from-brand-cyan/20 to-cyan-500/5',
     iconColor: 'text-brand-cyan',
   },
   {
     icon: IconCoin,
     title: 'Claim your tokens',
     description:
-      'Review pending rewards and claim them directly to your wallet with a single transaction.',
-    color: 'from-brand-teal/20 to-emerald-500/10',
+      'Review pending rewards and claim them to your wallet with a single signed transaction.',
+    gradient: 'from-brand-teal/20 to-emerald-500/5',
     iconColor: 'text-brand-teal',
   },
   {
     icon: IconHistory,
     title: 'Track history',
     description:
-      'View your complete claim history, distribution schedules, and token delivery status.',
-    color: 'from-brand-primary/20 to-purple-500/10',
+      'See your claim history, distribution schedules, and token delivery status anytime.',
+    gradient: 'from-brand-primary/20 to-purple-500/5',
     iconColor: 'text-brand-primary',
   },
-];
+] as const;
 
 export function OnboardingTourStep() {
   const [slideIndex, setSlideIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [saving, setSaving] = useState(false);
-  const { profileName, profileBio, profileAvatar, closeModal, reset } = useOnboardingStore();
+  const {
+    profileName,
+    profileBio,
+    profileAvatar,
+    saveError,
+    setSaveError,
+    closeModal,
+  } = useOnboardingStore();
   const { stakeAddress, walletName } = useWalletStore();
 
   const slide = tourSlides[slideIndex];
@@ -50,11 +60,11 @@ export function OnboardingTourStep() {
   async function handleFinish() {
     if (!stakeAddress) {
       closeModal();
-      reset();
       return;
     }
 
     setSaving(true);
+    setSaveError(null);
     try {
       await apiClient.post('/api/user', {
         stakeAddress,
@@ -64,12 +74,14 @@ export function OnboardingTourStep() {
         walletProvider: walletName,
         onboardingCompleted: true,
       });
+      closeModal();
     } catch (err) {
       console.error('Failed to save user profile:', err);
+      setSaveError(
+        err instanceof Error ? err.message : 'Could not save your profile. Try again.'
+      );
     } finally {
       setSaving(false);
-      closeModal();
-      reset();
     }
   }
 
@@ -77,6 +89,7 @@ export function OnboardingTourStep() {
     if (isLast) {
       handleFinish();
     } else {
+      setDirection(1);
       setSlideIndex((i) => i + 1);
     }
   }
@@ -85,6 +98,7 @@ export function OnboardingTourStep() {
     if (slideIndex === 0) {
       useOnboardingStore.getState().setStep('profile-setup');
     } else {
+      setDirection(-1);
       setSlideIndex((i) => i - 1);
     }
   }
@@ -93,45 +107,78 @@ export function OnboardingTourStep() {
     <div className="flex flex-col">
       <button
         onClick={handleBack}
-        className="mb-6 flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-slate-300"
+        disabled={saving}
+        className="mb-6 flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
       >
         <IconArrowLeft size={14} />
         Back
       </button>
 
-      {/* Tour slide */}
-      <div className="mb-8 flex flex-col items-center text-center">
-        <div
-          className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${slide.color} ring-1 ring-white/5`}
-        >
-          <slide.icon size={28} className={slide.iconColor} stroke={1.5} />
-        </div>
-        <h3 className="mb-2 text-lg font-semibold text-white">{slide.title}</h3>
-        <p className="text-sm leading-relaxed text-slate-400">{slide.description}</p>
+      {/* Animated slide */}
+      <div className="relative mb-8 min-h-[180px] overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={slideIndex}
+            custom={direction}
+            initial={{ opacity: 0, x: direction * 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction * -24 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="flex flex-col items-center text-center"
+          >
+            <div
+              className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${slide.gradient} ring-1 ring-white/5`}
+            >
+              <slide.icon size={28} className={slide.iconColor} stroke={1.5} />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-white">{slide.title}</h3>
+            <p className="max-w-xs text-sm leading-relaxed text-slate-400">
+              {slide.description}
+            </p>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Slide dots */}
       <div className="mb-6 flex items-center justify-center gap-2">
         {tourSlides.map((_, i) => (
-          <div
+          <button
             key={i}
+            onClick={() => {
+              setDirection(i > slideIndex ? 1 : -1);
+              setSlideIndex(i);
+            }}
+            aria-label={`Go to slide ${i + 1}`}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === slideIndex
-                ? 'w-6 bg-brand-cyan'
-                : 'w-1.5 bg-slate-600'
+              i === slideIndex ? 'w-6 bg-brand-cyan' : 'w-1.5 bg-slate-600 hover:bg-slate-500'
             }`}
           />
         ))}
       </div>
 
+      {saveError && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-status-error/30 bg-status-error/10 px-3 py-2.5">
+          <IconAlertCircle size={16} className="mt-0.5 shrink-0 text-status-error" />
+          <p className="text-xs text-status-error">{saveError}</p>
+        </div>
+      )}
+
       {/* Actions */}
       <button
         onClick={handleNext}
         disabled={saving}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-teal px-6 py-3.5 text-sm font-semibold text-surface-base transition-all hover:shadow-lg hover:shadow-brand-cyan/20 disabled:opacity-60"
+        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-teal px-6 py-3.5 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
       >
         {saving ? (
-          'Setting up...'
+          <>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-surface-base" />
+            Saving...
+          </>
+        ) : saveError && isLast ? (
+          <>
+            <IconArrowRight size={16} />
+            Retry
+          </>
         ) : isLast ? (
           <>
             <IconCheck size={16} />
@@ -145,7 +192,7 @@ export function OnboardingTourStep() {
         )}
       </button>
 
-      {!isLast && (
+      {!isLast && !saving && (
         <button
           onClick={handleFinish}
           className="mt-3 text-xs text-slate-500 transition hover:text-slate-300"
