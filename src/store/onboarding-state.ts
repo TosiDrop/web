@@ -6,6 +6,7 @@ export type OnboardingStep =
   | 'connecting'
   | 'profile-setup'
   | 'onboarding-tour'
+  | 'welcome-back'
   | 'complete';
 
 interface OnboardingStore {
@@ -15,6 +16,9 @@ interface OnboardingStore {
   profileBio: string;
   profileAvatar: string | null;
   isFirstTime: boolean;
+  connectError: string | null;
+  saveError: string | null;
+  returningUserName: string | null;
 
   openModal: () => void;
   closeModal: () => void;
@@ -23,6 +27,9 @@ interface OnboardingStore {
   setProfileBio: (bio: string) => void;
   setProfileAvatar: (url: string | null) => void;
   setIsFirstTime: (value: boolean) => void;
+  setConnectError: (err: string | null) => void;
+  setSaveError: (err: string | null) => void;
+  setReturningUserName: (name: string | null) => void;
   reset: () => void;
 }
 
@@ -33,16 +40,22 @@ const initialState = {
   profileBio: '',
   profileAvatar: null as string | null,
   isFirstTime: true,
+  connectError: null as string | null,
+  saveError: null as string | null,
+  returningUserName: null as string | null,
 };
 
 export const useOnboardingStore = create<OnboardingStore>((set) => ({
   ...initialState,
-  openModal: () => set({ isOpen: true, step: 'welcome' }),
-  closeModal: () => set({ isOpen: false }),
+  openModal: () => set({ ...initialState, isOpen: true, step: 'welcome' }),
+  closeModal: () => set({ ...initialState }),
   setStep: (step) => set({ step }),
   setProfileName: (profileName) => set({ profileName }),
   setProfileBio: (profileBio) => set({ profileBio }),
   setProfileAvatar: (profileAvatar) => set({ profileAvatar }),
   setIsFirstTime: (isFirstTime) => set({ isFirstTime }),
+  setConnectError: (connectError) => set({ connectError }),
+  setSaveError: (saveError) => set({ saveError }),
+  setReturningUserName: (returningUserName) => set({ returningUserName }),
   reset: () => set(initialState),
 }));
