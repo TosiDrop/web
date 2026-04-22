@@ -3,6 +3,8 @@ import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { MobileMenuProvider } from './MobileMenuContext';
 import { useWalletSync } from '@/features/wallet/hooks/useWalletSync';
+import { OnboardingModal } from '@/features/onboarding/components/OnboardingModal';
+import { useFirstTimeCheck } from '@/features/onboarding/hooks/useFirstTimeCheck';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -10,6 +12,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   useWalletSync();
+  useFirstTimeCheck();
 
   return (
     <MobileMenuProvider>
@@ -22,6 +25,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </main>
         </div>
       </div>
+      <OnboardingModal />
     </MobileMenuProvider>
   );
 }
