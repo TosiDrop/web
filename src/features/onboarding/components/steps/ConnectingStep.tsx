@@ -80,12 +80,12 @@ export function ConnectingStep() {
       </div>
 
       <h2 className="mb-2 text-xl font-semibold text-white">
-        {connected ? 'Almost there...' : 'Connecting...'}
+        {connected ? 'Almost there' : 'Connecting'}
       </h2>
       <p className="max-w-xs text-sm leading-relaxed text-slate-400">
         {connected
-          ? 'Loading your profile from the Cardano network.'
-          : 'Please approve the connection in your wallet extension.'}
+          ? 'Getting your profile ready.'
+          : 'Approve the connection in your wallet.'}
       </p>
     </div>
   );

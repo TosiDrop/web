@@ -17,24 +17,21 @@ const tourSlides = [
   {
     icon: IconMapPin,
     title: 'Enter your address',
-    description:
-      'Paste your Cardano wallet or stake address to check available rewards from pools you stake with.',
+    description: 'Paste your wallet address to see what you can claim.',
     gradient: 'from-brand-cyan/20 to-cyan-500/5',
     iconColor: 'text-brand-cyan',
   },
   {
     icon: IconCoin,
     title: 'Claim your tokens',
-    description:
-      'Review pending rewards and claim them to your wallet with a single signed transaction.',
+    description: 'Pick what you want and send it to your wallet in one step.',
     gradient: 'from-brand-teal/20 to-emerald-500/5',
     iconColor: 'text-brand-teal',
   },
   {
     icon: IconHistory,
-    title: 'Track history',
-    description:
-      'See your claim history, distribution schedules, and token delivery status anytime.',
+    title: 'Track your history',
+    description: 'See every claim you have made and what is still coming.',
     gradient: 'from-brand-primary/20 to-purple-500/5',
     iconColor: 'text-brand-primary',
   },

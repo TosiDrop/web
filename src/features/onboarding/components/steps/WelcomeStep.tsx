@@ -4,15 +4,15 @@ import { useOnboardingStore } from '@/store/onboarding-state';
 const highlights = [
   {
     icon: IconCoin,
-    label: 'Claim staking rewards',
+    label: 'Claim your rewards',
   },
   {
     icon: IconSparkles,
-    label: 'Track distributions',
+    label: 'See what you are owed',
   },
   {
     icon: IconShieldLock,
-    label: 'Non-custodial by design',
+    label: 'Your keys stay with you',
   },
 ];
 
@@ -34,7 +34,7 @@ export function WelcomeStep() {
         Welcome to Tosi
       </h2>
       <p className="mb-6 max-w-xs text-sm leading-relaxed text-slate-400">
-        Sign in with your Cardano wallet to claim rewards and manage your tokens — all in one place.
+        Connect your wallet to claim rewards and manage your tokens.
       </p>
 
       {/* Trust highlights */}
@@ -59,7 +59,7 @@ export function WelcomeStep() {
       </button>
 
       <p className="mt-4 text-[11px] text-slate-600">
-        Already a member? Your profile will be restored automatically.
+        Been here before? We'll recognize you.
       </p>
     </div>
   );

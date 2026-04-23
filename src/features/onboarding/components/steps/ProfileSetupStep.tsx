@@ -107,12 +107,9 @@ export function ProfileSetupStep() {
         <div className="mb-6 h-4" aria-hidden />
       )}
 
-      <h2 className="mb-1 text-xl font-semibold text-white">
+      <h2 className="mb-6 text-xl font-semibold text-white">
         {isFirstTime ? 'Set up your profile' : 'Finish your profile'}
       </h2>
-      <p className="mb-6 text-sm text-slate-400">
-        Add a name and picture so others can recognize you.
-      </p>
 
       {/* Avatar */}
       <div className="mb-6 flex flex-col items-center gap-2">
@@ -197,7 +194,7 @@ export function ProfileSetupStep() {
           value={profileName}
           maxLength={MAX_NAME + 10}
           onChange={(e) => setProfileName(e.target.value)}
-          placeholder="How should we call you?"
+          placeholder="Your name"
           className="w-full rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none focus:ring-2 focus:ring-brand-cyan/15"
           autoFocus
         />
@@ -222,7 +219,7 @@ export function ProfileSetupStep() {
           value={profileBio}
           maxLength={MAX_BIO + 20}
           onChange={(e) => setProfileBio(e.target.value)}
-          placeholder="A short intro about yourself..."
+          placeholder="Tell us a bit about yourself"
           rows={3}
           className="w-full resize-none rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none focus:ring-2 focus:ring-brand-cyan/15"
         />
