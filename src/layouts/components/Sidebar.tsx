@@ -83,7 +83,6 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={onLinkClick}
               className="text-gray-500 transition hover:text-gray-300"
               aria-label={label}
             >
