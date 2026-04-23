@@ -19,7 +19,7 @@ export function SelectWalletStep() {
       const msg =
         err instanceof Error && err.message
           ? err.message
-          : 'Connection rejected. Try again or pick a different wallet.';
+          : 'Connection canceled. Try again, or pick a different wallet.';
       setConnectError(msg);
       setStep('select-wallet');
     });
@@ -37,12 +37,9 @@ export function SelectWalletStep() {
         Back
       </button>
 
-      <h2 className="mb-1 text-xl font-semibold text-white">
-        Choose your wallet
+      <h2 className="mb-6 text-xl font-semibold text-white">
+        Pick a wallet
       </h2>
-      <p className="mb-6 text-sm text-slate-400">
-        Select a Cardano wallet provider. Your keys never leave the extension.
-      </p>
 
       {connectError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-status-error/30 bg-status-error/10 px-3 py-2.5">
@@ -53,9 +50,9 @@ export function SelectWalletStep() {
 
       {wallets.length === 0 ? (
         <div className="rounded-xl border border-border-subtle bg-surface-inset p-6 text-center">
-          <p className="text-sm text-slate-400">No Cardano wallets detected.</p>
+          <p className="text-sm text-slate-400">No wallets found.</p>
           <p className="mt-2 text-xs text-slate-500">
-            Install a wallet extension like Eternl, Nami, or Flint to continue.
+            Install one like Eternl, Nami, or Flint to continue.
           </p>
         </div>
       ) : (
@@ -85,10 +82,6 @@ export function SelectWalletStep() {
         </div>
       )}
 
-      <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-600">
-        By connecting, you agree that Tosi can read your stake address.
-        We never request signing rights over your assets.
-      </p>
     </div>
   );
 }

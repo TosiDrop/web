@@ -25,7 +25,7 @@ export function WelcomeBackStep() {
         Welcome back{returningUserName ? `, ${returningUserName}` : ''}
       </h2>
       <p className="text-sm text-slate-400">
-        You're all set. Taking you to your dashboard...
+        You're all set.
       </p>
     </div>
   );
