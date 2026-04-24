@@ -18,7 +18,7 @@ const MAX_AVATAR_BYTES = 600_000;
 
 // D1 may not be bound in local dev if the operator hasn't provisioned one yet.
 // Treat a missing binding as "no data" rather than crashing the onboarding flow.
-function hasDb(env: Env): boolean {
+function hasDb(env: Env): env is Env & { DB: D1Database } {
   return typeof env?.DB?.prepare === 'function';
 }
 
