@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Dialog, DialogPanel } from '@headlessui/react';
-import { IconGift, IconHistory, IconFileText, IconSettings, IconX } from '@tabler/icons-react';
+import { IconGift, IconUserCircle, IconFileText, IconX } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
@@ -8,8 +8,7 @@ import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
 const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
-  { name: 'History', href: '/history', icon: IconHistory },
-  { name: 'Settings', href: '/preferences', icon: IconSettings },
+  { name: 'Profile', href: '/profile', icon: IconUserCircle },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },
 ];
 
