@@ -19,7 +19,7 @@ function NetworkDot({ network }: { network: Network }) {
       className={
         'h-1.5 w-1.5 rounded-full ' +
         (isMainnet
-          ? 'bg-brand-cyan shadow-[0_0_6px_rgba(94,234,212,0.85)]'
+          ? 'bg-brand-cyan shadow-[0_0_6px_rgba(34,211,238,0.85)]'
           : 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.7)]')
       }
     />
@@ -39,7 +39,7 @@ export function NetworkSelector() {
         </p>
       </div>
       <Listbox value={selectedNetwork} onChange={setNetwork}>
-        <ListboxButton className="group flex min-w-[148px] items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset/80 px-3 py-1.5 text-xs text-white transition hover:border-brand-cyan/40 focus:outline-none data-[open]:border-brand-cyan/50 data-[open]:shadow-[0_0_0_1px_rgba(94,234,212,0.2)]">
+        <ListboxButton className="group flex min-w-[148px] items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset/80 px-3 py-1.5 text-xs text-white transition hover:border-brand-cyan/40 focus:outline-none data-[open]:border-brand-cyan/50 data-[open]:shadow-[0_0_0_1px_rgba(34,211,238,0.2)]">
           <span className="flex items-center gap-2">
             <NetworkDot network={selectedNetwork} />
             {networkLabel(selectedNetwork)}

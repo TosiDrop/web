@@ -1,5 +1,6 @@
 import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { AnimatePresence, motion } from 'motion/react';
+import { IconX } from '@tabler/icons-react';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { SelectWalletStep } from './steps/SelectWalletStep';
@@ -28,6 +29,15 @@ export function OnboardingModal() {
             aria-hidden
             className="pointer-events-none absolute -top-24 left-1/2 h-48 w-64 -translate-x-1/2 rounded-full bg-brand-cyan/10 blur-3xl"
           />
+
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close"
+            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40"
+          >
+            <IconX size={16} stroke={1.6} />
+          </button>
 
           <StepIndicator />
 
