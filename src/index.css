@@ -1,37 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  --font-sans: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surface system — blue-tinted depth layers */
-  --color-surface-base: #0B1120;
-  --color-surface-raised: #161B2E;
-  --color-surface-overlay: #1C2237;
-  --color-surface-inset: #0F1524;
-  --color-surface-sidebar: #070D1A;
+  /* Surface system — neutral dark layers */
+  --color-surface-base: #0b0e13;
+  --color-surface-raised: #11151c;
+  --color-surface-overlay: #161b24;
+  --color-surface-inset: #0a0d12;
+  --color-surface-sidebar: #0a0d12;
 
-  /* Borders — blue-tinted, not white */
-  --color-border-subtle: rgba(56, 78, 128, 0.25);
-  --color-border-default: rgba(56, 78, 128, 0.35);
+  /* Borders — neutral white-tinted */
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-default: rgba(255, 255, 255, 0.10);
 
-  /* Brand colors */
-  --color-brand-primary: #C6B6D4;
-  --color-brand-secondary: #4F46E5;
-  --color-brand-cyan: #22D3EE;
-  --color-brand-teal: #14B8A6;
+  /* Brand */
+  --color-brand-primary: #c6b6d4;
+  --color-brand-secondary: #4f46e5;
+  --color-brand-cyan: #5eead4;
+  --color-brand-teal: #14b8a6;
 
   /* Status */
-  --color-status-success: #22C55E;
-  --color-status-error: #EF4444;
-  --color-status-pending: #F59E0B;
+  --color-status-success: #22c55e;
+  --color-status-error: #ef4444;
+  --color-status-pending: #f59e0b;
 }
 
 html, body {
-  background-color: #0B1120;
+  background-color: #0b0e13;
+  color: #e7ecf3;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Tabular numerals on the mono utility (used for amounts, hashes, timestamps) */
+.font-mono {
+  font-feature-settings: "tnum", "ss01";
 }
 
 button:not(:disabled),
@@ -41,4 +48,22 @@ button:not(:disabled),
 
 a {
   cursor: pointer;
+}
+
+/* Flat panel surface — V1 refined direction (no radial glow / top highlight) */
+@utility card-premium {
+  position: relative;
+  border-radius: 0.75rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+}
+
+/* Eyebrow label — Geist Mono uppercase with tracking */
+@utility label-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(138 147 163 / 1);
 }
