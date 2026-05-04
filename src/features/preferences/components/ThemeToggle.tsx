@@ -29,7 +29,7 @@ export function ThemeToggle() {
               className={
                 'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-all duration-200 ' +
                 (active
-                  ? 'bg-surface-overlay text-white shadow-[0_0_0_1px_rgba(94,234,212,0.25),0_0_18px_-8px_rgba(94,234,212,0.55)]'
+                  ? 'bg-surface-overlay text-white shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_18px_-8px_rgba(34,211,238,0.55)]'
                   : 'text-slate-500 hover:text-slate-200')
               }
               aria-pressed={active}

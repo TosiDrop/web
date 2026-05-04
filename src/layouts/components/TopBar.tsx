@@ -15,7 +15,7 @@ function NetworkChip({ networkId }: { networkId: number | null }) {
         className={
           'h-1 w-1 rounded-full ' +
           (isMainnet
-            ? 'bg-brand-cyan shadow-[0_0_5px_rgba(94,234,212,0.85)]'
+            ? 'bg-brand-cyan shadow-[0_0_5px_rgba(34,211,238,0.85)]'
             : 'bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)]')
         }
       />

@@ -80,13 +80,10 @@ function AnalyticsTab() {
         <h2 className="text-xl font-light tracking-tight text-white">
           Reward <span className="font-semibold">analytics</span>
         </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Charts, yield curves, and pool comparisons.
-        </p>
       </div>
       <EmptyTab
         eyebrow="In development"
-        message="Yield curves, drop frequency, and pool comparisons ship with M7."
+        message="Analytics ship with M7."
       />
     </div>
   );
