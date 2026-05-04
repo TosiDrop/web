@@ -1,4 +1,5 @@
 import { useWallet } from '@meshsdk/react';
+import { IconWallet } from '@tabler/icons-react';
 import { useOnboardingStore } from '@/store/onboarding-state';
 
 export function ConnectWallet() {
@@ -10,7 +11,7 @@ export function ConnectWallet() {
       <button
         onClick={disconnect}
         aria-label="Disconnect wallet"
-        className="rounded-lg border border-border-subtle px-3 py-1.5 text-sm text-slate-400 transition hover:bg-surface-overlay hover:text-white"
+        className="rounded-lg border border-border-subtle bg-surface-raised/60 px-3 py-1.5 text-xs text-slate-400 transition hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-200"
       >
         Disconnect
       </button>
@@ -20,9 +21,10 @@ export function ConnectWallet() {
   return (
     <button
       onClick={openModal}
-      className="rounded-lg bg-gradient-to-r from-brand-cyan to-brand-teal px-4 py-2 text-xs font-semibold text-surface-base transition-all hover:shadow-lg hover:shadow-brand-cyan/20"
+      className="inline-flex items-center gap-2 rounded-lg bg-brand-cyan px-3.5 py-1.5 text-xs font-semibold text-[#06181a] transition hover:bg-cyan-300"
     >
-      Connect Wallet
+      <IconWallet size={13} stroke={1.8} />
+      Connect wallet
     </button>
   );
 }
