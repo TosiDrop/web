@@ -1,12 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProviders } from '@/app/providers';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import ClaimPage from '@/pages/ClaimPage';
-import HistoryPage from '@/pages/HistoryPage';
 
-const PreferencesPage = lazy(() => import('@/pages/PreferencesPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const ApiTesterPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/ApiTesterPage'))
@@ -21,8 +20,9 @@ export default function App() {
             <Suspense fallback={<div className="animate-pulse text-gray-400 p-8">Loading...</div>}>
               <Routes>
                 <Route path="/" element={<ClaimPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/preferences" element={<PreferencesPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/history" element={<Navigate to="/profile" replace />} />
+                <Route path="/preferences" element={<Navigate to="/profile" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
