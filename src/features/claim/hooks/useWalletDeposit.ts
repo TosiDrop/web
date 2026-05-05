@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useWallet } from '@meshsdk/react';
-import { Transaction, type IInitiator } from '@meshsdk/core';
+import { createMeshTransactionBuilder } from '@/services/mesh-transaction-builder';
 
 export interface SendDepositArgs {
   toAddress: string;
@@ -43,14 +43,13 @@ export function useWalletDeposit(): UseWalletDepositResult {
         }
       }
 
-      // @meshsdk/react (beta.2) and @meshsdk/transaction ship slightly
-      // different getCollateral() signatures. The wallet satisfies the runtime
-      // contract of IInitiator, so cast at the boundary.
-      const tx = new Transaction({ initiator: wallet as unknown as IInitiator }).sendLovelace(
+      const builder = createMeshTransactionBuilder(wallet);
+      const fromAddress = await wallet.getChangeAddress();
+      const unsignedTx = await builder.buildTransfer({
+        fromAddress,
         toAddress,
-        String(Math.floor(lovelace)),
-      );
-      const unsignedTx = await tx.build();
+        amount: BigInt(Math.floor(lovelace)),
+      });
       const signedTx = await wallet.signTx(unsignedTx, false);
       return wallet.submitTx(signedTx);
     },

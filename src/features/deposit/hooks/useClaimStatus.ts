@@ -1,0 +1,95 @@
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/api/client';
+
+export type ClaimStatusKind = 'waiting' | 'processing' | 'success' | 'failure';
+
+export interface ClaimStatus {
+  kind: ClaimStatusKind;
+  txHash?: string;
+  reason?: string;
+}
+
+export type Network = 'mainnet' | 'preview';
+
+export function explorerTxUrl(txHash: string, network: Network = 'mainnet'): string {
+  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
+  return `https://${host}/tx/${txHash}`;
+}
+
+interface UseClaimStatusArgs {
+  request_id: string | null;
+  staking_address: string | null;
+  /**
+   * Optional explicit session id. The current backend derives it server-side
+   * from the staking address, so passing it is optional.
+   */
+  session_id?: string;
+  /** Set false to pause polling (e.g. modal closed). */
+  enabled?: boolean;
+  /** Defaults to 60s. */
+  pollIntervalMs?: number;
+  /** Used to build explorer link on success. Defaults to mainnet. */
+  network?: Network;
+}
+
+export interface UseClaimStatusResult {
+  status: ClaimStatus | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  /** Convenience explorer URL when the status has a txHash; null otherwise. */
+  txExplorerUrl: string | null;
+  isTerminal: boolean;
+}
+
+const DEFAULT_INTERVAL_MS = 60_000;
+
+function isTerminalStatus(status: ClaimStatus | undefined): boolean {
+  return status?.kind === 'success' || status?.kind === 'failure';
+}
+
+export function useClaimStatus({
+  request_id,
+  staking_address,
+  enabled = true,
+  pollIntervalMs = DEFAULT_INTERVAL_MS,
+  network = 'mainnet',
+}: UseClaimStatusArgs): UseClaimStatusResult {
+  const ready = !!request_id && !!staking_address && enabled;
+
+  const query = useQuery<ClaimStatus, Error>({
+    queryKey: ['claim-status', request_id, staking_address],
+    queryFn: async () => {
+      if (!request_id || !staking_address) {
+        throw new Error('request_id and staking_address are required');
+      }
+      const params = new URLSearchParams({
+        requestId: request_id,
+        stakeAddress: staking_address,
+      });
+      return apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
+    },
+    enabled: ready,
+    refetchInterval: (q) => {
+      const data = q.state.data;
+      if (isTerminalStatus(data)) return false;
+      return pollIntervalMs;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const status = query.data;
+  const txExplorerUrl =
+    status?.kind === 'success' && status.txHash
+      ? explorerTxUrl(status.txHash, network)
+      : null;
+
+  return {
+    status,
+    isLoading: query.isLoading,
+    error: query.error,
+    txExplorerUrl,
+    isTerminal: isTerminalStatus(status),
+  };
+}
