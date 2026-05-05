@@ -1,17 +1,20 @@
 import type { ClaimableToken } from '@/shared/rewards';
+import { useClaimStore } from '@/store/claim-state';
 import { DistributionCard } from './DistributionCard';
 
 interface AvailableDistributionsProps {
   tokens: ClaimableToken[];
-  onClaim: (token: ClaimableToken) => void;
-  claimDisabled?: boolean;
 }
 
-export function AvailableDistributions({ tokens, onClaim, claimDisabled }: AvailableDistributionsProps) {
+export function AvailableDistributions({ tokens }: AvailableDistributionsProps) {
+  const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
+  const toggleAsset = useClaimStore((s) => s.toggleAsset);
+  const setSelected = useClaimStore((s) => s.setSelected);
+
   if (tokens.length === 0) {
     return (
       <div className="space-y-3">
-        <h2 className="text-sm font-medium text-white">Claimable Tokens</h2>
+        <h2 className="text-sm font-medium text-white">Claimable tokens</h2>
         <p className="py-6 text-center text-sm text-slate-500">
           No rewards found for this address.
         </p>
@@ -19,20 +22,40 @@ export function AvailableDistributions({ tokens, onClaim, claimDisabled }: Avail
     );
   }
 
+  const allSelected = selectedAssetIds.length === tokens.length;
+  const someSelected = selectedAssetIds.length > 0;
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected([]);
+    } else {
+      setSelected(tokens.map((t) => t.assetId));
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-medium text-white">
-        Claimable Tokens
-        <span className="ml-1.5 text-slate-500">{tokens.length}</span>
-      </h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-medium text-white">
+          Claimable tokens
+          <span className="ml-1.5 text-slate-500">{tokens.length}</span>
+        </h2>
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="text-xs text-brand-cyan transition hover:text-cyan-300"
+        >
+          {allSelected ? 'Clear' : someSelected ? 'Select all' : 'Select all'}
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {tokens.map((token) => (
           <DistributionCard
             key={token.assetId}
             token={token}
-            onClaim={() => onClaim(token)}
-            disabled={claimDisabled}
+            selected={selectedAssetIds.includes(token.assetId)}
+            onToggle={() => toggleAsset(token.assetId)}
           />
         ))}
       </div>
