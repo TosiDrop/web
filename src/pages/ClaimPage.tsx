@@ -42,9 +42,6 @@ export default function ClaimPage() {
   const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
   const hasRewards = !!rewards && rewards.length > 0;
 
-  // Default selection to all tokens once per lookup address. Gates on a ref so
-  // background rewards refetches with a new array reference don't wipe the
-  // user's manual deselections.
   useEffect(() => {
     if (!rewards || !lookupAddress) return;
     if (initializedFor.current === lookupAddress) return;
