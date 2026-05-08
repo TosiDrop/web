@@ -8,8 +8,6 @@
  */
 
 export interface TransferParams {
-  /** Bech32 sender address (changeAddress for the wallet). */
-  fromAddress: string;
   /** Bech32 receiver address. */
   toAddress: string;
   /** Amount to transfer in lovelace. */

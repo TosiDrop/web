@@ -1,26 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
-import { apiClient } from '@/api/client';
-
-interface Pool {
-  id: string;
-  ticker: string;
-  name: string;
-  enabled: string;
-  logo: string;
-  description?: string | null;
-}
-
-type GetPoolsResponse = Record<string, Pool>;
-
-function usePools() {
-  return useQuery<GetPoolsResponse, Error>({
-    queryKey: ['pools'],
-    queryFn: () => apiClient.get<GetPoolsResponse>('/api/getPools'),
-    staleTime: 60 * 60 * 1000,
-  });
-}
+import { usePools, type Pool } from '@/features/rewards/api/pools.queries';
 
 interface PoolInfoProps {
   /** Bech32 pool id of the user's currently delegated pool. */
@@ -71,9 +51,7 @@ export function PoolInfo({ poolId }: PoolInfoProps) {
     return (
       <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
         <p className="label-eyebrow">Delegation</p>
-        <p className="mt-2 text-sm text-slate-500">
-          No delegated pool detected.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">No delegated pool detected.</p>
       </div>
     );
   }
@@ -123,9 +101,7 @@ export function PoolInfo({ poolId }: PoolInfoProps) {
             {pool.name || pool.ticker || 'Pool'}
           </p>
           {pool.ticker && (
-            <p className="mt-0.5 font-mono text-[11px] text-slate-400">
-              [{pool.ticker}]
-            </p>
+            <p className="mt-0.5 font-mono text-[11px] text-slate-400">[{pool.ticker}]</p>
           )}
         </div>
       </div>

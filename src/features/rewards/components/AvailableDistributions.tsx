@@ -23,14 +23,9 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
   }
 
   const allSelected = selectedAssetIds.length === tokens.length;
-  const someSelected = selectedAssetIds.length > 0;
 
   const toggleAll = () => {
-    if (allSelected) {
-      setSelected([]);
-    } else {
-      setSelected(tokens.map((t) => t.assetId));
-    }
+    setSelected(allSelected ? [] : tokens.map((t) => t.assetId));
   };
 
   return (
@@ -45,7 +40,7 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
           onClick={toggleAll}
           className="text-xs text-brand-cyan transition hover:text-cyan-300"
         >
-          {allSelected ? 'Clear' : someSelected ? 'Select all' : 'Select all'}
+          {allSelected ? 'Clear' : 'Select all'}
         </button>
       </div>
 

@@ -1,6 +1,6 @@
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { truncateHash } from '@/utils/format';
-import { useNetworkStore, type Network } from '@/store/network-state';
+import { truncateHash, explorerTxUrl } from '@/utils/format';
+import { useNetworkStore } from '@/store/network-state';
 import type { ClaimFlowStep } from '@/types/claim';
 
 interface ClaimStatusProps {
@@ -13,11 +13,6 @@ const INFO_MESSAGES: Partial<Record<ClaimFlowStep['step'], string>> = {
   signing: 'Waiting for wallet signature...',
   polling: 'Waiting for the vending machine to deliver rewards...',
 };
-
-function explorerTxUrl(txHash: string, network: Network): string {
-  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
-  return `https://${host}/tx/${txHash}`;
-}
 
 export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
   const network = useNetworkStore((s) => s.selectedNetwork);
