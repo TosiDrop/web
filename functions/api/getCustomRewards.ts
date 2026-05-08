@@ -50,21 +50,8 @@ async function handleRequest(
   }
 }
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
-  const url = new URL(request.url);
-  return handleRequest(
-    { env },
-    {
-      staking_address: url.searchParams.get('staking_address'),
-      session_id: url.searchParams.get('session_id'),
-      selected: url.searchParams.get('selected'),
-      overhead_fee: (() => {
-        const raw = url.searchParams.get('overhead_fee');
-        return raw != null && !isNaN(Number(raw)) ? Number(raw) : null;
-      })(),
-    },
-  );
+export const onRequestGet: PagesFunction<Env> = async () => {
+  return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
 };
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
