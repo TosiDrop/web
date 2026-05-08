@@ -44,7 +44,7 @@ function WhitelistBadge({ enabled }: { enabled: boolean }) {
 }
 
 export function PoolInfo({ poolId }: PoolInfoProps) {
-  const { data: pools, isLoading } = usePools();
+  const { data: pools, isLoading, isError } = usePools();
 
   if (!poolId) {
     return (
@@ -66,6 +66,15 @@ export function PoolInfo({ poolId }: PoolInfoProps) {
             <div className="h-2.5 w-20 animate-pulse rounded bg-surface-inset/60" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
+        <p className="label-eyebrow">Delegation</p>
+        <p className="mt-2 text-sm text-rose-300">Failed to load pool metadata.</p>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
@@ -18,11 +18,42 @@ export function CopyButton({
   ariaLabel = 'Copy',
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleClick = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), feedbackMs);
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleClick = async () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    setCopied(false);
+    setCopyError(false);
+
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API unavailable');
+      }
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {
+      setCopyError(true);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+      setCopyError(false);
+      timeoutRef.current = null;
+    }, feedbackMs);
   };
 
   return (
@@ -32,6 +63,7 @@ export function CopyButton({
       aria-label={ariaLabel}
       className={cn(
         'rounded-md border border-border-subtle bg-surface-inset/60 p-1.5 text-slate-400 transition hover:border-brand-cyan/40 hover:text-brand-cyan',
+        copyError && 'border-rose-400/60 text-rose-300 hover:border-rose-400 hover:text-rose-300',
         className,
       )}
     >
@@ -40,6 +72,9 @@ export function CopyButton({
       ) : (
         <IconCopy size={iconSize} stroke={1.6} />
       )}
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Copied' : copyError ? 'Copy failed' : ''}
+      </span>
     </button>
   );
 }

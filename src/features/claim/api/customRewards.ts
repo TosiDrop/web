@@ -18,13 +18,17 @@ export async function getCustomRewards({
   selected,
   overheadFee,
 }: GetCustomRewardsParams): Promise<CustomRewardsResult> {
-  const params = new URLSearchParams({
+  if (selected.length === 0) {
+    throw new Error('selected must include at least one asset');
+  }
+
+  const body = {
     staking_address: stakeAddress,
     session_id: sessionIdFor(stakeAddress),
     selected: selected.join(','),
-  });
+  };
   if (overheadFee !== undefined) {
-    params.append('overhead_fee', String(overheadFee));
+    body.overhead_fee = overheadFee;
   }
-  return apiClient.get<CustomRewardsResult>(`/api/getCustomRewards?${params.toString()}`);
+  return apiClient.post<CustomRewardsResult>('/api/getCustomRewards', body);
 }

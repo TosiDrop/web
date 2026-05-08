@@ -43,7 +43,7 @@ export function useClaimStatus({
   const ready = !!request_id && !!staking_address && enabled;
 
   const query = useQuery<ClaimStatus, Error>({
-    queryKey: ['claim-status', request_id, staking_address],
+    queryKey: ['claim-status', request_id, staking_address, network],
     queryFn: async () => {
       if (!request_id || !staking_address) {
         throw new Error('request_id and staking_address are required');
@@ -51,6 +51,7 @@ export function useClaimStatus({
       const params = new URLSearchParams({
         requestId: request_id,
         stakeAddress: staking_address,
+        network,
       });
       return apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
     },
