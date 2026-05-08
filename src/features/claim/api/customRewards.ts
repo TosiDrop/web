@@ -21,7 +21,6 @@ export async function getCustomRewards({
   const params = new URLSearchParams({
     staking_address: stakeAddress,
     session_id: sessionIdFor(stakeAddress),
-    // Asset ids are policyHex+nameHex (no commas), so a comma join is safe.
     selected: selected.join(','),
   });
   if (overheadFee !== undefined) {

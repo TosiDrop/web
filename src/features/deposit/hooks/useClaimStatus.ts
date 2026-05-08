@@ -14,11 +14,8 @@ export interface ClaimStatus {
 interface UseClaimStatusArgs {
   request_id: string | null;
   staking_address: string | null;
-  /** Set false to pause polling (e.g. modal closed). */
   enabled?: boolean;
-  /** Defaults to 60s. */
   pollIntervalMs?: number;
-  /** Used to build explorer link on success. Defaults to mainnet. */
   network?: Network;
 }
 
@@ -26,7 +23,6 @@ export interface UseClaimStatusResult {
   status: ClaimStatus | undefined;
   isLoading: boolean;
   error: Error | null;
-  /** Convenience explorer URL when the status has a txHash; null otherwise. */
   txExplorerUrl: string | null;
   isTerminal: boolean;
 }

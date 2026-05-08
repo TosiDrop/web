@@ -6,16 +6,10 @@ interface CopyButtonProps {
   value: string;
   className?: string;
   iconSize?: number;
-  /** ms to show the check icon before reverting (default 1500). */
   feedbackMs?: number;
   ariaLabel?: string;
 }
 
-/**
- * Small icon-only button that copies `value` to the clipboard and briefly
- * swaps to a check icon. Intentionally unstyled beyond the default chip;
- * pass `className` for surrounding context.
- */
 export function CopyButton({
   value,
   className,

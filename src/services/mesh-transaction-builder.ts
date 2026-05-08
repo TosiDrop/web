@@ -5,10 +5,6 @@ import type {
   UnsignedTx,
 } from './transaction-builder';
 
-/**
- * Mesh-backed `TransactionBuilder`. The connected wallet supplies UTxOs,
- * coin selection, and fee estimation — we just describe the transfer.
- */
 export function createMeshTransactionBuilder(wallet: IInitiator): TransactionBuilder {
   return {
     async buildTransfer({ toAddress, amount }: TransferParams): Promise<UnsignedTx> {

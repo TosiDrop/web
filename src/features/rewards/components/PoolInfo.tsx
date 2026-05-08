@@ -3,7 +3,6 @@ import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
 import { usePools, type Pool } from '@/features/rewards/api/pools.queries';
 
 interface PoolInfoProps {
-  /** Bech32 pool id of the user's currently delegated pool. */
   poolId: string | null;
 }
 

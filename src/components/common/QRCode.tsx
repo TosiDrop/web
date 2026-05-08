@@ -2,16 +2,9 @@ import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/lib/utils';
 
 interface QRCodeProps {
-  /** Cardano address (or any string) to encode. */
   value: string;
-  /**
-   * Optional ADA amount in lovelace. When provided, the QR encodes a CIP-13
-   * `web+cardano:` URI so wallets that support deeplinking can prefill the amount.
-   */
   amountLovelace?: number;
-  /** Pixel size of the QR square (default 168). */
   size?: number;
-  /** Extra classes on the white card wrapper. */
   className?: string;
 }
 
