@@ -1,45 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconArrowLeft, IconCopy, IconCheck, IconExternalLink } from '@tabler/icons-react';
+import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useClaimStore } from '@/store/claim-state';
 import { useWalletStore } from '@/store/wallet-state';
 import { useNetworkStore } from '@/store/network-state';
 import { useWalletDeposit } from '@/features/claim/hooks/useWalletDeposit';
-import { useClaimStatus } from '@/features/deposit/hooks/useClaimStatus';
+import {
+  useClaimStatus,
+  type ClaimStatusKind,
+} from '@/features/deposit/hooks/useClaimStatus';
 import { QRCode } from '@/components/common/QRCode';
+import { CopyButton } from '@/components/common/CopyButton';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { truncateHash } from '@/utils/format';
+import { truncateHash, formatAda } from '@/utils/format';
 
-function formatAda(lovelace: number): string {
-  return (lovelace / 1_000_000).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
-}
-
-function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  const onClick = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-md border border-border-subtle bg-surface-inset/60 p-1.5 transition hover:border-brand-cyan/40 hover:text-brand-cyan"
-      aria-label="Copy"
-    >
-      {copied ? <IconCheck size={12} stroke={2} /> : <IconCopy size={12} stroke={1.6} />}
-    </button>
-  );
-}
-
-const STATUS_COPY: Record<string, { title: string; message: string; tone: 'info' | 'success' | 'error' }> = {
+const STATUS_COPY: Record<
+  ClaimStatusKind,
+  { title: string; message: string; tone: 'info' | 'success' | 'error' }
+> = {
   waiting: {
     title: 'Waiting for deposit',
-    message: 'Send the deposit from your wallet (or another wallet) so the vending machine can release your rewards.',
+    message:
+      'Send the deposit from your wallet (or another wallet) so the vending machine can release your rewards.',
     tone: 'info',
   },
   processing: {
@@ -63,7 +45,8 @@ export default function DepositPage() {
   const navigate = useNavigate();
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const network = useNetworkStore((s) => s.selectedNetwork);
-  const { requestId, deposit, withdrawalAddress, reset } = useClaimStore();
+  const request = useClaimStore((s) => s.request);
+  const reset = useClaimStore((s) => s.reset);
 
   const [txHash, setTxHash] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -71,18 +54,17 @@ export default function DepositPage() {
 
   const { sendDeposit, canSend } = useWalletDeposit();
   const { status, txExplorerUrl } = useClaimStatus({
-    request_id: requestId,
+    request_id: request?.requestId ?? null,
     staking_address: stakeAddress,
     network,
   });
 
   useEffect(() => {
-    if (!requestId || deposit === null || !withdrawalAddress) {
-      navigate('/', { replace: true });
-    }
-  }, [requestId, deposit, withdrawalAddress, navigate]);
+    if (!request) navigate('/', { replace: true });
+  }, [request, navigate]);
 
-  if (!requestId || deposit === null || !withdrawalAddress) return null;
+  if (!request) return null;
+  const { requestId, deposit, withdrawalAddress } = request;
 
   const handleSend = async () => {
     setSendError(null);
@@ -103,7 +85,7 @@ export default function DepositPage() {
   };
 
   const isTerminal = status?.kind === 'success' || status?.kind === 'failure';
-  const statusCopy = status ? STATUS_COPY[status.kind] : STATUS_COPY.waiting;
+  const statusCopy = STATUS_COPY[status?.kind ?? 'waiting'];
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -127,7 +109,6 @@ export default function DepositPage() {
         </p>
       </header>
 
-      {/* QR + address card */}
       <section className="card-premium overflow-hidden">
         <div className="flex flex-col items-center gap-5 p-6">
           <QRCode value={withdrawalAddress} amountLovelace={deposit} size={184} />
@@ -146,7 +127,7 @@ export default function DepositPage() {
                 <p className="break-all font-mono text-[12px] leading-relaxed text-slate-300">
                   {withdrawalAddress}
                 </p>
-                <CopyButton value={withdrawalAddress} />
+                <CopyButton value={withdrawalAddress} ariaLabel="Copy withdrawal address" />
               </div>
             </div>
 
@@ -175,9 +156,7 @@ export default function DepositPage() {
               Cancel
             </button>
           </div>
-          {sendError && (
-            <p className="mt-3 text-xs text-rose-300">{sendError}</p>
-          )}
+          {sendError && <p className="mt-3 text-xs text-rose-300">{sendError}</p>}
           {!canSend && (
             <p className="mt-3 text-xs text-slate-500">
               Connect your wallet here, or send the deposit manually from another wallet — either way the
@@ -187,19 +166,16 @@ export default function DepositPage() {
         </div>
       </section>
 
-      {/* Live status */}
       <FeedbackBanner
         tone={statusCopy.tone}
         title={statusCopy.title}
         message={
-          status?.kind === 'failure' && status.reason
-            ? status.reason
-            : statusCopy.message
+          status?.kind === 'failure' && status.reason ? status.reason : statusCopy.message
         }
       />
 
-      {(txHash || status?.txHash || txExplorerUrl) && (
-        <section className="card-premium p-5 space-y-3">
+      {(txHash || txExplorerUrl) && (
+        <section className="card-premium space-y-3 p-5">
           {txHash && (
             <div>
               <p className="label-eyebrow">Your deposit tx</p>

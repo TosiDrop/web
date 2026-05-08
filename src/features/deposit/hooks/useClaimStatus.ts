@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { explorerTxUrl } from '@/utils/format';
+import type { Network } from '@/store/network-state';
 
 export type ClaimStatusKind = 'waiting' | 'processing' | 'success' | 'failure';
 
@@ -9,21 +11,9 @@ export interface ClaimStatus {
   reason?: string;
 }
 
-export type Network = 'mainnet' | 'preview';
-
-export function explorerTxUrl(txHash: string, network: Network = 'mainnet'): string {
-  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
-  return `https://${host}/tx/${txHash}`;
-}
-
 interface UseClaimStatusArgs {
   request_id: string | null;
   staking_address: string | null;
-  /**
-   * Optional explicit session id. The current backend derives it server-side
-   * from the staking address, so passing it is optional.
-   */
-  session_id?: string;
   /** Set false to pause polling (e.g. modal closed). */
   enabled?: boolean;
   /** Defaults to 60s. */
@@ -70,8 +60,7 @@ export function useClaimStatus({
     },
     enabled: ready,
     refetchInterval: (q) => {
-      const data = q.state.data;
-      if (isTerminalStatus(data)) return false;
+      if (isTerminalStatus(q.state.data)) return false;
       return pollIntervalMs;
     },
     refetchOnWindowFocus: false,

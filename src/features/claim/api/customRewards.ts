@@ -1,17 +1,10 @@
 import { apiClient } from '@/api/client';
+import { sessionIdFor } from '@/shared/claim/session';
 
 export interface CustomRewardsResult {
   request_id: string;
   deposit: number;
   withdrawal_address: string;
-}
-
-/**
- * Mirror of `sessionIdFor` in `functions/services/vmClient.ts` so the same
- * deterministic id reaches the VM no matter which entry point is used.
- */
-function sessionIdFor(stakeAddress: string): string {
-  return stakeAddress.slice(0, 40);
 }
 
 interface GetCustomRewardsParams {
@@ -28,6 +21,7 @@ export async function getCustomRewards({
   const params = new URLSearchParams({
     staking_address: stakeAddress,
     session_id: sessionIdFor(stakeAddress),
+    // Asset ids are policyHex+nameHex (no commas), so a comma join is safe.
     selected: selected.join(','),
   });
   if (overheadFee !== undefined) {

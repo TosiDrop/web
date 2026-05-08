@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
@@ -17,21 +18,15 @@ import { WalletComposition } from '@/features/rewards/components/WalletCompositi
 export default function ClaimPage() {
   const navigate = useNavigate();
   const { stakeAddress, connected } = useWalletStore();
-  const {
-    selectedAssetIds,
-    isCreating,
-    error: claimError,
-    setSelected,
-    setCreating,
-    setError,
-    setRequest,
-  } = useClaimStore();
+  const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
+  const setSelected = useClaimStore((s) => s.setSelected);
+  const setRequest = useClaimStore((s) => s.setRequest);
 
   const [lookupAddress, setLookupAddress] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
+  const initializedFor = useRef<string | null>(null);
 
-  // Sync lookup address with wallet connection state
   useEffect(() => {
     if (stakeAddress) {
       setLookupAddress(stakeAddress);
@@ -47,14 +42,14 @@ export default function ClaimPage() {
   const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
   const hasRewards = !!rewards && rewards.length > 0;
 
-  // When the rewards list arrives, default selection to all tokens. Wipes
-  // when the lookup address changes so we don't carry stale selections.
+  // Default selection to all tokens once per lookup address. Gates on a ref so
+  // background rewards refetches with a new array reference don't wipe the
+  // user's manual deselections.
   useEffect(() => {
-    if (rewards && rewards.length > 0) {
-      setSelected(rewards.map((r) => r.assetId));
-    } else {
-      setSelected([]);
-    }
+    if (!rewards || !lookupAddress) return;
+    if (initializedFor.current === lookupAddress) return;
+    initializedFor.current = lookupAddress;
+    setSelected(rewards.map((r) => r.assetId));
   }, [rewards, lookupAddress, setSelected]);
 
   const handleLookup = useCallback(
@@ -77,34 +72,32 @@ export default function ClaimPage() {
       if (resolved === lookupAddress) {
         refetch();
       } else {
+        initializedFor.current = null;
         setLookupAddress(resolved);
       }
     },
     [lookupAddress, refetch],
   );
 
-  const handleClaim = async () => {
-    if (!stakeAddress || selectedAssetIds.length === 0) return;
-    setError(null);
-    setCreating(true);
-    try {
-      const result = await getCustomRewards({
-        stakeAddress,
-        selected: selectedAssetIds,
-      });
+  const claimMutation = useMutation({
+    mutationFn: getCustomRewards,
+    onSuccess: (result) => {
       setRequest({
         requestId: result.request_id,
         deposit: result.deposit,
         withdrawalAddress: result.withdrawal_address,
       });
       navigate('/deposit');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create claim request.');
-      setCreating(false);
-    }
+    },
+  });
+
+  const handleClaim = () => {
+    if (!stakeAddress || selectedAssetIds.length === 0 || claimMutation.isPending) return;
+    claimMutation.mutate({ stakeAddress, selected: selectedAssetIds });
   };
 
-  const claimDisabled = !canClaim || selectedAssetIds.length === 0 || isCreating;
+  const claimDisabled =
+    !canClaim || selectedAssetIds.length === 0 || claimMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -134,11 +127,15 @@ export default function ClaimPage() {
             />
           )}
 
-          {claimError && (
+          {claimMutation.error && (
             <FeedbackBanner
               tone="error"
               title="Could not start claim"
-              message={claimError}
+              message={
+                claimMutation.error instanceof Error
+                  ? claimMutation.error.message
+                  : 'Unknown error'
+              }
             />
           )}
 
@@ -149,7 +146,7 @@ export default function ClaimPage() {
               disabled={claimDisabled}
               className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-8 py-3 text-base font-semibold text-surface-base shadow-lg shadow-brand-cyan/25 transition hover:bg-cyan-300 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
-              {isCreating
+              {claimMutation.isPending
                 ? 'Preparing claim...'
                 : `Claim ${selectedAssetIds.length} ${selectedAssetIds.length === 1 ? 'token' : 'tokens'}`}
             </button>
