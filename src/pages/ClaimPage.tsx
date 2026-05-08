@@ -17,7 +17,7 @@ import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocati
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 
 export default function ClaimPage() {
-  const { stakeAddress, connected, networkId } = useWalletStore();
+  const { stakeAddress, connected } = useWalletStore();
   const [lookupAddress, setLookupAddress] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
@@ -154,7 +154,6 @@ export default function ClaimPage() {
 
       <ClaimStatusDisplay
         state={claimFlow.state}
-        networkId={networkId}
         onReset={claimFlow.reset}
       />
     </div>

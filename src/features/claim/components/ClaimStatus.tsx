@@ -1,10 +1,10 @@
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { truncateHash } from '@/utils/format';
+import { useNetworkStore, type Network } from '@/store/network-state';
 import type { ClaimFlowStep } from '@/types/claim';
 
 interface ClaimStatusProps {
   state: ClaimFlowStep;
-  networkId: number | null;
   onReset: () => void;
 }
 
@@ -14,12 +14,13 @@ const INFO_MESSAGES: Partial<Record<ClaimFlowStep['step'], string>> = {
   polling: 'Waiting for the vending machine to deliver rewards...',
 };
 
-function explorerTxUrl(txHash: string, networkId: number | null): string {
-  const host = networkId === 1 ? 'cexplorer.io' : 'preview.cexplorer.io';
+function explorerTxUrl(txHash: string, network: Network): string {
+  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
   return `https://${host}/tx/${txHash}`;
 }
 
-export function ClaimStatusDisplay({ state, networkId, onReset }: ClaimStatusProps) {
+export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
+  const network = useNetworkStore((s) => s.selectedNetwork);
   if (state.step === 'idle' || state.step === 'awaiting_deposit') return null;
 
   if (state.step === 'success') {
@@ -36,7 +37,7 @@ export function ClaimStatusDisplay({ state, networkId, onReset }: ClaimStatusPro
         />
         {state.txHash && (
           <a
-            href={explorerTxUrl(state.txHash, networkId)}
+            href={explorerTxUrl(state.txHash, network)}
             target="_blank"
             rel="noreferrer"
             className="text-xs text-brand-cyan underline hover:text-cyan-300"
@@ -78,7 +79,7 @@ export function ClaimStatusDisplay({ state, networkId, onReset }: ClaimStatusPro
       <FeedbackBanner tone="info" title="Claim in progress" message={message} />
       {state.step === 'polling' && state.txHash && (
         <a
-          href={explorerTxUrl(state.txHash, networkId)}
+          href={explorerTxUrl(state.txHash, network)}
           target="_blank"
           rel="noreferrer"
           className="text-xs text-brand-cyan underline hover:text-cyan-300"

@@ -10,7 +10,7 @@ export function truncateHash(value: string, leading = 8, trailing = 6): string {
 /** Map Cardano networkId to a human label. */
 export function getNetworkLabel(networkId: number | null): string {
   if (networkId === null) return 'Unknown';
-  return networkId === 0 ? 'Testnet' : 'Mainnet';
+  return networkId === 0 ? 'Preview' : 'Mainnet';
 }
 
 /** Convert lovelace (1/1,000,000 ADA) to ADA string. */
