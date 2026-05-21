@@ -59,7 +59,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const body = (await request.json().catch(() => null)) as
     | { staking_address?: unknown; session_id?: unknown; selected?: unknown; overhead_fee?: unknown }
     | null;
-  if (body?.overhead_fee !== undefined && typeof body.overhead_fee !== 'number') {
+  if (body?.overhead_fee !== undefined && body?.overhead_fee !== null && typeof body.overhead_fee !== 'number') {
     return errorResponse('overhead_fee must be a number', 400);
   }
 
