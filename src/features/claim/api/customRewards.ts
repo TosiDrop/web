@@ -26,9 +26,7 @@ export async function getCustomRewards({
     staking_address: stakeAddress,
     session_id: sessionIdFor(stakeAddress),
     selected: selected.join(','),
+    ...(overheadFee !== undefined ? { overhead_fee: overheadFee } : {}),
   };
-  if (overheadFee !== undefined) {
-    body.overhead_fee = overheadFee;
-  }
   return apiClient.post<CustomRewardsResult>('/api/getCustomRewards', body);
 }
