@@ -1,26 +1,46 @@
 import { useState } from 'react';
+import { IconCheck } from '@tabler/icons-react';
 import type { ClaimableToken } from '@/shared/rewards';
 import { cn } from '@/lib/utils';
 
 interface DistributionCardProps {
   token: ClaimableToken;
-  onClaim: () => void;
-  disabled?: boolean;
+  selected: boolean;
+  onToggle: () => void;
 }
 
-export function DistributionCard({ token, onClaim, disabled }: DistributionCardProps) {
+export function DistributionCard({ token, selected, onToggle }: DistributionCardProps) {
   const [imgFailed, setImgFailed] = useState(false);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
   });
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={selected}
       className={cn(
-        'group flex flex-col justify-between rounded-xl border bg-surface-raised p-4 transition hover:bg-surface-overlay',
-        token.premium ? 'border-purple-500/25' : 'border-border-subtle'
+        'group relative flex flex-col justify-between rounded-xl border p-4 text-left transition',
+        selected
+          ? 'border-brand-cyan/40 bg-surface-overlay'
+          : token.premium
+          ? 'border-purple-500/25 bg-surface-raised hover:bg-surface-overlay'
+          : 'border-border-subtle bg-surface-raised hover:bg-surface-overlay',
       )}
     >
+      <span
+        aria-hidden
+        className={cn(
+          'absolute right-3 top-3 flex h-4 w-4 items-center justify-center rounded border transition',
+          selected
+            ? 'border-brand-cyan bg-brand-cyan text-surface-base'
+            : 'border-border-default bg-surface-inset',
+        )}
+      >
+        {selected && <IconCheck size={11} stroke={3} />}
+      </span>
+
       <div className="flex items-center gap-2.5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
           {imgFailed || !token.logo ? (
@@ -42,21 +62,12 @@ export function DistributionCard({ token, onClaim, disabled }: DistributionCardP
         )}
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-lg font-semibold tabular-nums text-white truncate">
-            {formattedAmount}
-          </p>
-          <p className="text-[11px] text-slate-500">{token.ticker}</p>
-        </div>
-        <button
-          onClick={onClaim}
-          disabled={disabled}
-          className="shrink-0 rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-slate-400 transition hover:border-brand-cyan/30 hover:text-brand-cyan disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border-subtle disabled:hover:text-slate-400"
-        >
-          Claim
-        </button>
+      <div className="mt-4">
+        <p className="text-lg font-semibold tabular-nums text-white truncate">
+          {formattedAmount}
+        </p>
+        <p className="text-[11px] text-slate-500">{token.ticker}</p>
       </div>
-    </div>
+    </button>
   );
 }
