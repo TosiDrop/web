@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { users } from '../../db/schema';
 import type { Env } from '../types/env';
 import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { verifyProfileSignature } from '../services/verifyProfileSignature';
 
 const MAX_NAME_LEN = 50;
 const MAX_BIO_LEN = 280;
@@ -72,9 +73,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     avatarUrl?: string;
     walletProvider?: string;
     onboardingCompleted?: boolean;
-    // Signed message proving ownership of the stake address. Carried today for
-    // forward-compatibility; server-side verification (CIP-30) is tracked as
-    // a cross-cutting follow-up so it can upgrade profileData + user in one PR.
+    // CIP-30 datasignature proving ownership of stakeAddress. Required.
     signature?: string;
     key?: string;
     message?: string;
@@ -88,6 +87,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   if (!body.stakeAddress || !body.stakeAddress.startsWith('stake')) {
     return errorResponse('stakeAddress must be a bech32 stake address', 400, origin);
+  }
+
+  // Authentication: caller must prove ownership of stakeAddress via a fresh
+  // CIP-30 datasignature. Without this, anyone could overwrite any profile.
+  const verification = verifyProfileSignature({
+    stakeAddress: body.stakeAddress,
+    signature: body.signature,
+    key: body.key,
+    message: body.message,
+  });
+  if (!verification.ok) {
+    return errorResponse(verification.reason, verification.status, origin);
   }
 
   if (body.displayName && body.displayName.length > MAX_NAME_LEN) {
