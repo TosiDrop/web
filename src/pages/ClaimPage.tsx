@@ -14,6 +14,7 @@ import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
 import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
 import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
 import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocation';
+import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 
 export default function ClaimPage() {
@@ -146,6 +147,7 @@ export default function ClaimPage() {
         </div>
 
         <div className="space-y-4">
+          <RewardsSummary selectedCount={selectedAssetIds.length} />
           <RewardsAllocation tokens={rewards ?? []} />
           <WalletComposition />
           <NetworkStatusWidget />
