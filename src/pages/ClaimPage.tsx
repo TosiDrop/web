@@ -147,7 +147,7 @@ export default function ClaimPage() {
         </div>
 
         <div className="space-y-4">
-          <RewardsSummary selectedCount={selectedAssetIds.length} />
+          <RewardsSummary tokenCount={rewards?.length ?? 0} />
           <RewardsAllocation tokens={rewards ?? []} />
           <WalletComposition />
           <NetworkStatusWidget />

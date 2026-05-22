@@ -2,7 +2,7 @@ import { useEstimateFees } from '@/features/rewards/api/fees.queries';
 import { formatAda } from '@/utils/format';
 
 interface RewardsSummaryProps {
-  selectedCount: number;
+  tokenCount: number;
 }
 
 function FeeRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -17,14 +17,14 @@ function FeeRow({ label, value, hint }: { label: string; value: string; hint?: s
   );
 }
 
-export function RewardsSummary({ selectedCount }: RewardsSummaryProps) {
-  const { data, isLoading, error } = useEstimateFees(selectedCount);
+export function RewardsSummary({ tokenCount }: RewardsSummaryProps) {
+  const { data, isLoading, error } = useEstimateFees(tokenCount);
 
-  if (selectedCount === 0) {
+  if (tokenCount === 0) {
     return (
       <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
         <h3 className="text-xs font-medium text-slate-400">Fee breakdown</h3>
-        <p className="mt-3 text-xs text-slate-500">Select tokens to see fees.</p>
+        <p className="mt-3 text-xs text-slate-500">No rewards to claim.</p>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export function RewardsSummary({ selectedCount }: RewardsSummaryProps) {
       <div className="flex items-baseline justify-between">
         <h3 className="text-xs font-medium text-slate-400">Fee breakdown</h3>
         <span className="text-[10px] uppercase tracking-wide text-slate-500">
-          {selectedCount} {selectedCount === 1 ? 'token' : 'tokens'}
+          {tokenCount} {tokenCount === 1 ? 'token' : 'tokens'}
         </span>
       </div>
 
@@ -59,7 +59,7 @@ export function RewardsSummary({ selectedCount }: RewardsSummaryProps) {
             />
             <FeeRow
               label="Token fee"
-              hint={`× ${selectedCount}`}
+              hint={`× ${tokenCount}`}
               value={`${formatAda(data.tokens_fee)} ADA`}
             />
             <FeeRow
