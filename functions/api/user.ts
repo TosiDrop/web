@@ -1,16 +1,8 @@
+import { sql, eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/d1';
+import { users } from '../../db/schema';
 import type { Env } from '../types/env';
 import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
-
-interface UserRow {
-  stake_address: string;
-  display_name: string | null;
-  bio: string | null;
-  avatar_url: string | null;
-  wallet_provider: string | null;
-  onboarding_completed: number;
-  created_at: string;
-  updated_at: string;
-}
 
 const MAX_NAME_LEN = 50;
 const MAX_BIO_LEN = 280;
@@ -36,9 +28,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const row = await env.DB.prepare(
-      'SELECT * FROM users WHERE stake_address = ?'
-    ).bind(stakeAddress).first<UserRow>();
+    const db = drizzle(env.DB);
+    const row = await db
+      .select()
+      .from(users)
+      .where(eq(users.stakeAddress, stakeAddress))
+      .get();
 
     if (!row) {
       return jsonResponse({ exists: false, user: null }, 200, origin);
@@ -47,13 +42,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return jsonResponse({
       exists: true,
       user: {
-        stakeAddress: row.stake_address,
-        displayName: row.display_name,
+        stakeAddress: row.stakeAddress,
+        displayName: row.displayName,
         bio: row.bio,
-        avatarUrl: row.avatar_url,
-        walletProvider: row.wallet_provider,
-        onboardingCompleted: row.onboarding_completed === 1,
-        createdAt: row.created_at,
+        avatarUrl: row.avatarUrl,
+        walletProvider: row.walletProvider,
+        onboardingCompleted: row.onboardingCompleted === 1,
+        createdAt: row.createdAt,
       },
     }, 200, origin);
   } catch (err) {
@@ -111,24 +106,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    await env.DB.prepare(`
-      INSERT INTO users (stake_address, display_name, bio, avatar_url, wallet_provider, onboarding_completed, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-      ON CONFLICT(stake_address) DO UPDATE SET
-        display_name = COALESCE(excluded.display_name, users.display_name),
-        bio = COALESCE(excluded.bio, users.bio),
-        avatar_url = COALESCE(excluded.avatar_url, users.avatar_url),
-        wallet_provider = COALESCE(excluded.wallet_provider, users.wallet_provider),
-        onboarding_completed = COALESCE(excluded.onboarding_completed, users.onboarding_completed),
-        updated_at = datetime('now')
-    `).bind(
-      body.stakeAddress,
-      body.displayName ?? null,
-      body.bio ?? null,
-      body.avatarUrl ?? null,
-      body.walletProvider ?? null,
-      body.onboardingCompleted ? 1 : 0,
-    ).run();
+    const db = drizzle(env.DB);
+
+    await db
+      .insert(users)
+      .values({
+        stakeAddress: body.stakeAddress,
+        displayName: body.displayName ?? null,
+        bio: body.bio ?? null,
+        avatarUrl: body.avatarUrl ?? null,
+        walletProvider: body.walletProvider ?? null,
+        onboardingCompleted: body.onboardingCompleted ? 1 : 0,
+      })
+      .onConflictDoUpdate({
+        target: users.stakeAddress,
+        set: {
+          displayName: sql`COALESCE(excluded.display_name, ${users.displayName})`,
+          bio: sql`COALESCE(excluded.bio, ${users.bio})`,
+          avatarUrl: sql`COALESCE(excluded.avatar_url, ${users.avatarUrl})`,
+          walletProvider: sql`COALESCE(excluded.wallet_provider, ${users.walletProvider})`,
+          onboardingCompleted: sql`COALESCE(excluded.onboarding_completed, ${users.onboardingCompleted})`,
+          updatedAt: sql`(datetime('now'))`,
+        },
+      });
 
     return jsonResponse({ success: true, stakeAddress: body.stakeAddress }, 200, origin);
   } catch (err) {
