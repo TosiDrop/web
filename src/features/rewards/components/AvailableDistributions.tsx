@@ -1,5 +1,9 @@
+import { useMemo } from 'react';
 import type { ClaimableToken } from '@/shared/rewards';
 import { useClaimStore } from '@/store/claim-state';
+import { useFavorites } from '@/features/favorites/hooks/useFavorites';
+import { sortFavoritesFirst } from '@/features/favorites/utils/sortFavoritesFirst';
+import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
 
 interface AvailableDistributionsProps {
@@ -10,6 +14,13 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
   const setSelected = useClaimStore((s) => s.setSelected);
+
+  const { connected, favoriteIds, isFavorite, toggle: toggleFavorite } = useFavorites();
+
+  const sortedTokens = useMemo(
+    () => sortFavoritesFirst(tokens, favoriteIds),
+    [tokens, favoriteIds],
+  );
 
   if (tokens.length === 0) {
     return (
@@ -44,13 +55,28 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
         </button>
       </div>
 
+      <FavoritesSaveBar />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {tokens.map((token) => (
+        {sortedTokens.map((token) => (
           <DistributionCard
             key={token.assetId}
             token={token}
             selected={selectedAssetIds.includes(token.assetId)}
             onToggle={() => toggleAsset(token.assetId)}
+            favorite={
+              connected
+                ? {
+                    active: isFavorite(token.assetId),
+                    onToggle: () =>
+                      toggleFavorite({
+                        assetId: token.assetId,
+                        ticker: token.ticker,
+                        logo: token.logo,
+                      }),
+                  }
+                : undefined
+            }
           />
         ))}
       </div>
