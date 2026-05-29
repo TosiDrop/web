@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-const verifyMock = vi.fn(() => true);
+const verifyMock = vi.fn((..._a: unknown[]) => true);
 vi.mock('@cardano-foundation/cardano-verify-datasignature', () => ({
   default: (...a: unknown[]) => verifyMock(...a),
 }));
@@ -12,7 +12,7 @@ const STAKE = 'stake1' + 'u'.repeat(40);
 
 describe('signFavoritesUpdateMessage', () => {
   it('signs with the stake address and builds a server-verifiable message', async () => {
-    const signData = vi.fn(async () => ({ signature: 'sig', key: 'key' }));
+    const signData = vi.fn(async (_address: string, _payload: string) => ({ signature: 'sig', key: 'key' }));
     const wallet = { signData };
 
     const out = await signFavoritesUpdateMessage({
