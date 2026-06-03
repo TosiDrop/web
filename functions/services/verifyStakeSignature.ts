@@ -1,10 +1,11 @@
 import verifySignature from '@cardano-foundation/cardano-verify-datasignature';
 
-const MESSAGE_PREFIX = 'Tosi favorites update';
-// Mirrors buildFavoritesMessage() on the client. The ISO timestamp bounds
-// replay; the trailing digest binds the signature to the exact favorite set.
+const MESSAGE_PREFIX = 'Tosi preferences update';
+// Mirrors signPreferencesUpdateMessage() on the client. The ISO timestamp
+// bounds replay; the trailing digests bind the signature to the exact
+// preference sets.
 const MESSAGE_RE =
-  /^Tosi favorites update for (stake[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nfavorites: (\d+) \[([0-9a-f]{16})\]$/;
+  /^Tosi preferences update for (stake[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nfavorites: (\d+) \[([0-9a-f]{16})\]\ndislikes: (\d+) \[([0-9a-f]{16})\]$/;
 const FRESHNESS_WINDOW_MS = 5 * 60 * 1000;
 
 export type VerifyResult =
@@ -14,6 +15,7 @@ export type VerifyResult =
 interface VerifyInput {
   stakeAddress: string;
   favorites: string[];
+  dislikes: string[];
   signature?: unknown;
   key?: unknown;
   message?: unknown;
@@ -33,6 +35,7 @@ export async function favoritesDigest(assetIds: string[]): Promise<string> {
 export async function verifyStakeSignature({
   stakeAddress,
   favorites,
+  dislikes,
   signature,
   key,
   message,
@@ -49,7 +52,7 @@ export async function verifyStakeSignature({
   if (!match) {
     return { ok: false, status: 401, reason: 'Malformed signing message' };
   }
-  const [, signedStake, signedAt, signedCount, signedDigest] = match;
+  const [, signedStake, signedAt, favCount, favDigest, disCount, disDigest] = match;
 
   if (signedStake !== stakeAddress) {
     return { ok: false, status: 401, reason: 'Signed stake address does not match request' };
@@ -63,12 +66,17 @@ export async function verifyStakeSignature({
     return { ok: false, status: 401, reason: 'Signed message is stale (>5 min)' };
   }
 
-  if (Number(signedCount) !== favorites.length) {
+  if (Number(favCount) !== favorites.length) {
     return { ok: false, status: 401, reason: 'Favorite count does not match signed message' };
   }
-  const expectedDigest = await favoritesDigest(favorites);
-  if (expectedDigest !== signedDigest) {
+  if ((await favoritesDigest(favorites)) !== favDigest) {
     return { ok: false, status: 401, reason: 'Favorites payload does not match signed message' };
+  }
+  if (Number(disCount) !== dislikes.length) {
+    return { ok: false, status: 401, reason: 'Dislike count does not match signed message' };
+  }
+  if ((await favoritesDigest(dislikes)) !== disDigest) {
+    return { ok: false, status: 401, reason: 'Dislikes payload does not match signed message' };
   }
 
   let verified: boolean;
