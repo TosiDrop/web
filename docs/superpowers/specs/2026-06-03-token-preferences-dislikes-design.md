@@ -100,7 +100,8 @@ All inside `src/features/favorites/` (directory name kept; it is the preferences
   connected, stakeAddress }`. `toggleFavorite` removes the token from dislikes if present
   (and vice versa). Dirty check compares both sets.
 - `utils/signFavoritesUpdate.ts` → `utils/signPreferencesUpdate.ts` (new message format).
-- `utils/sortFavoritesFirst.ts` stays; add `utils/partitionPreferences.ts`:
+- `utils/sortFavoritesFirst.ts` is absorbed by `partitionPreferences` (visible list is
+  favorites-first) and removed. Add `utils/partitionPreferences.ts`:
   `partitionPreferences(tokens, favoriteIds, dislikedIds)` →
   `{ visible: T[] /* favorites first */, hidden: T[] /* disliked */ }`.
 - New `components/DislikeButton.tsx`: thumbs-down twin of `FavoriteStarButton`

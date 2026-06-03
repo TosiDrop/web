@@ -1,14 +1,15 @@
-interface SignFavoritesPayload {
+interface SignPreferencesPayload {
   wallet: {
     signData: (address: string, payload: string) => Promise<{ signature: string; key: string }>;
   };
   stakeAddress: string;
-  assetIds: string[];
+  favoriteIds: string[];
+  dislikedIds: string[];
 }
 
 // Must stay byte-identical to favoritesDigest() in
 // functions/services/verifyStakeSignature.ts — the server recomputes and compares.
-async function favoritesDigest(assetIds: string[]): Promise<string> {
+async function preferencesDigest(assetIds: string[]): Promise<string> {
   const sorted = [...assetIds].sort();
   const data = new TextEncoder().encode(sorted.join(','));
   const hash = await crypto.subtle.digest('SHA-256', data);
@@ -24,15 +25,18 @@ function toHex(value: string): string {
     .join('');
 }
 
-export async function signFavoritesUpdateMessage({
+export async function signPreferencesUpdateMessage({
   wallet,
   stakeAddress,
-  assetIds,
-}: SignFavoritesPayload): Promise<{ signature: string; key: string; message: string }> {
-  const digest = await favoritesDigest(assetIds);
+  favoriteIds,
+  dislikedIds,
+}: SignPreferencesPayload): Promise<{ signature: string; key: string; message: string }> {
+  const favDigest = await preferencesDigest(favoriteIds);
+  const disDigest = await preferencesDigest(dislikedIds);
   const message =
-    `Tosi favorites update for ${stakeAddress} at ${new Date().toISOString()}\n` +
-    `favorites: ${assetIds.length} [${digest}]`;
+    `Tosi preferences update for ${stakeAddress} at ${new Date().toISOString()}\n` +
+    `favorites: ${favoriteIds.length} [${favDigest}]\n` +
+    `dislikes: ${dislikedIds.length} [${disDigest}]`;
 
   // CIP-30: sign with the stake/reward address so the server can verify
   // stake-address ownership.
