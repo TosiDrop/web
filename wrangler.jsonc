@@ -12,11 +12,11 @@
       "id": "7a6e9597aa6d4e708c3e100c63ab2881"
     }
   ],
-  // D1 is optional — the /api/user and /api/userFavorites handlers degrade
+  // D1 is optional — the /api/user and /api/tokenPreferences handlers degrade
   // gracefully if the binding is missing. To enable persistence, run:
   //   wrangler d1 create tosi-users
   //   wrangler d1 execute tosi-users --remote --file=migrations/0001_create_users.sql
-  //   wrangler d1 execute tosi-users --remote --file=migrations/0002_create_user_favorites.sql
+  //   wrangler d1 execute tosi-users --remote --file=migrations/0002_create_token_preferences.sql
   // then uncomment the block below and paste the UUID from the create command.
   //
   // "d1_databases": [
