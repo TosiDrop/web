@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { useFavorites } from '@/features/favorites/hooks/useFavorites';
+import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { FavoriteStarButton } from './FavoriteStarButton';
+import { DislikeButton } from './DislikeButton';
 import { FavoritesSaveBar } from './FavoritesSaveBar';
-import type { FavoriteToken } from '@/features/favorites/types';
+import type { TokenRef } from '@/features/favorites/types';
 
-function FavoriteRow({
+function TokenRow({
   token,
-  active,
-  onToggle,
+  control,
 }: {
-  token: FavoriteToken;
-  active: boolean;
-  onToggle: () => void;
+  token: TokenRef;
+  control: React.ReactNode;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   return (
@@ -31,15 +30,22 @@ function FavoriteRow({
       <span className="truncate text-sm font-medium text-white">
         {token.ticker || token.assetId}
       </span>
-      <span className="ml-auto">
-        <FavoriteStarButton active={active} onToggle={onToggle} />
-      </span>
+      <span className="ml-auto">{control}</span>
     </li>
   );
 }
 
 export function FavoritesTab() {
-  const { favorites, connected, isFavorite, toggle, isLoading } = useFavorites();
+  const {
+    favorites,
+    dislikes,
+    connected,
+    isFavorite,
+    isDisliked,
+    toggleFavorite,
+    toggleDislike,
+    isLoading,
+  } = usePreferences();
 
   return (
     <div className="space-y-6">
@@ -63,25 +69,58 @@ export function FavoritesTab() {
         <>
           <FavoritesSaveBar />
           {isLoading ? (
-            <p className="text-sm text-slate-500 animate-pulse">Loading favorites…</p>
-          ) : favorites.length === 0 ? (
-            <div className="card-premium px-6 py-16 text-center">
-              <p className="label-eyebrow">No favorites yet</p>
-              <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-                Tap the star on a token in your claimable list to add it here.
-              </p>
-            </div>
+            <p className="text-sm text-slate-500 animate-pulse">Loading preferences…</p>
           ) : (
-            <ul className="space-y-2">
-              {favorites.map((token) => (
-                <FavoriteRow
-                  key={token.assetId}
-                  token={token}
-                  active={isFavorite(token.assetId)}
-                  onToggle={() => toggle(token)}
-                />
-              ))}
-            </ul>
+            <>
+              {favorites.length === 0 ? (
+                <div className="card-premium px-6 py-16 text-center">
+                  <p className="label-eyebrow">No favorites yet</p>
+                  <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
+                    Tap the star on a token in your claimable list to add it here.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {favorites.map((token) => (
+                    <TokenRow
+                      key={token.assetId}
+                      token={token}
+                      control={
+                        <FavoriteStarButton
+                          active={isFavorite(token.assetId)}
+                          onToggle={() => toggleFavorite(token)}
+                        />
+                      }
+                    />
+                  ))}
+                </ul>
+              )}
+
+              <div className="pt-4">
+                <h3 className="text-sm font-medium text-white">Hidden tokens</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Disliked tokens are tucked into a collapsed section on the claim page.
+                </p>
+                {dislikes.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-500">Nothing hidden.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {dislikes.map((token) => (
+                      <TokenRow
+                        key={token.assetId}
+                        token={token}
+                        control={
+                          <DislikeButton
+                            active={isDisliked(token.assetId)}
+                            onToggle={() => toggleDislike(token)}
+                          />
+                        }
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
           )}
         </>
       )}

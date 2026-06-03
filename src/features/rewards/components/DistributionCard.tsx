@@ -3,15 +3,17 @@ import { IconCheck } from '@tabler/icons-react';
 import type { ClaimableToken } from '@/shared/rewards';
 import { cn } from '@/lib/utils';
 import { FavoriteStarButton } from '@/features/favorites/components/FavoriteStarButton';
+import { DislikeButton } from '@/features/favorites/components/DislikeButton';
 
 interface DistributionCardProps {
   token: ClaimableToken;
   selected: boolean;
   onToggle: () => void;
   favorite?: { active: boolean; onToggle: () => void };
+  dislike?: { active: boolean; onToggle: () => void };
 }
 
-export function DistributionCard({ token, selected, onToggle, favorite }: DistributionCardProps) {
+export function DistributionCard({ token, selected, onToggle, favorite, dislike }: DistributionCardProps) {
   const [imgFailed, setImgFailed] = useState(false);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
@@ -24,6 +26,13 @@ export function DistributionCard({ token, selected, onToggle, favorite }: Distri
           active={favorite.active}
           onToggle={favorite.onToggle}
           className="absolute left-3 top-3 z-10"
+        />
+      )}
+      {dislike && (
+        <DislikeButton
+          active={dislike.active}
+          onToggle={dislike.onToggle}
+          className={cn('absolute top-3 z-10', favorite ? 'left-10' : 'left-3')}
         />
       )}
       <button
@@ -51,7 +60,12 @@ export function DistributionCard({ token, selected, onToggle, favorite }: Distri
           {selected && <IconCheck size={11} stroke={3} />}
         </span>
 
-        <div className={cn('flex items-center gap-2.5', favorite && 'pl-7')}>
+        <div
+          className={cn(
+            'flex items-center gap-2.5',
+            favorite && dislike ? 'pl-14' : (favorite || dislike) && 'pl-7',
+          )}
+        >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
             {imgFailed || !token.logo ? (
               token.ticker.slice(0, 2)
