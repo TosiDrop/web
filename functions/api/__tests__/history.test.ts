@@ -81,7 +81,7 @@ describe('GET /api/history', () => {
     const rows = [ROW, { ...ROW, reward_id: 'r2' }, { ...ROW, reward_id: 'r3' }];
     const db = fakeDb(rows, 30);
     const res = await onRequestGet(ctx(`staking_address=${STAKE}&limit=2`, { DB: db }));
-    const body = await res.json();
+    const body = (await res.json()) as { items: unknown[]; hasMore: boolean; total: number };
     expect(body.items).toHaveLength(2);
     expect(body.hasMore).toBe(true);
     expect(body.total).toBe(30);

@@ -1,7 +1,14 @@
-import { useState } from 'react';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  IconAlertCircle,
+  IconArrowsSort,
+  IconChevronLeft,
+  IconChevronRight,
+} from '@tabler/icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDeliveredRewards, type DeliveredReward } from '@/features/history/api/history.queries';
+import { useWithdrawalHistory, type HistoryOrder } from '@/features/history/hooks/useWithdrawalHistory';
 
 const PAGE_SIZE = 12;
 
@@ -121,6 +128,20 @@ export function HistoryList() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const { data, isLoading, error } = useDeliveredRewards(stakeAddress);
   const [showAll, setShowAll] = useState(false);
+  const [page, setPage] = useState(1);
+  const [order, setOrder] = useState<HistoryOrder>('desc');
+  const history = useWithdrawalHistory(stakeAddress, page, order);
+
+  // First visit: the delivered-rewards fetch also syncs D1 server-side, so
+  // refresh the archive query once it settles.
+  const queryClient = useQueryClient();
+  const invalidated = useRef(false);
+  useEffect(() => {
+    if (data && !invalidated.current) {
+      invalidated.current = true;
+      queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
+    }
+  }, [data, queryClient, stakeAddress]);
 
   if (!stakeAddress) {
     return (
@@ -133,7 +154,10 @@ export function HistoryList() {
 
   if (isLoading) return <SkeletonList />;
 
-  if (error) {
+  const serverMode =
+    !!history.data && !history.data.degraded && history.data.total > 0;
+
+  if (error && !serverMode) {
     return (
       <div className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
         <IconAlertCircle size={18} stroke={1.6} className="mt-0.5 shrink-0 text-rose-400" />
@@ -145,7 +169,7 @@ export function HistoryList() {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!serverMode && (!data || data.length === 0)) {
     return (
       <StateMessage
         eyebrow="No history yet"
@@ -154,8 +178,16 @@ export function HistoryList() {
     );
   }
 
-  const visible = showAll ? data : data.slice(0, PAGE_SIZE);
-  const hasMore = data.length > visible.length;
+  const totalPages = serverMode
+    ? Math.max(1, Math.ceil(history.data!.total / history.data!.limit))
+    : 1;
+  const rows: DeliveredReward[] = serverMode
+    ? history.data!.rows
+    : showAll
+      ? data!
+      : data!.slice(0, PAGE_SIZE);
+  const clientHasMore = !serverMode && !!data && data.length > rows.length;
+  const count = serverMode ? history.data!.total : data!.length;
 
   return (
     <section className="card-premium overflow-hidden">
@@ -163,26 +195,64 @@ export function HistoryList() {
         <div className="flex items-center gap-2">
           <p className="label-eyebrow">Delivered</p>
           <span className="rounded-full border border-border-subtle bg-surface-inset/70 px-2 py-0.5 font-mono text-[10px] text-slate-300">
-            {data.length}
+            {count}
           </span>
         </div>
-        <p className="text-[11px] text-slate-500">Most recent first</p>
+        {serverMode ? (
+          <button
+            type="button"
+            onClick={() => {
+              setOrder((o) => (o === 'desc' ? 'asc' : 'desc'));
+              setPage(1);
+            }}
+            className="flex items-center gap-1 text-[11px] text-slate-500 transition hover:text-slate-300"
+          >
+            <IconArrowsSort size={12} stroke={1.6} />
+            {order === 'desc' ? 'Newest first' : 'Oldest first'}
+          </button>
+        ) : (
+          <p className="text-[11px] text-slate-500">Most recent first</p>
+        )}
       </header>
 
       <ul className="divide-y divide-border-subtle/50">
-        {visible.map((row) => (
+        {rows.map((row) => (
           <HistoryRow key={row.key} row={row} />
         ))}
       </ul>
 
-      {hasMore && (
+      {serverMode && totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border-subtle/60 px-5 py-3">
+          <button
+            type="button"
+            disabled={page <= 1 || history.isFetching}
+            onClick={() => setPage((p) => p - 1)}
+            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <IconChevronLeft size={12} stroke={2} /> Prev
+          </button>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+            Page {page} / {totalPages}
+          </p>
+          <button
+            type="button"
+            disabled={!history.data!.hasMore || history.isFetching}
+            onClick={() => setPage((p) => p + 1)}
+            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next <IconChevronRight size={12} stroke={2} />
+          </button>
+        </div>
+      )}
+
+      {clientHasMore && (
         <div className="border-t border-border-subtle/60 px-5 py-3 text-center">
           <button
             type="button"
             onClick={() => setShowAll(true)}
             className="font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200"
           >
-            Show {data.length - visible.length} more
+            Show {data!.length - rows.length} more
           </button>
         </div>
       )}
