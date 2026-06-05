@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { IconCopy, IconCheck, IconWallet, IconChartLine, IconClock } from '@tabler/icons-react';
+import { IconCopy, IconCheck, IconWallet, IconChartLine, IconClock, IconStar } from '@tabler/icons-react';
 import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
 import { NetworkSelector } from '@/features/preferences/components/NetworkSelector';
 import { HistoryList } from '@/features/history/components/HistoryList';
+import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
   { name: 'History', Icon: IconClock },
+  { name: 'Favorites', Icon: IconStar },
   { name: 'Analytics', Icon: IconChartLine },
   { name: 'Preferences', Icon: IconWallet },
 ];
@@ -236,6 +238,9 @@ export default function ProfilePage() {
         <TabPanels className="mt-7">
           <TabPanel>
             <HistoryTab />
+          </TabPanel>
+          <TabPanel>
+            <FavoritesTab />
           </TabPanel>
           <TabPanel>
             <AnalyticsTab />
