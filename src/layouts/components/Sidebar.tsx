@@ -3,6 +3,7 @@ import { Dialog, DialogPanel } from '@headlessui/react';
 import {
   IconGift,
   IconUserCircle,
+  IconUsers,
   IconFileText,
   IconExternalLink,
   IconX,
@@ -17,6 +18,7 @@ import TosiDropLogo from '@/assets/tosidrop_logo.png';
 const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
   { name: 'Profile', href: '/profile', icon: IconUserCircle },
+  { name: 'Team', href: '/team', icon: IconUsers },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },
 ];
 
