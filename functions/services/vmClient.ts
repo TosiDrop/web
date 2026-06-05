@@ -13,9 +13,7 @@ function vmBaseUrl(env: Env): string {
   return env.VM_BASE_URL || DEFAULT_VM_BASE_URL;
 }
 
-export function sessionIdFor(stakeAddress: string): string {
-  return stakeAddress.slice(0, 40);
-}
+export { sessionIdFor } from '../../src/shared/claim/session';
 
 // vm-sdk ships `checkStatusCustomRequest` but does not re-export it from its
 // index, so we call the VM API's generic `api.php?action=` entrypoint directly.
