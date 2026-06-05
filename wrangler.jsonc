@@ -12,20 +12,18 @@
       "id": "7a6e9597aa6d4e708c3e100c63ab2881"
     }
   ],
-  // D1 is optional — the /api/user and /api/tokenPreferences handlers degrade
-  // gracefully if the binding is missing. To enable persistence, run:
-  //   wrangler d1 create tosi-users
-  //   wrangler d1 execute tosi-users --remote --file=migrations/0001_create_users.sql
-  //   wrangler d1 execute tosi-users --remote --file=migrations/0002_create_token_preferences.sql
-  // then uncomment the block below and paste the UUID from the create command.
-  //
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "tosi-users",
-  //     "database_id": "00000000-0000-0000-0000-000000000000"
-  //   }
-  // ],
+  // D1 persistence (tosidrop-db on the tosidrop.me account). Handlers
+  // feature-detect the binding and degrade gracefully when it is absent, so
+  // local dev and previews without D1 still boot. Schema lives in
+  // migrations/; apply new files with:
+  //   wrangler d1 execute tosidrop-db --remote --file=migrations/<file>.sql
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tosidrop-db",
+      "database_id": "689c7608-8a46-415e-9f46-99849222031c"
+    }
+  ],
   "vars": {
     "VITE_VM_API_KEY": "{{VITE_VM_API_KEY}}"
   }
