@@ -1,5 +1,9 @@
+import { useMemo, useState } from 'react';
 import type { ClaimableToken } from '@/shared/rewards';
 import { useClaimStore } from '@/store/claim-state';
+import { usePreferences } from '@/features/favorites/hooks/usePreferences';
+import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
+import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
 
 interface AvailableDistributionsProps {
@@ -10,6 +14,23 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
   const setSelected = useClaimStore((s) => s.setSelected);
+
+  const {
+    connected,
+    favoriteIds,
+    dislikedIds,
+    isFavorite,
+    isDisliked,
+    toggleFavorite,
+    toggleDislike,
+  } = usePreferences();
+
+  const [showHidden, setShowHidden] = useState(false);
+
+  const { visible, hidden } = useMemo(
+    () => partitionPreferences(tokens, favoriteIds, dislikedIds),
+    [tokens, favoriteIds, dislikedIds],
+  );
 
   if (tokens.length === 0) {
     return (
@@ -22,18 +43,55 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
     );
   }
 
-  const allSelected = selectedAssetIds.length === tokens.length;
+  const allSelected =
+    visible.length > 0 && visible.every((t) => selectedAssetIds.includes(t.assetId));
 
   const toggleAll = () => {
-    setSelected(allSelected ? [] : tokens.map((t) => t.assetId));
+    setSelected(allSelected ? [] : visible.map((t) => t.assetId));
   };
+
+  // Disliking a selected token also deselects it so hidden tokens can't ride
+  // along into a claim unnoticed.
+  const handleDislike = (token: ClaimableToken) => {
+    if (!isDisliked(token.assetId) && selectedAssetIds.includes(token.assetId)) {
+      toggleAsset(token.assetId);
+    }
+    toggleDislike({ assetId: token.assetId, ticker: token.ticker, logo: token.logo });
+  };
+
+  const renderCard = (token: ClaimableToken) => (
+    <DistributionCard
+      key={token.assetId}
+      token={token}
+      selected={selectedAssetIds.includes(token.assetId)}
+      onToggle={() => toggleAsset(token.assetId)}
+      favorite={
+        connected
+          ? {
+              active: isFavorite(token.assetId),
+              onToggle: () =>
+                toggleFavorite({
+                  assetId: token.assetId,
+                  ticker: token.ticker,
+                  logo: token.logo,
+                }),
+            }
+          : undefined
+      }
+      dislike={
+        connected
+          ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
+          : undefined
+      }
+    />
+  );
 
   return (
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-white">
           Claimable tokens
-          <span className="ml-1.5 text-slate-500">{tokens.length}</span>
+          <span className="ml-1.5 text-slate-500">{visible.length}</span>
         </h2>
         <button
           type="button"
@@ -44,16 +102,29 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
         </button>
       </div>
 
+      <FavoritesSaveBar />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {tokens.map((token) => (
-          <DistributionCard
-            key={token.assetId}
-            token={token}
-            selected={selectedAssetIds.includes(token.assetId)}
-            onToggle={() => toggleAsset(token.assetId)}
-          />
-        ))}
+        {visible.map(renderCard)}
       </div>
+
+      {hidden.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowHidden((v) => !v)}
+            aria-expanded={showHidden}
+            className="font-mono text-[10px] uppercase tracking-wider text-slate-500 transition hover:text-slate-300"
+          >
+            {showHidden ? '▾' : '▸'} Hidden tokens ({hidden.length})
+          </button>
+          {showHidden && (
+            <div className="grid grid-cols-1 gap-3 opacity-70 sm:grid-cols-2 xl:grid-cols-3">
+              {hidden.map(renderCard)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
