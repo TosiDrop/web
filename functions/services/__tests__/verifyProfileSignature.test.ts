@@ -63,6 +63,22 @@ describe('verifyProfileSignature', () => {
     expect(r.ok).toBe(false);
   });
 
+  it('rejects when the underlying verify throws', () => {
+    vi.mocked(verifySignature).mockImplementationOnce(() => {
+      throw new Error('Crypto failure');
+    });
+    const now = new Date('2026-05-21T22:00:00.000Z');
+    const r = verifyProfileSignature({
+      stakeAddress,
+      signature: 'sig',
+      key: 'key',
+      message: goodMessage('2026-05-21T22:00:00.000Z'),
+      now,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/verification failed/i);
+  });
+
   it('accepts a well-formed, fresh, valid signature', () => {
     vi.mocked(verifySignature).mockReturnValueOnce(true);
     const now = new Date('2026-05-21T22:00:00.000Z');

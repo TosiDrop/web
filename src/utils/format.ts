@@ -1,5 +1,3 @@
-import type { Network } from '@/store/network-state';
-
 /**
  * Truncate a hex hash or bech32 address for display.
  * Default: 8 leading + 6 trailing characters.

@@ -9,6 +9,10 @@ export const users = sqliteTable('users', {
   walletProvider: text('wallet_provider'),
   onboardingCompleted: integer('onboarding_completed').notNull().default(0),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  /**
+   * default(sql`(datetime('now'))`) only runs on INSERT; callers must set
+   * updatedAt = sql`(datetime('now'))` on every UPDATE. See functions/api/user.ts.
+   */
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
 });
 
