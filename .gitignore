@@ -13,6 +13,11 @@ dist-ssr
 *.local
 .wrangler/
 
+# Claude / AI assistant artifacts — never commit these
+CLAUDE.md
+.claude/
+docs/superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
