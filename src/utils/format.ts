@@ -1,3 +1,5 @@
+import type { Network } from '@/store/network-state';
+
 /**
  * Truncate a hex hash or bech32 address for display.
  * Default: 8 leading + 6 trailing characters.
@@ -23,4 +25,9 @@ export function formatAda(lovelace: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 6,
   });
+}
+
+export function explorerTxUrl(txHash: string, network: Network = 'mainnet'): string {
+  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
+  return `https://${host}/tx/${txHash}`;
 }
