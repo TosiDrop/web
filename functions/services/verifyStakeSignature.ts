@@ -3,9 +3,11 @@ import verifySignature from '@cardano-foundation/cardano-verify-datasignature';
 const MESSAGE_PREFIX = 'Tosi preferences update';
 // Mirrors signPreferencesUpdateMessage() on the client. The ISO timestamp
 // bounds replay; the trailing digests bind the signature to the exact
-// preference sets.
+// preference sets. The address segment accepts both mainnet (stake1...) and
+// testnet (stake_test1...) bech32 stake addresses — the latter's underscore
+// is not in [a-z0-9].
 const MESSAGE_RE =
-  /^Tosi preferences update for (stake[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nfavorites: (\d+) \[([0-9a-f]{16})\]\ndislikes: (\d+) \[([0-9a-f]{16})\]$/;
+  /^Tosi preferences update for (stake(?:_test)?1[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nfavorites: (\d+) \[([0-9a-f]{16})\]\ndislikes: (\d+) \[([0-9a-f]{16})\]$/;
 const FRESHNESS_WINDOW_MS = 5 * 60 * 1000;
 
 export type VerifyResult =
