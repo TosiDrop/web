@@ -14,11 +14,26 @@ interface DistributionCardProps {
   dislike?: { active: boolean; onToggle: () => void };
 }
 
+// Deterministic swatch color so each token's icon tile reads distinctly,
+// matching the vivid coin tiles in the design.
+const PALETTE = [
+  '#3B82F6', '#22C55E', '#A855F7', '#EC4899', '#EF4444',
+  '#F59E0B', '#14B8A6', '#C084FC', '#64748B',
+];
+
+function colorFor(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
 export function DistributionCard({ token, selected, onToggle, favorite, dislike }: DistributionCardProps) {
   const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
   });
+  const tile = colorFor(token.ticker);
+  const hasImage = !img.failed && !!img.src;
 
   return (
     <div className="relative">
@@ -41,24 +56,23 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
         onClick={onToggle}
         aria-pressed={selected}
         className={cn(
-          'group relative flex w-full flex-col justify-between rounded-xl border p-4 text-left transition',
+          'group relative flex w-full flex-col justify-between rounded-[15px] border bg-[linear-gradient(180deg,#13161F,#10131A)] p-[17px] text-left shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_14px_30px_-22px_rgba(0,0,0,0.7)] transition',
           selected
-            ? 'border-brand-cyan/40 bg-surface-overlay'
-            : token.premium
-            ? 'border-purple-500/25 bg-surface-raised hover:bg-surface-overlay'
-            : 'border-border-subtle bg-surface-raised hover:bg-surface-overlay',
+            ? 'border-accent/40'
+            : 'border-white/[0.07] hover:border-white/[0.14]',
         )}
       >
+        {/* Glow check — selection indicator */}
         <span
           aria-hidden
           className={cn(
-            'absolute right-3 top-3 flex h-4 w-4 items-center justify-center rounded border transition',
+            'absolute right-[15px] top-[15px] flex h-[18px] w-[18px] items-center justify-center rounded-full transition',
             selected
-              ? 'border-brand-cyan bg-brand-cyan text-surface-base'
-              : 'border-border-default bg-surface-inset',
+              ? 'bg-accent text-white shadow-[0_0_0_3px_rgba(99,102,241,0.16)]'
+              : 'border-[1.5px] border-white/20',
           )}
         >
-          {selected && <IconCheck size={11} stroke={3} />}
+          {selected && <IconCheck size={11} stroke={3.2} />}
         </span>
 
         <div
@@ -67,31 +81,34 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
             favorite && dislike ? 'pl-14' : (favorite || dislike) && 'pl-7',
           )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
-            {img.failed || !img.src ? (
-              token.ticker.slice(0, 2)
-            ) : (
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[9px] text-[11px] font-bold tracking-tight text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset]"
+            style={hasImage ? undefined : { backgroundColor: tile }}
+          >
+            {hasImage ? (
               <img
                 src={img.src}
                 alt={token.ticker}
-                className="h-8 w-8 rounded-full"
+                className="h-8 w-8 rounded-[9px] object-cover"
                 onError={img.onError}
               />
+            ) : (
+              token.ticker.slice(0, 2)
             )}
-          </div>
-          <p className="text-sm font-medium text-white">{token.ticker}</p>
+          </span>
+          <p className="text-[14px] font-medium text-[#EDEEF2]">{token.ticker}</p>
           {token.premium && (
-            <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
+            <span className="rounded bg-accent/[0.12] px-1.5 py-0.5 text-[10px] font-medium text-accent-light">
               Premium
             </span>
           )}
         </div>
 
-        <div className="mt-4">
-          <p className="text-lg font-semibold tabular-nums text-white truncate">
+        <div className="mt-[18px]">
+          <p className="truncate text-[23px] font-semibold tabular-nums tracking-[-0.01em] text-[#F4F5F7]">
             {formattedAmount}
           </p>
-          <p className="text-[11px] text-slate-500">{token.ticker}</p>
+          <p className="mt-0.5 font-mono text-[11px] text-[#6B6F7B]">{token.ticker}</p>
         </div>
       </button>
     </div>

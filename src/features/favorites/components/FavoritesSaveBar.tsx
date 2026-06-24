@@ -23,7 +23,7 @@ export function FavoritesSaveBar() {
             type="button"
             onClick={persist}
             disabled={saving || !connected}
-            className="rounded-lg bg-brand-cyan px-4 py-1.5 text-sm font-medium text-surface-base transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg bg-brand-cyan px-4 py-1.5 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

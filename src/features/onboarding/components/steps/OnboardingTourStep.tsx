@@ -20,7 +20,7 @@ const tourSlides = [
     icon: IconMapPin,
     title: 'Enter your address',
     description: 'Paste your wallet address to see what you can claim.',
-    gradient: 'from-brand-cyan/20 to-cyan-500/5',
+    gradient: 'from-brand-cyan/20 to-indigo-500/5',
     iconColor: 'text-brand-cyan',
   },
   {
@@ -172,7 +172,7 @@ export function OnboardingTourStep() {
       <button
         onClick={handleNext}
         disabled={saving}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-teal px-6 py-3.5 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
+        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6F72F5] to-[#5A5DE8] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
       >
         {saving ? (
           <>

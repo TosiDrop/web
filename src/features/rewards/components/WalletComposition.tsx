@@ -1,17 +1,31 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useLovelace, useAssets } from '@meshsdk/react';
 import { useWalletStore } from '@/store/wallet-state';
-import { DonutChart, type DonutSegment } from '@/components/charts/DonutChart';
 
 const MAX_TOKENS = 5;
 const HEX_PAIR_RE = /^(?:[0-9a-fA-F]{2})+$/;
-const PALETTE = ['#3B82F6', '#A855F7', '#F59E0B', '#EC4899', '#10B981', '#22D3EE', '#8B5CF6', '#F97316', '#64748B'];
+const PALETTE = ['#6366F1', '#A855F7', '#F59E0B', '#EC4899', '#22C55E', '#14B8A6'];
 const decoder = new TextDecoder();
 
 function decodeAssetName(assetName: string): string {
   if (!HEX_PAIR_RE.test(assetName)) return assetName.slice(0, 8);
   const pairs = assetName.match(/.{2}/g)!;
   return decoder.decode(new Uint8Array(pairs.map((b) => parseInt(b, 16)))).slice(0, 8);
+}
+
+interface Part {
+  label: string;
+  value: number;
+  color: string;
+}
+
+function Card({ children }: { children: ReactNode }) {
+  return (
+    <div className="card-premium p-5">
+      <h3 className="text-[13.5px] font-semibold text-[#C5C8D2]">Wallet composition</h3>
+      {children}
+    </div>
+  );
 }
 
 export function WalletComposition() {
@@ -22,8 +36,8 @@ export function WalletComposition() {
   const adaBalance = lovelace ? Number(lovelace) / 1_000_000 : 0;
   const tokenList = useMemo(() => assets ?? [], [assets]);
 
-  const { segments, totalTokens } = useMemo(() => {
-    const result: DonutSegment[] = [];
+  const { parts, total, totalTokens } = useMemo(() => {
+    const result: Part[] = [];
     if (adaBalance > 0) {
       result.push({ label: 'ADA', value: adaBalance, color: PALETTE[0] });
     }
@@ -47,39 +61,61 @@ export function WalletComposition() {
         color: PALETTE[PALETTE.length - 1],
       });
     }
-    return { segments: result, totalTokens: tokenList.length };
+
+    const sum = result.reduce((acc, p) => acc + p.value, 0) || 1;
+    return { parts: result, total: sum, totalTokens: tokenList.length };
   }, [adaBalance, tokenList]);
 
   if (!connected) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
-        <h3 className="text-xs font-medium text-slate-400">Wallet</h3>
-        <p className="mt-3 text-center text-xs text-slate-500">Connect wallet to view</p>
-      </div>
+      <Card>
+        <p className="mt-3 text-center text-xs text-[#6B6F7B]">Connect wallet to view</p>
+      </Card>
     );
   }
 
-  if (segments.length === 0) {
+  if (parts.length === 0) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
-        <h3 className="text-xs font-medium text-slate-400">Wallet</h3>
-        <p className="mt-3 text-center text-xs text-slate-500">No assets found</p>
-      </div>
+      <Card>
+        <p className="mt-3 text-center text-xs text-[#6B6F7B]">No assets found</p>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
-      <h3 className="text-xs font-medium text-slate-400">Wallet</h3>
-      <div className="mt-3">
-        <DonutChart
-          segments={segments}
-          size={130}
-          strokeWidth={16}
-          centerLabel={`₳ ${adaBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          centerSub={`${totalTokens} tokens`}
-        />
+    <Card>
+      <div className="mt-3.5 flex items-baseline gap-2">
+        <span className="text-[28px] font-semibold tabular-nums tracking-[-0.02em] text-[#F4F5F7]">
+          ₳ {adaBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+        </span>
+        <span className="text-[12px] text-[#6B6F7B]">
+          {totalTokens} {totalTokens === 1 ? 'asset' : 'assets'}
+        </span>
       </div>
-    </div>
+
+      <div className="my-4 flex h-[9px] gap-[2px] overflow-hidden rounded-[6px]">
+        {parts.map((p) => (
+          <div
+            key={p.label}
+            style={{ width: `${(p.value / total) * 100}%`, backgroundColor: p.color }}
+          />
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-[9px]">
+        {parts.map((p) => (
+          <div key={p.label} className="flex items-center gap-2.5">
+            <span
+              className="h-[9px] w-[9px] rounded-[3px]"
+              style={{ backgroundColor: p.color }}
+            />
+            <span className="flex-1 truncate text-[12.5px] text-[#C5C8D2]">{p.label}</span>
+            <span className="font-mono text-[11px] text-[#8A8E9A]">
+              {Math.round((p.value / total) * 100)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

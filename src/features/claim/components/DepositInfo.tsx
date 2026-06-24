@@ -66,7 +66,7 @@ export function DepositInfoDisplay({
           <button
             type="button"
             onClick={handleCopy}
-            className="text-[10px] text-brand-cyan underline hover:text-cyan-300"
+            className="text-[10px] text-brand-cyan underline hover:text-indigo-300"
           >
             {copied ? 'Copied!' : `Copy address (${truncateHash(depositInfo.withdrawalAddress)})`}
           </button>
@@ -78,7 +78,7 @@ export function DepositInfoDisplay({
           <button
             onClick={onSendFromWallet}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-6 py-2.5 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/25 transition hover:bg-cyan-300 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-cyan/25 transition hover:brightness-110 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send from Connected Wallet
           </button>

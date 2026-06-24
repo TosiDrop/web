@@ -256,7 +256,7 @@ export function HistoryList() {
           <button
             type="button"
             onClick={() => setShowAll(true)}
-            className="font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200"
+            className="font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-indigo-200"
           >
             Show {data!.length - rows.length} more
           </button>

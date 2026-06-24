@@ -15,15 +15,15 @@ export function GradientButton({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition',
+        'inline-flex items-center justify-center rounded-[11px] px-4 py-2 text-sm font-semibold transition',
         variant === 'primary' && [
-          'bg-brand-cyan text-surface-base',
-          'hover:bg-cyan-300',
-          'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand-cyan',
+          'bg-[linear-gradient(180deg,#6F72F5,#5A5DE8)] text-white',
+          'shadow-[0_10px_24px_-12px_rgba(99,102,241,0.85)] hover:brightness-110',
+          'disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none',
         ],
         variant === 'outline' && [
-          'border border-border-default text-slate-300',
-          'hover:bg-surface-overlay hover:text-white',
+          'border border-white/[0.14] bg-white/[0.04] text-[#D7D9E0]',
+          'hover:bg-white/[0.07] hover:text-white',
           'disabled:opacity-40 disabled:cursor-not-allowed',
         ],
         className

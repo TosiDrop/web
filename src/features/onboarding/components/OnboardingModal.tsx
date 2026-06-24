@@ -77,7 +77,7 @@ function StepIndicator() {
   return (
     <div className="relative h-1 w-full bg-surface-inset">
       <motion.div
-        className="h-full bg-gradient-to-r from-brand-cyan to-brand-teal"
+        className="h-full bg-gradient-to-r from-[#6F72F5] to-[#5A5DE8]"
         initial={false}
         animate={{ width: `${progress}%` }}
         transition={{ duration: 0.5, ease: 'easeOut' }}

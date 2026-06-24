@@ -21,7 +21,7 @@ export function ConnectWallet() {
   return (
     <button
       onClick={openModal}
-      className="inline-flex items-center gap-2 rounded-lg bg-brand-cyan px-3.5 py-1.5 text-xs font-semibold text-[#06181a] transition hover:bg-cyan-300"
+      className="inline-flex items-center gap-2 rounded-[10px] bg-[linear-gradient(180deg,#6F72F5,#5A5DE8)] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_10px_24px_-14px_rgba(99,102,241,0.85)] transition hover:brightness-110"
     >
       <IconWallet size={13} stroke={1.8} />
       Connect wallet

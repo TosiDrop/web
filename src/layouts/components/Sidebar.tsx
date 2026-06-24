@@ -13,6 +13,7 @@ import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
 import { useWalletStore } from '@/store/wallet-state';
 import { useNetworkStore, networkLabel } from '@/store/network-state';
+import { truncateHash, getNetworkLabel } from '@/utils/format';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
 const NAV_LINKS = [
@@ -28,27 +29,37 @@ const SOCIAL_LINKS = [
   { label: 'GitHub', href: 'https://github.com/ADAIApool/tosidrop', icon: GitHubIcon },
 ];
 
-function StatusDot() {
-  const connected = useWalletStore((s) => s.connected);
+function ConnectedWalletCard() {
+  const { connected, stakeAddress, networkId } = useWalletStore();
   const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
 
-  if (!connected) {
+  if (!connected || !stakeAddress) {
     return (
-      <span className="inline-flex items-center gap-2 text-[11px] text-slate-500">
-        <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
-        Disconnected
-      </span>
+      <div className="rounded-xl border border-border-subtle bg-white/[0.03] px-3.5 py-3.5">
+        <div className="text-[12px] text-[#8A8E9A]">No wallet connected</div>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#A9ADBA] rounded-[5px] border border-border-default px-1.5 py-[3px]">
+            {networkLabel(selectedNetwork)}
+          </span>
+          <span className="text-[12px] text-[#6B6F7B]">Target</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-2 text-[11px] text-slate-300">
-      <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
-        <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.85)]" />
-      </span>
-      Online · {networkLabel(selectedNetwork)}
-    </span>
+    <div className="rounded-xl border border-border-subtle bg-white/[0.03] px-3.5 py-3.5">
+      <div className="text-[12px] text-[#8A8E9A]">Connected wallet</div>
+      <div className="mt-1.5 font-mono text-[12px] text-[#D7D9E0]">
+        {truncateHash(stakeAddress, 10, 6)}
+      </div>
+      <div className="mt-2.5 flex items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#A9ADBA] rounded-[5px] border border-border-default px-1.5 py-[3px]">
+          {getNetworkLabel(networkId)}
+        </span>
+        <span className="text-[12px] text-[#6B6F7B]">Synced</span>
+      </div>
+    </div>
   );
 }
 
@@ -56,21 +67,21 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const location = useLocation();
 
   return (
-    <div className="relative flex h-full flex-col border-r border-border-subtle bg-surface-sidebar">
+    <div className="relative flex h-full flex-col border-r border-white/[0.06] bg-[linear-gradient(180deg,#0A0C12,#080A0E)]">
       {/* Brand */}
-      <div className="px-5 pt-6 pb-6">
+      <div className="px-6 pt-7 pb-7">
         <Link to="/" className="flex items-center gap-2.5" onClick={onLinkClick}>
-          <img src={TosiDropLogo} alt="" className="h-7 w-auto" />
-          <span className="text-base font-semibold tracking-tight text-white">
-            TosiDrop
+          <img src={TosiDropLogo} alt="" className="h-7 w-7" />
+          <span className="text-[17px] font-semibold tracking-tight text-[#F4F5F7]">
+            Tosi<span className="text-cream">Drop</span>
           </span>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1.5 px-3">
-        <p className="label-eyebrow px-3 pb-2">Workspace</p>
-        <div className="space-y-0.5">
+      <nav className="flex-1 px-4">
+        <p className="label-eyebrow px-2.5 pb-3">Workspace</p>
+        <div className="space-y-[3px]">
           {NAV_LINKS.map((link) => {
             const isActive =
               link.href === '/'
@@ -86,14 +97,14 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={onLinkClick}
-                  className="group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-slate-400 transition hover:bg-white/[0.02] hover:text-slate-200"
+                  className="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] text-[#8A8E9A] transition hover:bg-white/[0.03] hover:text-[#D7D9E0]"
                 >
-                  <Icon size={16} stroke={1.6} />
+                  <Icon size={18} stroke={1.6} />
                   <span className="flex-1">{link.name}</span>
                   <IconExternalLink
-                    size={11}
-                    stroke={1.6}
-                    className="opacity-40 transition group-hover:opacity-100"
+                    size={12}
+                    stroke={1.7}
+                    className="opacity-45 transition group-hover:opacity-100"
                   />
                 </a>
               );
@@ -105,21 +116,25 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 to={link.href}
                 onClick={onLinkClick}
                 className={cn(
-                  'relative flex items-center gap-3 rounded-lg border px-3 py-2 text-[13px] transition',
+                  'relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] transition',
                   isActive
-                    ? 'border-border-default bg-surface-raised text-white'
-                    : 'border-transparent text-slate-400 hover:bg-white/[0.02] hover:text-slate-200',
+                    ? 'bg-accent/[0.13] text-[#EDEEF2] font-medium'
+                    : 'text-[#8A8E9A] hover:bg-white/[0.03] hover:text-[#D7D9E0]',
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
                 {isActive && (
                   <span
                     aria-hidden
-                    className="absolute -left-px top-2 bottom-2 w-[2px] rounded-full bg-brand-cyan"
+                    className="absolute left-0 top-[9px] bottom-[9px] w-[2.5px] rounded-full bg-accent"
                   />
                 )}
-                <Icon size={16} stroke={1.6} />
-                <span className="flex-1 font-medium">{link.name}</span>
+                <Icon
+                  size={18}
+                  stroke={1.7}
+                  className={isActive ? 'text-accent-light' : ''}
+                />
+                <span className="flex-1">{link.name}</span>
               </Link>
             );
           })}
@@ -127,16 +142,16 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </nav>
 
       {/* Footer */}
-      <div className="space-y-3 border-t border-border-subtle px-5 py-4">
-        <StatusDot />
-        <div className="flex items-center gap-3.5">
+      <div className="space-y-3.5 px-4 pb-5 pt-4">
+        <ConnectedWalletCard />
+        <div className="flex items-center gap-4 px-1">
           {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
             <a
               key={label}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-600 transition hover:text-brand-cyan"
+              className="text-[#54565F] transition hover:text-accent-light"
               aria-label={label}
             >
               <Icon />
@@ -153,7 +168,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 lg:block">
         <SidebarContent />
       </aside>
 
@@ -162,7 +177,7 @@ export function Sidebar() {
           className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           aria-hidden="true"
         />
-        <DialogPanel className="fixed inset-y-0 left-0 w-56 shadow-2xl shadow-black/60">
+        <DialogPanel className="fixed inset-y-0 left-0 w-60 shadow-2xl shadow-black/60">
           <div className="absolute right-2 top-2 z-10">
             <button
               onClick={close}
