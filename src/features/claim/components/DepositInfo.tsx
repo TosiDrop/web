@@ -35,11 +35,8 @@ export function DepositInfoDisplay({
   };
 
   return (
-    <div className="rounded-xl border border-brand-cyan/20 bg-surface-raised p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="h-2 w-2 rounded-full bg-brand-cyan animate-pulse" />
-        <h3 className="text-sm font-semibold text-white">Confirm Deposit</h3>
-      </div>
+    <div className="card-premium p-5 space-y-4">
+      <h3 className="text-sm font-semibold text-white">Confirm Deposit</h3>
 
       <p className="text-xs text-slate-400">
         To claim your rewards, send the deposit below to the vending machine. Rewards and any

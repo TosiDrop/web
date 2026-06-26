@@ -41,8 +41,7 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
 
   return (
     <Menu>
-      <MenuButton className="group flex items-center gap-2.5 rounded-[9px] border border-border-default px-3 py-2 transition hover:border-accent/40 hover:bg-white/[0.03] data-[open]:border-accent/50">
-        <span className="h-[7px] w-[7px] rounded-full bg-[#4ADE80]" />
+      <MenuButton className="group flex h-9 items-center gap-2 rounded-lg border border-border-default px-3 transition hover:bg-white/[0.04] data-[open]:bg-white/[0.04]">
         <span className="font-mono text-[12px] text-[#C5C8D2] group-hover:text-white">
           {truncateHash(stakeAddress)}
         </span>

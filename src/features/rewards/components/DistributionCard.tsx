@@ -44,7 +44,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
         className={cn(
           'flex w-full flex-col rounded-2xl border bg-[linear-gradient(180deg,#161B2E,#121726)] p-4 text-left transition duration-200 hover:-translate-y-0.5',
           selected
-            ? 'border-accent/45 shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_16px_34px_-24px_rgba(0,0,0,0.75)]'
+            ? 'border-accent/40 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.75)]'
             : 'border-[rgba(56,78,128,0.28)] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_14px_30px_-24px_rgba(0,0,0,0.7)] hover:border-[rgba(56,78,128,0.55)]',
         )}
       >
@@ -111,18 +111,10 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
           )}
         >
           {favorite && (
-            <FavoriteStarButton
-              active={favorite.active}
-              onToggle={favorite.onToggle}
-              className="border-transparent bg-transparent hover:bg-white/[0.06]"
-            />
+            <FavoriteStarButton active={favorite.active} onToggle={favorite.onToggle} />
           )}
           {dislike && (
-            <DislikeButton
-              active={dislike.active}
-              onToggle={dislike.onToggle}
-              className="border-transparent bg-transparent hover:bg-white/[0.06]"
-            />
+            <DislikeButton active={dislike.active} onToggle={dislike.onToggle} />
           )}
         </div>
       )}

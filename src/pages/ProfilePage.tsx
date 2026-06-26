@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { IconCopy, IconCheck, IconWallet, IconChartLine, IconClock, IconStar } from '@tabler/icons-react';
+import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
 import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
@@ -13,7 +13,7 @@ import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
   { name: 'History', Icon: IconClock },
-  { name: 'Favorites', Icon: IconStar },
+  { name: 'Favorites', Icon: IconBookmark },
   { name: 'Analytics', Icon: IconChartLine },
   { name: 'Preferences', Icon: IconWallet },
 ];
@@ -35,8 +35,8 @@ function StakeAddressDisplay({ value }: { value: string }) {
       aria-label="Copy stake address"
     >
       <span>{truncateHash(value, 14, 8)}</span>
-      <span className="rounded-md border border-border-subtle bg-surface-inset/60 p-1 transition group-hover:border-brand-cyan/40 group-hover:text-brand-cyan">
-        {copied ? <IconCheck size={11} stroke={2} /> : <IconCopy size={11} stroke={1.6} />}
+      <span className="text-slate-500 transition group-hover:text-accent-light">
+        {copied ? <IconCheck size={12} stroke={2} /> : <IconCopy size={12} stroke={1.6} />}
       </span>
     </button>
   );
@@ -57,7 +57,7 @@ function HistoryTab() {
         <button
           disabled
           title="Coming soon"
-          className="rounded-md border border-border-subtle px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400 opacity-50 cursor-not-allowed"
+          className="font-mono text-[11px] uppercase tracking-wider text-slate-500 opacity-60 cursor-not-allowed"
         >
           Export · CSV
         </button>
@@ -97,21 +97,13 @@ function PreferencesTab() {
               {connected ? walletName ?? 'Wallet' : 'Not connected'}
             </p>
           </div>
-          {connected ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.85)]" />
-              Live
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-surface-inset/60 px-2.5 py-1 text-[11px] font-medium text-slate-500">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
-              Offline
-            </span>
-          )}
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-slate-500">
+            {connected ? 'Synced' : 'Offline'}
+          </span>
         </div>
 
         {connected && stakeAddress ? (
-          <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border-subtle/60 pt-4">
+          <div className="mt-5 grid grid-cols-2 gap-4">
             <div>
               <p className="label-eyebrow">Network</p>
               <p className="mt-1.5 font-mono text-xs text-slate-200">
@@ -145,7 +137,7 @@ function PreferencesTab() {
         ) : (
           <>
             {profile?.value?.name && (
-              <div className="mb-4 flex items-center justify-between rounded-lg border border-border-subtle/60 bg-surface-inset/50 px-3 py-2">
+              <div className="mb-4 flex items-center justify-between rounded-lg bg-surface-inset/50 px-3 py-2">
                 <span className="label-eyebrow">Current</span>
                 <span className="text-sm font-medium text-white">
                   {profile.value.name}
@@ -164,7 +156,7 @@ function PreferencesTab() {
             Personal preferences. Stored on your device.
           </p>
         </div>
-        <div className="mt-5 space-y-5 border-t border-border-subtle/60 pt-5">
+        <div className="mt-5 space-y-5">
           <ThemeToggle />
           <NetworkSelector />
         </div>
@@ -178,7 +170,7 @@ function HeroStakeChip() {
   const connected = useWalletStore((s) => s.connected);
   if (!connected || !stakeAddress) return null;
   return (
-    <span className="inline-flex items-center gap-2 rounded-md border border-border-subtle bg-surface-raised px-2.5 py-1 font-mono text-xs text-slate-400">
+    <span className="font-mono text-xs text-slate-500">
       {truncateHash(stakeAddress, 8, 6)}
     </span>
   );
@@ -196,7 +188,7 @@ export default function ProfilePage() {
           <HeroStakeChip />
         </div>
         <p className="mt-2 max-w-md text-sm text-slate-400">
-          Track claim history, watch reward analytics, and tune how TosiDrop
+          Track claim history, manage saved tokens, and tune how TosiDrop
           talks to your wallet.
         </p>
       </header>
@@ -209,7 +201,7 @@ export default function ProfilePage() {
               className={({ selected }) =>
                 'group -mb-px flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm transition focus:outline-none ' +
                 (selected
-                  ? 'border-brand-cyan font-semibold text-white'
+                  ? 'border-accent font-semibold text-white'
                   : 'border-transparent font-medium text-slate-500 hover:text-slate-200')
               }
             >
@@ -218,7 +210,7 @@ export default function ProfilePage() {
                   <Icon
                     size={14}
                     stroke={1.6}
-                    className={selected ? 'text-brand-cyan' : ''}
+                    className={selected ? 'text-accent-light' : ''}
                   />
                   {name}
                 </>

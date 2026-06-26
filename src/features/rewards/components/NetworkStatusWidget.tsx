@@ -9,8 +9,7 @@ export function NetworkStatusWidget() {
       <div className="flex items-center justify-between">
         <h3 className="text-[13.5px] font-semibold text-[#C5C8D2]">Network</h3>
         {connected ? (
-          <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.06em] text-[#C5C8D2]">
-            <span className="h-[7px] w-[7px] rounded-full bg-[#4ADE80]" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#C5C8D2]">
             {getNetworkLabel(networkId)}
           </span>
         ) : (

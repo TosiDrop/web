@@ -55,7 +55,7 @@ export function FavoritesTab() {
           Favorite <span className="font-semibold">tokens</span>
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Starred tokens rise to the top of your claimable list.
+          Saved tokens rise to the top of your claimable list.
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export function FavoritesTab() {
                 <div className="card-premium px-6 py-16 text-center">
                   <p className="label-eyebrow">No favorites yet</p>
                   <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-                    Tap the star on a token in your claimable list to add it here.
+                    Tap the bookmark on a token in your claimable list to add it here.
                   </p>
                 </div>
               ) : (

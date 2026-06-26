@@ -86,12 +86,6 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {isActive && (
-                  <span
-                    aria-hidden
-                    className="absolute left-0 top-[9px] bottom-[9px] w-[2.5px] rounded-full bg-accent"
-                  />
-                )}
                 <Icon
                   size={18}
                   stroke={1.7}

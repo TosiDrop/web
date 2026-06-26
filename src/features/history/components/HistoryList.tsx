@@ -55,7 +55,7 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
     );
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-brand-cyan/20 bg-gradient-to-br from-brand-cyan/12 to-brand-teal/8 font-mono text-[10px] font-medium uppercase tracking-tight text-brand-cyan">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-[10px] font-medium uppercase tracking-tight text-slate-300">
       {ticker.slice(0, 3)}
     </div>
   );

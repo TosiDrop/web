@@ -51,12 +51,9 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress }: GlobalCl
 
       {connected && stakeAddress && (
         <div className="mt-3.5 flex items-center justify-between border-t border-border-subtle pt-3.5">
-          <div className="flex items-center gap-2">
-            <span className="h-[7px] w-[7px] rounded-full bg-[#4ADE80]" />
-            <span className="font-mono text-xs text-[#8A8E9A]">
-              {truncateHash(stakeAddress, 10, 6)}
-            </span>
-          </div>
+          <span className="font-mono text-xs text-[#8A8E9A]">
+            {truncateHash(stakeAddress, 10, 6)}
+          </span>
           <button
             onClick={handleWalletLookup}
             disabled={isLoading}
