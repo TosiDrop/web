@@ -39,7 +39,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress }: GlobalCl
           onChange={(e) => setManualInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleManualLookup()}
           placeholder="$handle or stake1…"
-          className="min-w-0 flex-1 rounded-[11px] border border-border-subtle bg-surface-inset px-3.5 py-2.5 text-sm text-white placeholder:text-[#5A5E6A] focus:border-accent/50 focus:outline-none"
+          className="h-11 min-w-0 flex-1 rounded-xl border border-border-subtle bg-surface-inset px-4 text-sm text-white placeholder:text-[#5A5E6A] focus:border-accent/50 focus:outline-none"
         />
         <GradientButton
           onClick={handleManualLookup}

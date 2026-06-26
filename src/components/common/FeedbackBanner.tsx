@@ -52,7 +52,7 @@ export function FeedbackBanner({ tone = 'info', title, message }: FeedbackBanner
   return (
     <div
       role={ariaRoles[tone]}
-      className={`flex items-start gap-3 rounded-[14px] border ${style.border} bg-[linear-gradient(180deg,#15151B,#121218)] px-4 py-3.5`}
+      className={`flex items-start gap-3 rounded-2xl border ${style.border} bg-[linear-gradient(180deg,#161B2E,#121726)] px-4 py-3.5`}
     >
       <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] ${style.box}`}>
         <Icon size={17} stroke={1.8} />

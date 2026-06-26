@@ -1,3 +1,4 @@
+import { GradientButton } from '@/components/common/GradientButton';
 import { UmbrellaMark } from '@/components/icons/UmbrellaMark';
 import { QueueCount } from './QueueCount';
 
@@ -23,8 +24,8 @@ export function ClaimHero({
   canClaim,
 }: ClaimHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-[18px] border border-accent/20 bg-[linear-gradient(135deg,rgba(99,102,241,0.16),rgba(99,102,241,0.04)_52%,rgba(255,255,255,0.02))] px-7 py-7 shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_24px_50px_-28px_rgba(60,60,160,0.5)]">
-      <UmbrellaMark className="pointer-events-none absolute -right-4 -bottom-9 h-[250px] w-[250px] opacity-[0.07]" />
+    <section className="relative overflow-hidden rounded-2xl border border-accent/12 bg-[linear-gradient(135deg,rgba(34,211,238,0.045),rgba(34,211,238,0.02)_52%,rgba(255,255,255,0.012))] px-7 py-7 shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_18px_40px_-32px_rgba(8,145,178,0.22)]">
+      <UmbrellaMark className="pointer-events-none absolute -right-4 -bottom-9 h-[250px] w-[250px] opacity-[0.06]" />
 
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>
@@ -48,21 +49,12 @@ export function ClaimHero({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onToggleAll}
-            className="rounded-[11px] border border-white/[0.14] bg-white/[0.04] px-5 py-3 text-[14px] font-medium text-[#D7D9E0] transition hover:bg-white/[0.07] hover:text-white"
-          >
+          <GradientButton variant="secondary" onClick={onToggleAll}>
             {allSelected ? 'Clear' : 'Select all'}
-          </button>
-          <button
-            type="button"
-            onClick={onClaim}
-            disabled={claimDisabled}
-            className="rounded-[11px] bg-[linear-gradient(180deg,#6F72F5,#5A5DE8)] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_-10px_rgba(99,102,241,0.8)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-          >
+          </GradientButton>
+          <GradientButton onClick={onClaim} disabled={claimDisabled}>
             {isPending ? 'Preparing…' : 'Claim all'}
-          </button>
+          </GradientButton>
         </div>
       </div>
 

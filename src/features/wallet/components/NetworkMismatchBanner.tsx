@@ -12,7 +12,7 @@ export function NetworkMismatchBanner() {
   return (
     <div
       role="alert"
-      className="mb-6 flex flex-wrap items-center gap-4 rounded-[14px] border border-border-subtle bg-[linear-gradient(180deg,#15151B,#121218)] px-[18px] py-[15px] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
+      className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border-subtle bg-[linear-gradient(180deg,#161B2E,#121726)] px-[18px] py-[15px] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
     >
       <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[#F5B042]/[0.12]">
         <IconAlertTriangle size={19} stroke={1.8} className="text-[#F0B04B]" />
@@ -29,7 +29,7 @@ export function NetworkMismatchBanner() {
           wallet · {networkLabel(walletNetwork).toLowerCase()}
         </span>
         <IconArrowRight size={14} stroke={1.7} className="text-[#5A5E6A]" />
-        <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[#A6A8F5]">
+        <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[#A5F3FC]">
           target · {networkLabel(selectedNetwork).toLowerCase()}
         </span>
       </div>

@@ -172,7 +172,7 @@ export function OnboardingTourStep() {
       <button
         onClick={handleNext}
         disabled={saving}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6F72F5] to-[#5A5DE8] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
+        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3.5 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
       >
         {saving ? (
           <>

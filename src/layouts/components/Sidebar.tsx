@@ -11,9 +11,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
-import { useWalletStore } from '@/store/wallet-state';
-import { useNetworkStore, networkLabel } from '@/store/network-state';
-import { truncateHash, getNetworkLabel } from '@/utils/format';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
 const NAV_LINKS = [
@@ -29,45 +26,11 @@ const SOCIAL_LINKS = [
   { label: 'GitHub', href: 'https://github.com/ADAIApool/tosidrop', icon: GitHubIcon },
 ];
 
-function ConnectedWalletCard() {
-  const { connected, stakeAddress, networkId } = useWalletStore();
-  const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
-
-  if (!connected || !stakeAddress) {
-    return (
-      <div className="rounded-xl border border-border-subtle bg-white/[0.03] px-3.5 py-3.5">
-        <div className="text-[12px] text-[#8A8E9A]">No wallet connected</div>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#A9ADBA] rounded-[5px] border border-border-default px-1.5 py-[3px]">
-            {networkLabel(selectedNetwork)}
-          </span>
-          <span className="text-[12px] text-[#6B6F7B]">Target</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border border-border-subtle bg-white/[0.03] px-3.5 py-3.5">
-      <div className="text-[12px] text-[#8A8E9A]">Connected wallet</div>
-      <div className="mt-1.5 font-mono text-[12px] text-[#D7D9E0]">
-        {truncateHash(stakeAddress, 10, 6)}
-      </div>
-      <div className="mt-2.5 flex items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#A9ADBA] rounded-[5px] border border-border-default px-1.5 py-[3px]">
-          {getNetworkLabel(networkId)}
-        </span>
-        <span className="text-[12px] text-[#6B6F7B]">Synced</span>
-      </div>
-    </div>
-  );
-}
-
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const location = useLocation();
 
   return (
-    <div className="relative flex h-full flex-col border-r border-white/[0.06] bg-[linear-gradient(180deg,#0A0C12,#080A0E)]">
+    <div className="relative flex h-full flex-col border-r border-[rgba(56,78,128,0.25)] bg-[linear-gradient(180deg,#0B1322,#070D1A)]">
       {/* Brand */}
       <div className="px-6 pt-7 pb-7">
         <Link to="/" className="flex items-center gap-2.5" onClick={onLinkClick}>
@@ -142,9 +105,8 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </nav>
 
       {/* Footer */}
-      <div className="space-y-3.5 px-4 pb-5 pt-4">
-        <ConnectedWalletCard />
-        <div className="flex items-center gap-4 px-1">
+      <div className="px-5 pb-5 pt-4">
+        <div className="flex items-center gap-4">
           {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
             <a
               key={label}

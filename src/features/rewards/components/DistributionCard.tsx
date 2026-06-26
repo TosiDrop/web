@@ -14,8 +14,7 @@ interface DistributionCardProps {
   dislike?: { active: boolean; onToggle: () => void };
 }
 
-// Deterministic swatch color so each token's icon tile reads distinctly,
-// matching the vivid coin tiles in the design.
+// Deterministic swatch color so each token's fallback tile reads distinctly.
 const PALETTE = [
   '#3B82F6', '#22C55E', '#A855F7', '#EC4899', '#EF4444',
   '#F59E0B', '#14B8A6', '#C084FC', '#64748B',
@@ -34,83 +33,99 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
   });
   const tile = colorFor(token.ticker);
   const hasImage = !img.failed && !!img.src;
+  const actionsActive = !!(favorite?.active || dislike?.active);
 
   return (
-    <div className="relative">
-      {favorite && (
-        <FavoriteStarButton
-          active={favorite.active}
-          onToggle={favorite.onToggle}
-          className="absolute left-3 top-3 z-10"
-        />
-      )}
-      {dislike && (
-        <DislikeButton
-          active={dislike.active}
-          onToggle={dislike.onToggle}
-          className={cn('absolute top-3 z-10', favorite ? 'left-10' : 'left-3')}
-        />
-      )}
+    <div className="group relative">
       <button
         type="button"
         onClick={onToggle}
         aria-pressed={selected}
         className={cn(
-          'group relative flex w-full flex-col justify-between rounded-[15px] border bg-[linear-gradient(180deg,#13161F,#10131A)] p-[17px] text-left shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_14px_30px_-22px_rgba(0,0,0,0.7)] transition',
+          'flex w-full flex-col rounded-2xl border bg-[linear-gradient(180deg,#161B2E,#121726)] p-4 text-left transition duration-200 hover:-translate-y-0.5',
           selected
-            ? 'border-accent/40'
-            : 'border-white/[0.07] hover:border-white/[0.14]',
+            ? 'border-accent/45 shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_16px_34px_-24px_rgba(0,0,0,0.75)]'
+            : 'border-[rgba(56,78,128,0.28)] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_14px_30px_-24px_rgba(0,0,0,0.7)] hover:border-[rgba(56,78,128,0.55)]',
         )}
       >
-        {/* Glow check — selection indicator */}
-        <span
-          aria-hidden
-          className={cn(
-            'absolute right-[15px] top-[15px] flex h-[18px] w-[18px] items-center justify-center rounded-full transition',
-            selected
-              ? 'bg-accent text-white shadow-[0_0_0_3px_rgba(99,102,241,0.16)]'
-              : 'border-[1.5px] border-white/20',
-          )}
-        >
-          {selected && <IconCheck size={11} stroke={3.2} />}
-        </span>
-
-        <div
-          className={cn(
-            'flex items-center gap-2.5',
-            favorite && dislike ? 'pl-14' : (favorite || dislike) && 'pl-7',
-          )}
-        >
-          <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[9px] text-[11px] font-bold tracking-tight text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset]"
-            style={hasImage ? undefined : { backgroundColor: tile }}
-          >
-            {hasImage ? (
-              <img
-                src={img.src}
-                alt={token.ticker}
-                className="h-8 w-8 rounded-[9px] object-cover"
-                onError={img.onError}
-              />
-            ) : (
-              token.ticker.slice(0, 2)
-            )}
-          </span>
-          <p className="text-[14px] font-medium text-[#EDEEF2]">{token.ticker}</p>
-          {token.premium && (
-            <span className="rounded bg-accent/[0.12] px-1.5 py-0.5 text-[10px] font-medium text-accent-light">
-              Premium
+        {/* Header: icon + ticker, selection control */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-[12px] font-bold tracking-tight text-white ring-1 ring-white/10"
+              style={hasImage ? undefined : { backgroundColor: tile }}
+            >
+              {hasImage ? (
+                <img
+                  src={img.src}
+                  alt={token.ticker}
+                  className="h-10 w-10 rounded-xl object-cover"
+                  onError={img.onError}
+                />
+              ) : (
+                token.ticker.slice(0, 2).toUpperCase()
+              )}
             </span>
-          )}
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold text-[#F2F3F6]">{token.ticker}</p>
+              {token.premium ? (
+                <span className="mt-1 inline-block rounded bg-accent/[0.12] px-1.5 py-0.5 text-[10px] font-medium text-accent-light">
+                  Premium
+                </span>
+              ) : (
+                <p className="mt-0.5 text-[11px] text-[#6B7290]">Reward</p>
+              )}
+            </div>
+          </div>
+
+          <span
+            aria-hidden
+            className={cn(
+              'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition',
+              selected
+                ? 'bg-accent text-accent-contrast'
+                : 'border-[1.5px] border-[rgba(56,78,128,0.7)] group-hover:border-accent/50',
+            )}
+          >
+            {selected && <IconCheck size={12} stroke={3.2} />}
+          </span>
         </div>
 
-        <div className="mt-[18px]">
-          <p className="truncate text-[23px] font-semibold tabular-nums tracking-[-0.01em] text-[#F4F5F7]">
+        {/* Amount */}
+        <div className="mt-5">
+          <p className="truncate text-[24px] font-semibold leading-none tabular-nums tracking-[-0.01em] text-[#F4F5F7]">
             {formattedAmount}
           </p>
-          <p className="mt-0.5 font-mono text-[11px] text-[#6B6F7B]">{token.ticker}</p>
+          <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.06em] text-[#6B7290]">
+            {token.ticker}
+          </p>
         </div>
       </button>
+
+      {/* Favorite / dislike — revealed on hover, persistent when active */}
+      {(favorite || dislike) && (
+        <div
+          className={cn(
+            'absolute bottom-3.5 right-3.5 z-10 flex items-center gap-0.5 transition',
+            actionsActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
+        >
+          {favorite && (
+            <FavoriteStarButton
+              active={favorite.active}
+              onToggle={favorite.onToggle}
+              className="border-transparent bg-transparent hover:bg-white/[0.06]"
+            />
+          )}
+          {dislike && (
+            <DislikeButton
+              active={dislike.active}
+              onToggle={dislike.onToggle}
+              className="border-transparent bg-transparent hover:bg-white/[0.06]"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

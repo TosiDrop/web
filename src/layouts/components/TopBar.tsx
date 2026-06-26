@@ -93,7 +93,7 @@ export function TopBar() {
   const section = useSectionLabel();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/[0.05] bg-surface-base/70 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-[rgba(56,78,128,0.22)] bg-surface-base/70 backdrop-blur-md">
       <div className="flex h-[66px] items-center justify-between px-5 lg:px-9">
         <div className="flex items-center gap-3">
           <button

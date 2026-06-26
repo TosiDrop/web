@@ -76,7 +76,7 @@ export function ConnectingStep() {
       <div className="relative mb-8 flex h-20 w-20 items-center justify-center">
         <div className="absolute inset-0 animate-ping rounded-full bg-brand-cyan/20" />
         <div className="absolute inset-2 animate-ping rounded-full bg-brand-cyan/30 [animation-delay:200ms]" />
-        <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#6F72F5] to-[#5A5DE8] shadow-lg shadow-brand-cyan/40" />
+        <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] shadow-lg shadow-brand-cyan/40" />
       </div>
 
       <h2 className="mb-2 text-xl font-semibold text-white">

@@ -10,6 +10,7 @@ import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
 
 import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
+import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
 import { ClaimHero } from '@/features/rewards/components/ClaimHero';
 import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
 import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
@@ -28,7 +29,7 @@ function LoadingTokens() {
         {[0, 0.15, 0.3, 0.1, 0.25, 0.4].map((delay, i) => (
           <div
             key={i}
-            className="skeleton-shimmer h-24 rounded-[13px] border border-white/[0.06]"
+            className="skeleton-shimmer h-24 rounded-[13px] border border-[rgba(56,78,128,0.25)]"
             style={{ animationDelay: `${delay}s` }}
           />
         ))}
@@ -174,6 +175,8 @@ export default function ClaimPage() {
           }
         />
       )}
+
+      {!lookupAddress && <ClaimWelcome />}
 
       {lookupAddress && !loading && hasRewards && (
         <ClaimHero
