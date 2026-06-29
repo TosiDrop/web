@@ -12,14 +12,14 @@ interface VmDeliveredReward {
   expiry: string;
 }
 
-interface TokenInfo {
+export interface TokenInfo {
   ticker?: string;
   decimals?: string | number;
   logo?: string;
   name?: string;
 }
 
-type TokenMap = Record<string, TokenInfo>;
+export type TokenMap = Record<string, TokenInfo>;
 
 export interface DeliveredReward {
   key: string;
@@ -45,19 +45,19 @@ function hexToUtf8(hex: string): string {
   }
 }
 
-function tickerFor(token: string, info?: TokenInfo): string {
+export function tickerFor(token: string, info?: TokenInfo): string {
   if (token === 'lovelace') return 'ADA';
   if (info?.ticker) return info.ticker;
   const parts = token.split('.');
   return parts.length === 2 ? hexToUtf8(parts[1]) || token : token.slice(0, 12);
 }
 
-function decimalsFor(token: string, info?: TokenInfo): number {
+export function decimalsFor(token: string, info?: TokenInfo): number {
   if (token === 'lovelace') return 6;
   return Number(info?.decimals ?? 0) || 0;
 }
 
-function parseDeliveredOn(raw: string): Date | null {
+export function parseDeliveredOn(raw: string): Date | null {
   const asNumber = Number(raw);
   if (!Number.isNaN(asNumber) && asNumber > 1_000_000_000 && asNumber < 10_000_000_000) {
     return new Date(asNumber * 1000);

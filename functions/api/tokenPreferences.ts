@@ -1,6 +1,7 @@
 import type { Env } from '../types/env';
 import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 import { verifyStakeSignature } from '../services/verifyStakeSignature';
+import { hasDb } from '../services/d1';
 
 const MAX_PER_LIST = 200;
 const MAX_ASSET_ID_LEN = 120;
@@ -24,10 +25,6 @@ interface TokenRef {
   assetId: string;
   ticker: string;
   logo: string;
-}
-
-function hasDb(env: Env): env is Env & { DB: D1Database } {
-  return typeof env?.DB?.prepare === 'function';
 }
 
 // Returns the sanitized, deduped list — or an error string.
