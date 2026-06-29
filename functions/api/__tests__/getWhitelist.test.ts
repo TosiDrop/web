@@ -27,6 +27,7 @@ function ctx(env: Partial<Env>): Ctx {
       headers: { Origin: 'http://localhost:5173' },
     }),
     env: { VITE_VM_API_KEY: 'k', ...env } as Env,
+    waitUntil: vi.fn(),
   } as unknown as Ctx;
 }
 

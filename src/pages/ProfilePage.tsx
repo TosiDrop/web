@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
 import { NetworkSelector } from '@/features/preferences/components/NetworkSelector';
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
+import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
@@ -38,15 +39,6 @@ function StakeAddressDisplay({ value }: { value: string }) {
         {copied ? <IconCheck size={11} stroke={2} /> : <IconCopy size={11} stroke={1.6} />}
       </span>
     </button>
-  );
-}
-
-function EmptyTab({ eyebrow, message }: { eyebrow: string; message: string }) {
-  return (
-    <div className="card-premium px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">{message}</p>
-    </div>
   );
 }
 
@@ -82,11 +74,11 @@ function AnalyticsTab() {
         <h2 className="text-xl font-light tracking-tight text-white">
           Reward <span className="font-semibold">analytics</span>
         </h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Where your rewards came from — by pool, epoch, and distribution rule.
+        </p>
       </div>
-      <EmptyTab
-        eyebrow="In development"
-        message="Analytics ship with M7."
-      />
+      <RewardBreakdown />
     </div>
   );
 }
