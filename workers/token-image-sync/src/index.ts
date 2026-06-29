@@ -1,4 +1,5 @@
-import { syncTokenImages } from './sync';
+import { readResponseBodyWithLimit } from '../../../src/shared/readLimitedBody';
+import { MAX_IMAGE_BYTES, syncTokenImages } from './sync';
 
 interface Env {
   TOKEN_IMAGES: R2Bucket;
@@ -26,10 +27,12 @@ export default {
         fetchImage: async (url) => {
           const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
           if (!res.ok) return null;
+          const bytes = await readResponseBodyWithLimit(res, MAX_IMAGE_BYTES);
+          if (!bytes) return null;
           return {
             ok: true,
             contentType: res.headers.get('Content-Type') ?? '',
-            bytes: await res.arrayBuffer(),
+            bytes,
           };
         },
       }).then((result) =>

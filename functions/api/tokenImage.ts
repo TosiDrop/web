@@ -1,5 +1,6 @@
 import type { Env } from '../types/env';
 import { initVmSdk, errorResponse, optionsResponse } from '../services/vmClient';
+import { readResponseBodyWithLimit } from '../../src/shared/readLimitedBody';
 
 const MAX_ID_LEN = 120;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -72,12 +73,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const upstream = await fetch(logo, { signal: AbortSignal.timeout(10_000) });
     const contentType = upstream.headers.get('Content-Type') ?? '';
-    const declaredLength = Number(upstream.headers.get('Content-Length') ?? '0');
-    if (!upstream.ok || !contentType.startsWith('image/') || declaredLength > MAX_IMAGE_BYTES) {
+    if (!upstream.ok || !contentType.startsWith('image/')) {
       return redirect(logo);
     }
-    const bytes = await upstream.arrayBuffer();
-    if (bytes.byteLength > MAX_IMAGE_BYTES) {
+    const bytes = await readResponseBodyWithLimit(upstream, MAX_IMAGE_BYTES);
+    if (!bytes) {
       return redirect(logo);
     }
 

@@ -110,6 +110,27 @@ describe('GET /api/tokenImage', () => {
     expect(bucket.put).not.toHaveBeenCalled();
   });
 
+  it('cancels oversized image streams without a content length', async () => {
+    const cancel = vi.fn();
+    let pulls = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulls += 1;
+        controller.enqueue(new Uint8Array(1024 * 1024));
+      },
+      cancel,
+    });
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(stream, { headers: { 'Content-Type': 'image/png' } }),
+    ));
+    const bucket = fakeR2();
+    const res = await onRequestGet(ctx('?id=pol.aaaa', { TOKEN_IMAGES: bucket }));
+    expect(res.status).toBe(302);
+    expect(bucket.put).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(pulls).toBeLessThan(6);
+  });
+
   it('falls back to the SDK when the KV tokens cache is empty', async () => {
     const res = await onRequestGet(ctx('?id=pol.aaaa', { VM_WEB_PROFILES: fakeKv(null) }));
     expect(res.status).toBe(302); // no bucket bound, but resolution succeeded via SDK

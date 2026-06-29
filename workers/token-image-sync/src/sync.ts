@@ -24,7 +24,7 @@ export interface SyncDeps {
 
 const TOKENS_CACHE_KEY = '__internal:tokens_cache';
 const CURSOR_KEY = '__internal:image_sync_cursor';
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_SCANS_PER_RUN = 500;
 
 export async function syncTokenImages({
