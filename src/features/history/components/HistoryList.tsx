@@ -8,6 +8,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDeliveredRewards, type DeliveredReward } from '@/features/history/api/history.queries';
+import { tokenImageSrc } from '@/shared/tokenImage';
+import { useImageFallback } from '@/hooks/useImageFallback';
 import { useWithdrawalHistory, type HistoryOrder } from '@/features/history/hooks/useWithdrawalHistory';
 
 const PAGE_SIZE = 12;
@@ -40,14 +42,14 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
-function TokenAvatar({ logo, ticker }: { logo?: string; ticker: string }) {
-  const [failed, setFailed] = useState(false);
-  if (logo && !failed) {
+function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string; ticker: string }) {
+  const img = useImageFallback([tokenImageSrc(assetId, logo), logo]);
+  if (img.src && !img.failed) {
     return (
       <img
-        src={logo}
+        src={img.src}
         alt=""
-        onError={() => setFailed(true)}
+        onError={img.onError}
         className="h-9 w-9 shrink-0 rounded-full border border-border-subtle bg-surface-inset object-cover"
       />
     );
@@ -62,7 +64,7 @@ function TokenAvatar({ logo, ticker }: { logo?: string; ticker: string }) {
 function HistoryRow({ row }: { row: DeliveredReward }) {
   return (
     <li className="group flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
-      <TokenAvatar logo={row.logo} ticker={row.ticker} />
+      <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-white">{row.ticker}</p>
         <p className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500">
@@ -136,6 +138,10 @@ export function HistoryList() {
   // refresh the archive query once it settles.
   const queryClient = useQueryClient();
   const invalidated = useRef(false);
+  useEffect(() => {
+    invalidated.current = false;
+    setPage(1);
+  }, [stakeAddress]);
   useEffect(() => {
     if (data && !invalidated.current) {
       invalidated.current = true;

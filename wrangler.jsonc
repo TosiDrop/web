@@ -24,6 +24,11 @@
       "database_id": "689c7608-8a46-415e-9f46-99849222031c"
     }
   ],
+  // R2-backed token image cache (bucket exists; see infrastructure#84).
+  // /api/tokenImage feature-detects the binding and degrades to a redirect.
+  "r2_buckets": [
+    { "binding": "TOKEN_IMAGES", "bucket_name": "tosidrop-token-images" }
+  ],
   "vars": {
     "VITE_VM_API_KEY": "{{VITE_VM_API_KEY}}"
   }

@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { IconCheck } from '@tabler/icons-react';
 import type { ClaimableToken } from '@/shared/rewards';
 import { cn } from '@/lib/utils';
+import { tokenImageSrc } from '@/shared/tokenImage';
+import { useImageFallback } from '@/hooks/useImageFallback';
 import { FavoriteStarButton } from '@/features/favorites/components/FavoriteStarButton';
 import { DislikeButton } from '@/features/favorites/components/DislikeButton';
 
@@ -14,7 +15,7 @@ interface DistributionCardProps {
 }
 
 export function DistributionCard({ token, selected, onToggle, favorite, dislike }: DistributionCardProps) {
-  const [imgFailed, setImgFailed] = useState(false);
+  const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
   });
@@ -67,14 +68,14 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
           )}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
-            {imgFailed || !token.logo ? (
+            {img.failed || !img.src ? (
               token.ticker.slice(0, 2)
             ) : (
               <img
-                src={token.logo}
+                src={img.src}
                 alt={token.ticker}
                 className="h-8 w-8 rounded-full"
-                onError={() => setImgFailed(true)}
+                onError={img.onError}
               />
             )}
           </div>

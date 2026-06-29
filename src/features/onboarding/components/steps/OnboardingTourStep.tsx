@@ -9,9 +9,11 @@ import {
   IconArrowLeft,
   IconAlertCircle,
 } from '@tabler/icons-react';
+import { useWallet } from '@meshsdk/react';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { useWalletStore } from '@/store/wallet-state';
 import { apiClient } from '@/api/client';
+import { signProfileUpdate } from '@/features/profile/utils/signProfileUpdate';
 
 const tourSlides = [
   {
@@ -50,6 +52,7 @@ export function OnboardingTourStep() {
     closeModal,
   } = useOnboardingStore();
   const { stakeAddress, walletName } = useWalletStore();
+  const { wallet, connected: walletConnected } = useWallet();
 
   const slide = tourSlides[slideIndex];
   const isLast = slideIndex === tourSlides.length - 1;
@@ -63,6 +66,10 @@ export function OnboardingTourStep() {
     setSaving(true);
     setSaveError(null);
     try {
+      if (!walletConnected || !wallet) {
+        throw new Error('Wallet disconnected — reconnect and try again');
+      }
+      const auth = await signProfileUpdate(wallet, stakeAddress);
       await apiClient.post('/api/user', {
         stakeAddress,
         displayName: profileName.trim() || null,
@@ -70,6 +77,7 @@ export function OnboardingTourStep() {
         avatarUrl: profileAvatar,
         walletProvider: walletName,
         onboardingCompleted: true,
+        ...auth,
       });
       closeModal();
     } catch (err) {

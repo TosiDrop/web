@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
+import { tokenImageSrc } from '@/shared/tokenImage';
+import { useImageFallback } from '@/hooks/useImageFallback';
 import { FavoriteStarButton } from './FavoriteStarButton';
 import { DislikeButton } from './DislikeButton';
 import { FavoritesSaveBar } from './FavoritesSaveBar';
@@ -12,18 +13,18 @@ function TokenRow({
   token: TokenRef;
   control: React.ReactNode;
 }) {
-  const [imgFailed, setImgFailed] = useState(false);
+  const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   return (
     <li className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
-        {imgFailed || !token.logo ? (
+        {img.failed || !img.src ? (
           (token.ticker || token.assetId).slice(0, 2)
         ) : (
           <img
-            src={token.logo}
+            src={img.src}
             alt={token.ticker}
             className="h-8 w-8 rounded-full"
-            onError={() => setImgFailed(true)}
+            onError={img.onError}
           />
         )}
       </div>

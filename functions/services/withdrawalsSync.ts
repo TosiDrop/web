@@ -28,6 +28,19 @@ export function buildWithdrawalUpserts(
     if (!raw || typeof raw.id !== 'string' || !raw.id || typeof raw.token !== 'string') continue;
     const epochNum = Number(raw.epoch);
     const deliveredOn = String(raw.delivered_on ?? '');
+    const deliveredAt = deliveredOn.trim() ? toUnixSeconds(deliveredOn) : null;
+    const amount = raw.amount as unknown;
+    const amountString = String(amount ?? '');
+    const amountNum = Number(amountString);
+    if (
+      deliveredAt === null ||
+      amount === null ||
+      amount === undefined ||
+      amountString.trim() === '' ||
+      !Number.isFinite(amountNum)
+    ) {
+      continue;
+    }
     stmts.push(
       db
         .prepare(
@@ -39,10 +52,10 @@ export function buildWithdrawalUpserts(
           stakeAddress,
           raw.id,
           raw.token,
-          String(raw.amount ?? ''),
+          amountString,
           Number.isNaN(epochNum) ? null : epochNum,
           deliveredOn,
-          toUnixSeconds(deliveredOn),
+          deliveredAt,
           raw.withdrawal_request ?? null,
         ),
     );

@@ -56,6 +56,11 @@ describe('GET /api/history', () => {
     expect(res.status).toBe(400);
   });
 
+  it('400 when from is after to', async () => {
+    const res = await onRequestGet(ctx(`staking_address=${STAKE}&from=2026-06-02&to=2026-06-01`, {}));
+    expect(res.status).toBe(400);
+  });
+
   it('degrades without a DB binding', async () => {
     const res = await onRequestGet(ctx(`staking_address=${STAKE}`, {}));
     const body = await res.json();
