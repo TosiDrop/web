@@ -1,5 +1,7 @@
 import type { Env } from '../types/env';
 import { initVmSdk, requireApiKey, withCache, errorResponse, optionsResponse } from '../services/vmClient';
+import { hasDb } from '../services/d1';
+import { buildWithdrawalUpserts } from '../services/withdrawalsSync';
 
 const CACHE_TTL = 300;
 
@@ -22,7 +24,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const sdk = await initVmSdk(env);
       const input: { staking_address: string; token_id?: string } = { staking_address };
       if (token_id) input.token_id = token_id;
-      return sdk.getDeliveredRewards(input);
+      const data = await sdk.getDeliveredRewards(input);
+
+      // #181: accumulate history beyond the VM window. Append-only; a D1
+      // hiccup must never break the read path.
+      if (hasDb(env)) {
+        const stmts = buildWithdrawalUpserts(env.DB, staking_address, data);
+        if (stmts.length > 0) {
+          context.waitUntil(
+            env.DB.batch(stmts).then(
+              () => undefined,
+              (err) => console.error('withdrawals sync error:', err),
+            ),
+          );
+        }
+      }
+      return data;
     }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getDeliveredRewards error:', error);

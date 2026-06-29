@@ -19,6 +19,7 @@ export function lovelaceToAda(lovelace: number): string {
   return (lovelace / 1_000_000).toFixed(6);
 }
 
+/** Format a lovelace value as a human-readable ADA amount (locale-aware, 2-6 dp). */
 export function formatAda(lovelace: number): string {
   return (lovelace / 1_000_000).toLocaleString(undefined, {
     minimumFractionDigits: 2,
