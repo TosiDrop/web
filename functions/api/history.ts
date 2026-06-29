@@ -47,6 +47,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (params.get('to') && to === null) {
     return errorResponse('to must be a unix timestamp or date', 400, origin);
   }
+  if (from !== null && to !== null && from > to) {
+    return errorResponse('from must be <= to', 400, origin);
+  }
 
   if (!hasDb(env)) {
     return jsonResponse(

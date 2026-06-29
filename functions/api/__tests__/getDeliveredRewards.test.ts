@@ -92,18 +92,22 @@ describe('getDeliveredRewards sync', () => {
     ]);
   });
 
-  it('parses ISO delivered_on and stores null for garbage', async () => {
+  it('parses ISO delivered_on and skips invalid delivered_on or amount', async () => {
     const db = fakeDb();
     sdkGetDelivered.mockResolvedValue([
       { ...VM_ROW, id: 'r2', delivered_on: '2026-06-01T00:00:00Z' },
-      { ...VM_ROW, id: 'r3', delivered_on: 'not-a-date', epoch: 'x' },
+      { ...VM_ROW, id: 'r3', delivered_on: 'not-a-date' },
+      { ...VM_ROW, id: 'r4', amount: '' },
+      { ...VM_ROW, id: 'r5', amount: 'abc' },
+      { ...VM_ROW, id: 'r6', epoch: 'x' },
     ]);
     const { ctx, waitUntil } = makeCtx({ DB: db });
     await onRequestGet(ctx);
     await Promise.all(waitUntil.mock.calls.map((call) => call[0]));
+    expect(db.__calls).toHaveLength(2);
+    expect(db.__calls.map((call) => call.binds[1])).toEqual(['r2', 'r6']);
     expect(db.__calls[0].binds[6]).toBe(Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000));
     expect(db.__calls[1].binds[4]).toBe(null); // epoch 'x' -> null
-    expect(db.__calls[1].binds[6]).toBe(null); // unparsable delivered_on
   });
 
   it('skips rows without an id and survives a D1 failure', async () => {
