@@ -323,8 +323,8 @@ Per-file transform — same skeleton as Task 2 (origin + `resolveNetwork` + `req
 
 | File | VM action + params | Caching | Notes |
 |---|---|---|---|
-| `getSystemInfo.ts` | `system_info` | keeps direct `caches.default`, TTL 300 — cache key already derives from full request URL, which now varies by `?network=`; no key change needed | add origin threading (currently none) |
-| `getStatistics.ts` | `get_statistics` | same direct `caches.default`, TTL 3600 | add origin threading |
+| `getSystemInfo.ts` | `system_info` | switch to the shared `withCache` helper, TTL 300 — its fresh-CORS-per-response handling avoids serving a cached ACAO header to the wrong origin (direct `caches.default` caches the whole response incl. headers) | add origin threading (currently none) |
+| `getStatistics.ts` | `get_statistics` | same: `withCache`, TTL 3600 | add origin threading |
 | `getQueue.ts` | `get_pending_tx_count` | `withCache` (URL-keyed — splits on `?network=` automatically) | already threads origin |
 | `estimateFees.ts` | `estimate_fees`, param `token_count` | `withCache` | already threads origin |
 | `getRewardBreakdown.ts` | `get_reward_breakdown`, param `staking_address` | `withCache` | already threads origin |
