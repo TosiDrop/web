@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../types/env';
 
-const sdkGetDelivered = vi.fn();
+const { vmFetch } = vi.hoisted(() => ({ vmFetch: vi.fn() }));
 vi.mock('../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vmClient')>();
   return {
     ...actual,
-    initVmSdk: async () => ({ getDeliveredRewards: sdkGetDelivered }),
+    vmFetch,
     // Bypass the Cache API in tests: always a miss, return the payload directly.
     withCache: async (_req: Request, _ttl: number, fetchFn: () => Promise<unknown>) =>
       new Response(JSON.stringify(await fetchFn()), { status: 200 }),
@@ -61,8 +61,8 @@ const VM_ROW = {
 
 describe('getDeliveredRewards sync', () => {
   beforeEach(() => {
-    sdkGetDelivered.mockReset();
-    sdkGetDelivered.mockResolvedValue([VM_ROW]);
+    vmFetch.mockReset();
+    vmFetch.mockResolvedValue([VM_ROW]);
   });
 
   it('returns the VM payload untouched', async () => {
@@ -94,7 +94,7 @@ describe('getDeliveredRewards sync', () => {
 
   it('parses ISO delivered_on and skips invalid delivered_on or amount', async () => {
     const db = fakeDb();
-    sdkGetDelivered.mockResolvedValue([
+    vmFetch.mockResolvedValue([
       { ...VM_ROW, id: 'r2', delivered_on: '2026-06-01T00:00:00Z' },
       { ...VM_ROW, id: 'r3', delivered_on: 'not-a-date' },
       { ...VM_ROW, id: 'r4', amount: '' },
@@ -113,7 +113,7 @@ describe('getDeliveredRewards sync', () => {
   it('skips rows without an id and survives a D1 failure', async () => {
     const db = fakeDb();
     (db.batch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'));
-    sdkGetDelivered.mockResolvedValue([{ ...VM_ROW, id: '' }, VM_ROW]);
+    vmFetch.mockResolvedValue([{ ...VM_ROW, id: '' }, VM_ROW]);
     const { ctx, waitUntil } = makeCtx({ DB: db });
     const res = await onRequestGet(ctx);
     expect(res.status).toBe(200);

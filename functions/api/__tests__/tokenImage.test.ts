@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Env } from '../../types/env';
 
-const sdkGetTokens = vi.fn();
+const { vmFetch } = vi.hoisted(() => ({ vmFetch: vi.fn() }));
 vi.mock('../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vmClient')>();
-  return { ...actual, initVmSdk: async () => ({ getTokens: sdkGetTokens }) };
+  return { ...actual, vmFetch };
 });
 
 import { onRequestGet } from '../tokenImage';
@@ -19,7 +19,7 @@ const TOKENS = {
 function fakeKv(tokens: unknown = TOKENS) {
   return {
     get: vi.fn(async (key: string) =>
-      key === '__internal:tokens_cache' ? tokens : null,
+      key === '__internal:tokens_cache:preview' ? tokens : null,
     ),
   } as unknown as KVNamespace;
 }
@@ -53,8 +53,8 @@ describe('GET /api/tokenImage', () => {
   // Block body on purpose: beforeEach treats a returned function as a
   // teardown hook, and mockReset() returns the mock itself.
   beforeEach(() => {
-    sdkGetTokens.mockReset();
-    sdkGetTokens.mockResolvedValue(TOKENS);
+    vmFetch.mockReset();
+    vmFetch.mockResolvedValue(TOKENS);
     vi.stubGlobal('fetch', vi.fn(async () =>
       new Response(PNG, { headers: { 'Content-Type': 'image/png', 'Content-Length': '4' } }),
     ));
@@ -131,9 +131,10 @@ describe('GET /api/tokenImage', () => {
     expect(pulls).toBeLessThan(6);
   });
 
-  it('falls back to the SDK when the KV tokens cache is empty', async () => {
+  it('falls back to the VM API when the KV tokens cache is empty', async () => {
     const res = await onRequestGet(ctx('?id=pol.aaaa', { VM_WEB_PROFILES: fakeKv(null) }));
-    expect(res.status).toBe(302); // no bucket bound, but resolution succeeded via SDK
-    expect(sdkGetTokens).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(302); // no bucket bound, but resolution succeeded via the VM API
+    expect(vmFetch).toHaveBeenCalledTimes(1);
+    expect(vmFetch).toHaveBeenCalledWith(expect.anything(), 'preview', 'get_tokens');
   });
 });

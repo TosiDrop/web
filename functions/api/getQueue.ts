@@ -1,19 +1,26 @@
 import type { Env } from '../types/env';
-import { initVmSdk, requireApiKey, withCache, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  resolveNetwork,
+  vmConfigFor,
+  vmFetch,
+  networkUnavailableResponse,
+  withCache,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 
 const CACHE_TTL = 60;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
+  const network = resolveNetwork(request);
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
 
   try {
     return await withCache(request, CACHE_TTL, async () => {
-      const sdk = await initVmSdk(env);
-      return sdk.getPendingTxCount();
+      return vmFetch(env, network, 'get_pending_tx_count');
     }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getQueue error:', error);
