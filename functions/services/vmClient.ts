@@ -2,6 +2,55 @@ import type { Env } from '../types/env';
 
 export const DEFAULT_VM_BASE_URL = 'https://vmprev.adaseal.eu';
 
+export type VmNetwork = 'mainnet' | 'preview';
+
+export function resolveNetwork(request: Request): VmNetwork {
+  const value = new URL(request.url).searchParams.get('network');
+  return value === 'mainnet' ? 'mainnet' : 'preview';
+}
+
+export function vmConfigFor(env: Env, network: VmNetwork): { baseUrl: string; apiKey: string } | null {
+  if (network === 'mainnet') {
+    if (!env.VM_BASE_URL_MAINNET || !env.VM_API_KEY_MAINNET) return null;
+    return { baseUrl: env.VM_BASE_URL_MAINNET, apiKey: env.VM_API_KEY_MAINNET };
+  }
+  const apiKey = env.VM_API_KEY_PREVIEW || env.VITE_VM_API_KEY;
+  if (!apiKey || apiKey.trim() === '') return null;
+  return { baseUrl: env.VM_BASE_URL_PREVIEW || env.VM_BASE_URL || DEFAULT_VM_BASE_URL, apiKey };
+}
+
+export function networksAvailable(env: Env): { mainnet: boolean; preview: boolean } {
+  return { mainnet: vmConfigFor(env, 'mainnet') !== null, preview: vmConfigFor(env, 'preview') !== null };
+}
+
+export function networkUnavailableResponse(requestOrigin?: string | null): Response {
+  return errorResponse('network_unavailable', 503, requestOrigin ?? undefined);
+}
+
+export function netCacheKey(base: string, network: VmNetwork): string {
+  return `${base}:${network}`;
+}
+
+export async function vmFetch(
+  env: Env,
+  network: VmNetwork,
+  action: string,
+  params?: Record<string, string | number | boolean | undefined>,
+): Promise<unknown> {
+  const config = vmConfigFor(env, network);
+  if (!config) throw new Error('network_unavailable');
+  const qs = new URLSearchParams({ action });
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (v === undefined) continue;
+    qs.append(k, String(v));
+  }
+  const res = await fetch(`${config.baseUrl}/api.php?${qs.toString()}`, {
+    headers: { 'X-API-Token': config.apiKey },
+  });
+  if (!res.ok) throw new Error(`VM API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
 const ALLOWED_ORIGINS = [
   'https://tosidrop.io',
   'https://www.tosidrop.io',
@@ -23,16 +72,7 @@ export async function vmApiGet(
   action: string,
   params: Record<string, string | number | boolean | undefined>,
 ): Promise<unknown> {
-  const qs = new URLSearchParams({ action });
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined) continue;
-    qs.append(k, String(v));
-  }
-  const res = await fetch(`${vmBaseUrl(env)}/api.php?${qs.toString()}`, {
-    headers: { 'X-API-Token': env.VITE_VM_API_KEY },
-  });
-  if (!res.ok) throw new Error(`VM API ${res.status}: ${res.statusText}`);
-  return res.json();
+  return vmFetch(env, 'preview', action, params);
 }
 
 function getCorsOrigin(requestOrigin?: string | null): string {
