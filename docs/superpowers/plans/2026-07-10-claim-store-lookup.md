@@ -6,7 +6,7 @@
 
 **Architecture:** `src/store/claim-state.ts` gains `lookupAddress`, `setLookupAddress`, and `initSelectionFor(address, assetIds)` (replacing ClaimPage's `initializedFor` ref). ClaimPage drops its local `useState`/`useRef` and reads the store. `useRewards` stays a pure TanStack Query hook.
 
-**Tech Stack:** Zustand 5, TanStack Query, Vitest (jsdom), React 19.
+**Tech Stack:** Zustand 5, TanStack Query, Vitest (jsdom), React 18.
 
 ## Global Constraints
 

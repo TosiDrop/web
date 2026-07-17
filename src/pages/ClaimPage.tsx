@@ -72,7 +72,7 @@ export default function ClaimPage() {
       setLookupAddress(null);
       setResolveError(null);
     }
-  }, [stakeAddress, connected]);
+  }, [stakeAddress, connected, setLookupAddress]);
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
 
@@ -110,7 +110,7 @@ export default function ClaimPage() {
         setLookupAddress(resolved);
       }
     },
-    [lookupAddress, refetch],
+    [lookupAddress, refetch, setLookupAddress],
   );
 
   const claimMutation = useMutation({

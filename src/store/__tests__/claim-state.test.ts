@@ -55,6 +55,13 @@ describe('initSelectionFor', () => {
     useClaimStore.getState().initSelectionFor('stake1uxabc', ['a']);
     expect(useClaimStore.getState().selectedAssetIds).toEqual(['a']);
   });
+
+  it('prunes selected ids that are no longer claimable for the same address', () => {
+    useClaimStore.getState().initSelectionFor('stake1uxabc', ['a', 'b', 'c']);
+    // 'b' and 'c' were claimed; refetch returns only 'a' — same address, no reset() ran
+    useClaimStore.getState().initSelectionFor('stake1uxabc', ['a']);
+    expect(useClaimStore.getState().selectedAssetIds).toEqual(['a']);
+  });
 });
 
 describe('reset', () => {

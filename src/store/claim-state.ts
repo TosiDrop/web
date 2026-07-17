@@ -36,10 +36,11 @@ export const useClaimStore = create<ClaimState>((set) => ({
   setRequest: (request) => set({ request }),
   setLookupAddress: (lookupAddress) => set({ lookupAddress }),
   initSelectionFor: (address, assetIds) =>
-    set((s) =>
-      s.initializedFor === address
-        ? s
-        : { initializedFor: address, selectedAssetIds: assetIds },
-    ),
+    set((s) => {
+      if (s.initializedFor !== address)
+        return { initializedFor: address, selectedAssetIds: assetIds };
+      const pruned = s.selectedAssetIds.filter((id) => assetIds.includes(id));
+      return pruned.length === s.selectedAssetIds.length ? s : { selectedAssetIds: pruned };
+    }),
   reset: () => set({ selectedAssetIds: [], request: null, initializedFor: null }),
 }));
