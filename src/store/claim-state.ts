@@ -9,16 +9,22 @@ export interface ClaimRequestInfo {
 interface ClaimState {
   selectedAssetIds: string[];
   request: ClaimRequestInfo | null;
+  lookupAddress: string | null;
+  initializedFor: string | null;
 
   setSelected: (ids: string[]) => void;
   toggleAsset: (id: string) => void;
   setRequest: (info: ClaimRequestInfo) => void;
+  setLookupAddress: (address: string | null) => void;
+  initSelectionFor: (address: string, assetIds: string[]) => void;
   reset: () => void;
 }
 
 export const useClaimStore = create<ClaimState>((set) => ({
   selectedAssetIds: [],
   request: null,
+  lookupAddress: null,
+  initializedFor: null,
 
   setSelected: (selectedAssetIds) => set({ selectedAssetIds }),
   toggleAsset: (id) =>
@@ -28,5 +34,13 @@ export const useClaimStore = create<ClaimState>((set) => ({
         : [...s.selectedAssetIds, id],
     })),
   setRequest: (request) => set({ request }),
-  reset: () => set({ selectedAssetIds: [], request: null }),
+  setLookupAddress: (lookupAddress) => set({ lookupAddress }),
+  initSelectionFor: (address, assetIds) =>
+    set((s) => {
+      if (s.initializedFor !== address)
+        return { initializedFor: address, selectedAssetIds: assetIds };
+      const pruned = s.selectedAssetIds.filter((id) => assetIds.includes(id));
+      return pruned.length === s.selectedAssetIds.length ? s : { selectedAssetIds: pruned };
+    }),
+  reset: () => set({ selectedAssetIds: [], request: null, initializedFor: null }),
 }));
