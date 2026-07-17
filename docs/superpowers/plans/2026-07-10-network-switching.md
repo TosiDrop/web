@@ -253,7 +253,6 @@ import {
   vmFetch,
   netCacheKey,
   networkUnavailableResponse,
-  requireApiKey,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -267,8 +266,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const origin = request.headers.get('Origin');
   const network = resolveNetwork(request);
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
   if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
 
   try {
@@ -290,6 +287,8 @@ export const onRequestOptions: PagesFunction<Env> = async ({ request }) =>
 ```
 
 Preserve each file's existing extra logic verbatim around this skeleton (e.g. `getWhitelist`'s response normalization, `getSettings`'s pass-through of upstream JSON). If a file already has an `onRequestOptions`, keep it, just thread origin.
+
+**Migrated handlers DROP `requireApiKey` (and any inline `VITE_VM_API_KEY` check)** — the `vmConfigFor` gate subsumes it per network. Rationale (from Task 1 review): `requireApiKey` gates solely on `VITE_VM_API_KEY`, so a deployment configured only via `VM_API_KEY_PREVIEW` would 500 despite being fully functional. Task 4 deletes `requireApiKey` from vmClient once its last caller is migrated (watch `noUnusedLocals` — delete, don't orphan).
 
 | File | VM action | Cache base key | TTL | Notes |
 |---|---|---|---|---|
@@ -367,7 +366,7 @@ Specifics:
 | `claim/status.ts` | replace `vmApiGet(env, 'check_status_custom_request', {...})` with `vmFetch(env, resolveNetwork(request), 'check_status_custom_request', {...})` — this makes the network param the deposit-flow frontend ALREADY SENDS finally effective |
 | `resolveHandle.ts` | before the Koios call: `if (resolveNetwork(request) === 'preview') return errorResponse('ADA Handle resolution is only available on mainnet', 400, origin);` (Koios is mainnet-only) |
 | `networks.ts` (new) | `onRequestGet`: `return jsonResponse({ networks: networksAvailable(env) }, 200, origin)` — NO `requireApiKey` (availability booleans are not sensitive; the frontend needs this before anything else works). `onRequestOptions` with origin. |
-| `vmClient.ts` | delete `initVmSdk` and `vmApiGet` (last callers gone); delete the now-unused vm-sdk comment block |
+| `vmClient.ts` | delete `initVmSdk`, `vmApiGet`, and `requireApiKey` (last callers gone after this task); delete the now-unused vm-sdk comment block; leave no orphaned locals (`noUnusedLocals` breaks the build) |
 
 Wait — `resolveHandle` today is called for `$handle` lookups on the claim page, which currently serves preview data; after this task a preview-network user typing `$handle` gets a clear 400 instead of a mainnet address that silently returns empty preview rewards. That is the intended behavior change; note it in the PR body.
 
