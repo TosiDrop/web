@@ -230,7 +230,7 @@ export function ProfileSetupStep() {
         <button
           onClick={handleContinue}
           disabled={!canContinue}
-          className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-teal px-6 py-3 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/10 transition-all hover:shadow-xl hover:shadow-brand-cyan/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-40 disabled:hover:shadow-none"
+          className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/10 transition-all hover:shadow-xl hover:shadow-brand-cyan/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-40 disabled:hover:shadow-none"
         >
           Continue
           <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />

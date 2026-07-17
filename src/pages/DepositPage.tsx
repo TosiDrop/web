@@ -144,7 +144,7 @@ export default function DepositPage() {
               type="button"
               onClick={handleSend}
               disabled={!canSend || isSending || isTerminal}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-6 py-2.5 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/20 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-cyan/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
               {isSending ? 'Signing...' : 'Send from wallet'}
             </button>
@@ -189,7 +189,7 @@ export default function DepositPage() {
               href={txExplorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-brand-cyan transition hover:text-cyan-300"
+              className="inline-flex items-center gap-1.5 text-xs text-brand-cyan transition hover:text-indigo-300"
             >
               View delivery tx
               <IconExternalLink size={12} stroke={1.6} />

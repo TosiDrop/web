@@ -1,5 +1,6 @@
 import { useWallet } from '@meshsdk/react';
 import { IconWallet } from '@tabler/icons-react';
+import { GradientButton } from '@/components/common/GradientButton';
 import { useOnboardingStore } from '@/store/onboarding-state';
 
 export function ConnectWallet() {
@@ -8,23 +9,22 @@ export function ConnectWallet() {
 
   if (connected) {
     return (
-      <button
+      <GradientButton
+        variant="secondary"
+        size="sm"
         onClick={disconnect}
         aria-label="Disconnect wallet"
-        className="rounded-lg border border-border-subtle bg-surface-raised/60 px-3 py-1.5 text-xs text-slate-400 transition hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-200"
+        className="text-slate-400 hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-200"
       >
         Disconnect
-      </button>
+      </GradientButton>
     );
   }
 
   return (
-    <button
-      onClick={openModal}
-      className="inline-flex items-center gap-2 rounded-lg bg-brand-cyan px-3.5 py-1.5 text-xs font-semibold text-[#06181a] transition hover:bg-cyan-300"
-    >
-      <IconWallet size={13} stroke={1.8} />
+    <GradientButton size="sm" onClick={openModal}>
+      <IconWallet size={14} stroke={1.8} />
       Connect wallet
-    </button>
+    </GradientButton>
   );
 }

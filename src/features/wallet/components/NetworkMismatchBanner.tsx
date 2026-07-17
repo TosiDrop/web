@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconArrowNarrowRight } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowRight } from '@tabler/icons-react';
 import { useWalletStore } from '@/store/wallet-state';
 import { useNetworkStore, networkFromId, networkLabel } from '@/store/network-state';
 
@@ -12,33 +12,26 @@ export function NetworkMismatchBanner() {
   return (
     <div
       role="alert"
-      className="relative mb-5 overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-surface-raised to-surface-raised px-5 py-4"
+      className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border-subtle bg-[linear-gradient(180deg,#161B2E,#121726)] px-[18px] py-[15px] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
     >
-      <span className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700" />
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/12">
-            <span className="absolute inset-0 rounded-full bg-amber-500/30 animate-ping opacity-60" />
-            <IconAlertTriangle size={16} stroke={1.75} className="relative text-amber-300" />
-          </span>
-          <div>
-            <p className="text-sm font-medium text-white">Wallet network mismatch</p>
-            <p className="mt-0.5 text-[12px] text-slate-400">
-              Switch your wallet, or change the selected network in Profile → Preferences.
-            </p>
-          </div>
-        </div>
-        <div className="ml-auto flex items-center gap-2 font-mono text-[11px] tracking-tight">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-200">
-            <span className="h-1 w-1 rounded-full bg-amber-300" />
-            wallet · {networkLabel(walletNetwork).toLowerCase()}
-          </span>
-          <IconArrowNarrowRight size={14} stroke={1.5} className="text-slate-500" />
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-cyan/30 bg-brand-cyan/10 px-2 py-1 text-brand-cyan">
-            <span className="h-1 w-1 rounded-full bg-brand-cyan" />
-            target · {networkLabel(selectedNetwork).toLowerCase()}
-          </span>
-        </div>
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[#F5B042]/[0.12]">
+        <IconAlertTriangle size={19} stroke={1.8} className="text-[#F0B04B]" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[14px] font-semibold text-[#EDEEF2]">Wallet network mismatch</p>
+        <p className="mt-0.5 text-[12.5px] text-[#8A8E9A]">
+          Your wallet is on a different network. Switch the wallet, or change the target in
+          Profile → Preferences.
+        </p>
+      </div>
+      <div className="ml-auto flex items-center gap-2.5 font-mono text-[11px]">
+        <span className="rounded-lg border border-[#F5B042]/20 bg-[#F5B042]/[0.08] px-2.5 py-1.5 text-[#E7B86E]">
+          wallet · {networkLabel(walletNetwork).toLowerCase()}
+        </span>
+        <IconArrowRight size={14} stroke={1.7} className="text-[#5A5E6A]" />
+        <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[#A5F3FC]">
+          target · {networkLabel(selectedNetwork).toLowerCase()}
+        </span>
       </div>
     </div>
   );

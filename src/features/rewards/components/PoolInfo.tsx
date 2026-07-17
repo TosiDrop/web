@@ -20,7 +20,7 @@ function PoolLogo({ pool }: { pool: Pool }) {
   }
   const initials = (pool.ticker || pool.name || '??').slice(0, 3).toUpperCase();
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brand-cyan/20 bg-gradient-to-br from-brand-cyan/15 to-brand-teal/10 font-mono text-[11px] font-medium uppercase text-brand-cyan">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-[11px] font-medium uppercase text-slate-300">
       {initials}
     </div>
   );

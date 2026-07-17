@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { IconCheck } from '@tabler/icons-react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
@@ -8,13 +9,48 @@ import { useClaimStore } from '@/store/claim-state';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
 
-import { ClaimPageHeader } from '@/features/rewards/components/ClaimPageHeader';
 import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
+import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
+import { ClaimHero } from '@/features/rewards/components/ClaimHero';
 import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
 import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
 import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocation';
 import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
+
+function LoadingTokens() {
+  return (
+    <div className="card-premium p-[22px]">
+      <div className="mb-[18px] flex items-center gap-3">
+        <span className="inline-block h-[18px] w-[18px] animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light" />
+        <span className="text-[13.5px] text-[#C5C8D2]">Scanning stake address…</span>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 0.15, 0.3, 0.1, 0.25, 0.4].map((delay, i) => (
+          <div
+            key={i}
+            className="skeleton-shimmer h-24 rounded-[13px] border border-[rgba(56,78,128,0.25)]"
+            style={{ animationDelay: `${delay}s` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NoRewardsState() {
+  return (
+    <div className="flex h-[300px] flex-col items-center justify-center rounded-[16px] border border-border-subtle bg-surface-inset px-8 text-center">
+      <span className="mb-[18px] flex h-[54px] w-[54px] items-center justify-center rounded-full bg-[#4ADE80]/[0.12]">
+        <IconCheck size={26} stroke={2.4} className="text-[#4ADE80]" />
+      </span>
+      <p className="text-[17px] font-semibold text-[#F4F5F7]">You're all caught up</p>
+      <p className="mt-1.5 max-w-[320px] text-[13px] leading-relaxed text-[#8A8E9A]">
+        No claimable rewards right now. New distributions land each epoch — check back soon.
+      </p>
+    </div>
+  );
+}
 
 export default function ClaimPage() {
   const navigate = useNavigate();
@@ -42,6 +78,8 @@ export default function ClaimPage() {
   const walletReady = connected && !!stakeAddress;
   const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
   const hasRewards = !!rewards && rewards.length > 0;
+  const total = rewards?.length ?? 0;
+  const allSelected = total > 0 && rewards!.every((r) => selectedAssetIds.includes(r.assetId));
 
   useEffect(() => {
     if (!rewards || !lookupAddress) return;
@@ -94,92 +132,85 @@ export default function ClaimPage() {
     claimMutation.mutate({ stakeAddress, selected: selectedAssetIds });
   };
 
+  const toggleAll = () => {
+    setSelected(allSelected ? [] : (rewards ?? []).map((r) => r.assetId));
+  };
+
   const claimDisabled =
     !canClaim || selectedAssetIds.length === 0 || claimMutation.isPending;
+  const loading = isLoading || resolving;
 
   return (
     <div className="space-y-6">
-      <ClaimPageHeader />
+      <GlobalClaimCard
+        onLookup={handleLookup}
+        isLoading={loading}
+        activeAddress={lookupAddress}
+      />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="space-y-5 lg:col-span-2">
-          <GlobalClaimCard
-            onLookup={handleLookup}
-            isLoading={isLoading || resolving}
-            activeAddress={lookupAddress}
-          />
+      {resolveError && (
+        <FeedbackBanner
+          tone="error"
+          title="Handle resolution failed"
+          message={resolveError}
+        />
+      )}
 
-          {resolveError && (
-            <FeedbackBanner
-              tone="error"
-              title="Handle resolution failed"
-              message={resolveError}
-            />
-          )}
+      {error && (
+        <FeedbackBanner
+          tone="error"
+          title="Unable to fetch rewards"
+          message={error.message}
+        />
+      )}
 
-          {error && (
-            <FeedbackBanner
-              tone="error"
-              title="Unable to fetch rewards"
-              message={error.message}
-            />
-          )}
+      {claimMutation.error && (
+        <FeedbackBanner
+          tone="error"
+          title="Could not start claim"
+          message={
+            claimMutation.error instanceof Error
+              ? claimMutation.error.message
+              : 'Unknown error'
+          }
+        />
+      )}
 
-          {claimMutation.error && (
-            <FeedbackBanner
-              tone="error"
-              title="Could not start claim"
-              message={
-                claimMutation.error instanceof Error
-                  ? claimMutation.error.message
-                  : 'Unknown error'
-              }
-            />
-          )}
+      {!lookupAddress && <ClaimWelcome />}
 
-          {hasRewards && canClaim && (
-            <button
-              type="button"
-              onClick={handleClaim}
-              disabled={claimDisabled}
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-8 py-3 text-base font-semibold text-surface-base shadow-lg shadow-brand-cyan/25 transition hover:bg-cyan-300 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-            >
-              {claimMutation.isPending
-                ? 'Preparing claim...'
-                : `Claim ${selectedAssetIds.length} ${selectedAssetIds.length === 1 ? 'token' : 'tokens'}`}
-            </button>
-          )}
+      {lookupAddress && !loading && hasRewards && (
+        <ClaimHero
+          selectedCount={selectedAssetIds.length}
+          totalCount={total}
+          allSelected={allSelected}
+          onToggleAll={toggleAll}
+          onClaim={handleClaim}
+          claimDisabled={claimDisabled}
+          isPending={claimMutation.isPending}
+          canClaim={canClaim}
+        />
+      )}
 
-          {hasRewards && !canClaim && (
-            <p className="text-sm text-slate-500">
-              Connect this wallet to claim rewards.
-            </p>
-          )}
+      {lookupAddress && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
+            {loading ? (
+              <LoadingTokens />
+            ) : hasRewards ? (
+              <AvailableDistributions tokens={rewards ?? []} />
+            ) : (
+              !error && <NoRewardsState />
+            )}
+          </div>
 
-          {isLoading ? (
-            <div className="space-y-3">
-              <h2 className="text-sm font-medium text-white">Claimable tokens</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-28 animate-pulse rounded-xl border border-border-subtle bg-surface-raised"
-                  />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <AvailableDistributions tokens={rewards ?? []} />
-          )}
+          <div className="space-y-[18px]">
+            <RewardsSummary tokenCount={selectedAssetIds.length} />
+            <RewardsAllocation tokens={rewards ?? []} />
+            <WalletComposition />
+            <NetworkStatusWidget />
+          </div>
         </div>
-
-        <div className="space-y-4">
-          <RewardsSummary tokenCount={selectedAssetIds.length} />
-          <RewardsAllocation tokens={rewards ?? []} />
-          <WalletComposition />
-          <NetworkStatusWidget />
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -22,9 +22,9 @@ export function WelcomeStep() {
   return (
     <div className="flex flex-col items-center text-center">
       {/* Brand mark */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-cyan to-brand-teal p-[1.5px] shadow-lg shadow-brand-cyan/20">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] p-[1.5px] shadow-lg shadow-brand-cyan/20">
         <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-surface-raised">
-          <span className="bg-gradient-to-br from-brand-cyan to-brand-teal bg-clip-text text-2xl font-bold text-transparent">
+          <span className="bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] bg-clip-text text-2xl font-bold text-transparent">
             T
           </span>
         </div>
@@ -52,7 +52,7 @@ export function WelcomeStep() {
 
       <button
         onClick={() => setStep('select-wallet')}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-teal px-6 py-3.5 text-sm font-semibold text-surface-base shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
+        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3.5 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
       >
         Get Started
         <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />

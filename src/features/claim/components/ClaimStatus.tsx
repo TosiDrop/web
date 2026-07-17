@@ -35,7 +35,7 @@ export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
             href={explorerTxUrl(state.txHash, network)}
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-brand-cyan underline hover:text-cyan-300"
+            className="text-xs text-brand-cyan underline hover:text-indigo-300"
           >
             View on cexplorer
           </a>
@@ -77,7 +77,7 @@ export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
           href={explorerTxUrl(state.txHash, network)}
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-brand-cyan underline hover:text-cyan-300"
+          className="text-xs text-brand-cyan underline hover:text-indigo-300"
         >
           View deposit on cexplorer ({truncateHash(state.txHash)})
         </a>

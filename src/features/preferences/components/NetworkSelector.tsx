@@ -12,20 +12,6 @@ const OPTIONS: Option[] = [
   { value: 'preview', description: 'Test network for development.' },
 ];
 
-function NetworkDot({ network }: { network: Network }) {
-  const isMainnet = network === 'mainnet';
-  return (
-    <span
-      className={
-        'h-1.5 w-1.5 rounded-full ' +
-        (isMainnet
-          ? 'bg-brand-cyan shadow-[0_0_6px_rgba(34,211,238,0.85)]'
-          : 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.7)]')
-      }
-    />
-  );
-}
-
 export function NetworkSelector() {
   const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
   const setNetwork = useNetworkStore((s) => s.setNetwork);
@@ -39,15 +25,12 @@ export function NetworkSelector() {
         </p>
       </div>
       <Listbox value={selectedNetwork} onChange={setNetwork}>
-        <ListboxButton className="group flex min-w-[148px] items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset/80 px-3 py-1.5 text-xs text-white transition hover:border-brand-cyan/40 focus:outline-none data-[open]:border-brand-cyan/50 data-[open]:shadow-[0_0_0_1px_rgba(34,211,238,0.2)]">
-          <span className="flex items-center gap-2">
-            <NetworkDot network={selectedNetwork} />
-            {networkLabel(selectedNetwork)}
-          </span>
+        <ListboxButton className="group flex min-w-[148px] items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset/80 px-3 py-2 text-xs text-white transition hover:bg-white/[0.04] focus:outline-none data-[open]:bg-white/[0.04]">
+          {networkLabel(selectedNetwork)}
           <IconChevronDown
             size={13}
             stroke={1.6}
-            className="text-slate-500 transition group-data-[open]:rotate-180 group-data-[open]:text-brand-cyan"
+            className="text-slate-500 transition group-data-[open]:rotate-180"
           />
         </ListboxButton>
         <ListboxOptions
@@ -61,19 +44,14 @@ export function NetworkSelector() {
               value={value}
               className="group flex cursor-pointer items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-slate-300 transition data-[focus]:bg-surface-inset data-[selected]:text-white"
             >
-              <div className="flex items-start gap-2.5">
-                <span className="mt-1.5">
-                  <NetworkDot network={value} />
-                </span>
-                <div>
-                  <p className="text-xs font-medium">{networkLabel(value)}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">{description}</p>
-                </div>
+              <div>
+                <p className="text-xs font-medium">{networkLabel(value)}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">{description}</p>
               </div>
               <IconCheck
                 size={13}
                 stroke={2}
-                className="mt-1 shrink-0 text-brand-cyan opacity-0 transition group-data-[selected]:opacity-100"
+                className="mt-0.5 shrink-0 text-accent-light opacity-0 transition group-data-[selected]:opacity-100"
               />
             </ListboxOption>
           ))}

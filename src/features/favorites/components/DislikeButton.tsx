@@ -1,4 +1,4 @@
-import { IconThumbDown, IconThumbDownFilled } from '@tabler/icons-react';
+import { IconEyeOff } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
 interface DislikeButtonProps {
@@ -12,20 +12,20 @@ export function DislikeButton({ active, onToggle, className }: DislikeButtonProp
     <button
       type="button"
       aria-pressed={active}
-      aria-label={active ? 'Remove dislike' : 'Hide this token'}
+      aria-label={active ? 'Unhide token' : 'Hide token'}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
       }}
       className={cn(
-        'flex h-6 w-6 items-center justify-center rounded-md border transition',
+        'flex h-7 w-7 items-center justify-center rounded-lg transition',
         active
-          ? 'border-rose-400/40 bg-rose-400/10 text-rose-300'
-          : 'border-border-default bg-surface-inset text-slate-500 hover:text-rose-300',
+          ? 'text-[#9AA6BE] hover:bg-white/[0.06]'
+          : 'text-[#5F6680] hover:bg-white/[0.06] hover:text-[#9AA6BE]',
         className,
       )}
     >
-      {active ? <IconThumbDownFilled size={13} /> : <IconThumbDown size={13} stroke={1.8} />}
+      <IconEyeOff size={15} stroke={active ? 1.9 : 1.7} />
     </button>
   );
 }
