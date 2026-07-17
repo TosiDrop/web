@@ -33,6 +33,15 @@ describe('initSelectionFor', () => {
     expect(useClaimStore.getState().selectedAssetIds).toEqual(['a']);
   });
 
+  it('keeps a partial selection across page remounts (navigate away and back)', () => {
+    // Mount 1: init + user deselects one token
+    useClaimStore.getState().initSelectionFor('stake1uxabc', ['a', 'b']);
+    useClaimStore.getState().setSelected(['a']);
+    // Mount 2 (user navigated away and back): init effect fires again with the same address
+    useClaimStore.getState().initSelectionFor('stake1uxabc', ['a', 'b']);
+    expect(useClaimStore.getState().selectedAssetIds).toEqual(['a']);
+  });
+
   it('re-initializes when the address changes', () => {
     useClaimStore.getState().initSelectionFor('stake1uxabc', ['a', 'b']);
     useClaimStore.getState().setSelected([]);
