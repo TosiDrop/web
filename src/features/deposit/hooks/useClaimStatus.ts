@@ -51,7 +51,6 @@ export function useClaimStatus({
       const params = new URLSearchParams({
         requestId: request_id,
         stakeAddress: staking_address,
-        network,
       });
       return apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
     },
