@@ -5,6 +5,7 @@ import {
   networksAvailable,
   netCacheKey,
   vmFetch,
+  networkUnavailableResponse,
 } from '../vmClient';
 import type { Env } from '../../types/env';
 
@@ -74,6 +75,14 @@ describe('networksAvailable', () => {
 describe('netCacheKey', () => {
   it('suffixes with the network', () => {
     expect(netCacheKey('__internal:pools_cache', 'mainnet')).toBe('__internal:pools_cache:mainnet');
+  });
+});
+
+describe('networkUnavailableResponse', () => {
+  it('returns 503 with the stable error body', async () => {
+    const res = networkUnavailableResponse('https://tosidrop.io');
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'network_unavailable' });
   });
 });
 

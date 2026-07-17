@@ -58,10 +58,6 @@ const ALLOWED_ORIGINS = [
   'http://localhost:8788',
 ];
 
-function vmBaseUrl(env: Env): string {
-  return env.VM_BASE_URL || DEFAULT_VM_BASE_URL;
-}
-
 export { sessionIdFor } from '../../src/shared/claim/session';
 
 // vm-sdk ships `checkStatusCustomRequest` but does not re-export it from its
