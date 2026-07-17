@@ -4,7 +4,7 @@ import {
   vmConfigFor,
   vmFetch,
   networkUnavailableResponse,
-  jsonResponse,
+  withCache,
   errorResponse,
   optionsResponse,
 } from '../services/vmClient';
@@ -19,17 +19,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
 
   try {
-    const cache = caches.default;
-    const cacheKey = new Request(new URL(request.url).toString());
-    const cached = await cache.match(cacheKey);
-    if (cached) return cached;
-
-    const data = await vmFetch(env, network, 'get_statistics');
-
-    const response = jsonResponse(data, 200, origin);
-    response.headers.set('Cache-Control', `s-maxage=${CACHE_TTL}`);
-    await cache.put(cacheKey, response.clone());
-    return response;
+    return await withCache(request, CACHE_TTL, async () => {
+      return vmFetch(env, network, 'get_statistics');
+    }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getStatistics error:', error);
     return errorResponse('Failed to fetch statistics', 500, origin);
