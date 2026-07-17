@@ -5,7 +5,16 @@ import {
   type TokenInfo,
 } from '../../src/shared/rewards';
 import type { Env } from '../types/env';
-import { initVmSdk, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  resolveNetwork,
+  vmConfigFor,
+  vmFetch,
+  networkUnavailableResponse,
+  type VmNetwork,
+  jsonResponse,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 
 function mergeAmounts(...sources: (Record<string, number> | undefined)[]): Record<string, number> {
   const merged: Record<string, number> = {};
@@ -40,12 +49,10 @@ function toClaimableTokens(
     });
 }
 
-async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToken[]> {
-  const { getRewards: getRewardsFromVM, getTokens: getTokensFromVM } = await initVmSdk(env);
-
+async function getRewards(stakeAddress: string, env: Env, network: VmNetwork): Promise<ClaimableToken[]> {
   const [rewardsResponse, tokensRaw] = await Promise.all([
-    getRewardsFromVM(stakeAddress) as Promise<GetRewardsDto | null>,
-    getTokensFromVM(),
+    vmFetch(env, network, 'get_rewards', { staking_address: stakeAddress }) as Promise<GetRewardsDto | null>,
+    vmFetch(env, network, 'get_tokens'),
   ]);
 
   let tokens = tokensRaw as unknown as Record<string, TokenInfo> | null;
@@ -63,7 +70,7 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
   const allAssetIds = [...Object.keys(regular), ...Object.keys(premium)];
   for (const assetId of allAssetIds) {
     if (!tokens[assetId]) {
-      tokens = (await getTokensFromVM()) as unknown as Record<string, TokenInfo> | null;
+      tokens = (await vmFetch(env, network, 'get_tokens')) as unknown as Record<string, TokenInfo> | null;
       if (!tokens) {
         console.warn('getRewards: token re-fetch returned null', { stakeAddress });
         return [];
@@ -80,23 +87,24 @@ async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToke
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
+  const origin = request.headers.get('Origin');
+  const network = resolveNetwork(request);
   const stakeAddress = new URL(request.url).searchParams.get('walletId');
 
   if (!stakeAddress) {
-    return errorResponse('walletId is required', 400);
+    return errorResponse('walletId is required', 400, origin);
   }
 
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500);
-  }
+  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
 
   try {
-    const claimableTokens = await getRewards(stakeAddress, env);
-    return jsonResponse({ rewards: claimableTokens });
+    const claimableTokens = await getRewards(stakeAddress, env, network);
+    return jsonResponse({ rewards: claimableTokens }, 200, origin);
   } catch (error) {
     console.error('getRewards error:', error);
-    return errorResponse('Failed to process request');
+    return errorResponse('Failed to process request', 500, origin);
   }
 };
 
-export const onRequestOptions: PagesFunction = async () => optionsResponse();
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) =>
+  optionsResponse(request.headers.get('Origin'));

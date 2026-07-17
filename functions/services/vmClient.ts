@@ -60,38 +60,11 @@ const ALLOWED_ORIGINS = [
 
 export { sessionIdFor } from '../../src/shared/claim/session';
 
-// vm-sdk ships `checkStatusCustomRequest` but does not re-export it from its
-// index, so we call the VM API's generic `api.php?action=` entrypoint directly.
-// Remove this shim if a future SDK release exports the function.
-export async function vmApiGet(
-  env: Env,
-  action: string,
-  params: Record<string, string | number | boolean | undefined>,
-): Promise<unknown> {
-  return vmFetch(env, 'preview', action, params);
-}
-
 function getCorsOrigin(requestOrigin?: string | null): string {
   if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
     return requestOrigin;
   }
   return ALLOWED_ORIGINS[0];
-}
-
-// Note: vm-sdk's setApiToken mutates module-level state. This is safe in
-// single-request-per-isolate environments but could race under concurrent
-// requests sharing an isolate. If the SDK adds per-instance config, prefer that.
-export async function initVmSdk(env: Env) {
-  const sdk = await import('vm-sdk');
-  sdk.setApiToken(env.VITE_VM_API_KEY);
-  return sdk;
-}
-
-export function requireApiKey(env: Env, requestOrigin?: string | null): Response | null {
-  if (!env.VITE_VM_API_KEY || env.VITE_VM_API_KEY.trim() === '') {
-    return errorResponse('Server configuration error', 500, requestOrigin);
-  }
-  return null;
 }
 
 export async function withCache(

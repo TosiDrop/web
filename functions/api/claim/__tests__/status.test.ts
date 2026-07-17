@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Env } from '../../../types/env';
+
+const { vmFetch } = vi.hoisted(() => ({ vmFetch: vi.fn() }));
+vi.mock('../../../services/vmClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/vmClient')>();
+  return { ...actual, vmFetch };
+});
+
 import { onRequestGet } from '../status';
 
 type CFContext = Parameters<typeof onRequestGet>[0];
@@ -17,51 +24,42 @@ function makeContext(url: string, env?: Partial<Env>): CFContext {
   } as unknown as CFContext;
 }
 
-function mockFetch(body: unknown, ok = true, status = 200) {
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
-    new Response(JSON.stringify(body), {
-      status: ok ? status : status || 500,
-      headers: { 'Content-Type': 'application/json' },
-    }),
-  );
-}
-
 describe('GET /api/claim/status', () => {
   const stake = 'stake_test1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
   const url = (extra = '') =>
     `https://example.com/api/claim/status?requestId=7&stakeAddress=${stake}${extra}`;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vmFetch.mockReset();
   });
 
   it('maps code 0 to waiting', async () => {
-    mockFetch({ status: 0 });
+    vmFetch.mockResolvedValueOnce({ status: 0 });
     const res = await onRequestGet(makeContext(url()));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ kind: 'waiting' });
   });
 
   it('maps code 1 to processing with optional txHash', async () => {
-    mockFetch({ status: 1, tx_hash: 'abc' });
+    vmFetch.mockResolvedValueOnce({ status: 1, tx_hash: 'abc' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'processing', txHash: 'abc' });
   });
 
   it('maps code 2 to failure with a reason', async () => {
-    mockFetch({ status: 2, reason: 'oops' });
+    vmFetch.mockResolvedValueOnce({ status: 2, reason: 'oops' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'failure', reason: 'oops' });
   });
 
   it('maps code 3 to success with txHash', async () => {
-    mockFetch({ status: 3, tx_hash: 'final' });
+    vmFetch.mockResolvedValueOnce({ status: 3, tx_hash: 'final' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({ kind: 'success', txHash: 'final' });
   });
 
   it('maps unknown status codes to failure', async () => {
-    mockFetch({ status: 9, tx_hash: 'abc' });
+    vmFetch.mockResolvedValueOnce({ status: 9, tx_hash: 'abc' });
     const res = await onRequestGet(makeContext(url()));
     expect(await res.json()).toEqual({
       kind: 'failure',
@@ -90,14 +88,42 @@ describe('GET /api/claim/status', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 502 when upstream fetch fails', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('bad', { status: 500 }));
+  it('returns 502 when the VM API call fails', async () => {
+    vmFetch.mockRejectedValueOnce(new Error('vm down'));
     const res = await onRequestGet(makeContext(url()));
     expect(res.status).toBe(502);
   });
 
-  it('returns 500 when API key is missing', async () => {
+  it('returns 503 network_unavailable when the preview API key is missing', async () => {
     const res = await onRequestGet(makeContext(url(), { VITE_VM_API_KEY: '' }));
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'network_unavailable' });
+  });
+
+  it('defaults to the preview network when ?network= is absent', async () => {
+    vmFetch.mockResolvedValueOnce({ status: 0 });
+    await onRequestGet(makeContext(url()));
+    expect(vmFetch.mock.calls[0][1]).toBe('preview');
+  });
+
+  it('routes to the network requested via ?network= (the deposit flow sends this)', async () => {
+    vmFetch.mockResolvedValueOnce({ status: 0 });
+    const env = { VM_BASE_URL_MAINNET: 'https://vm.example', VM_API_KEY_MAINNET: 'mk' };
+    await onRequestGet(makeContext(url('&network=mainnet'), env));
+    expect(vmFetch.mock.calls[0][1]).toBe('mainnet');
+    const [, , action, params] = vmFetch.mock.calls[0];
+    expect(action).toBe('check_status_custom_request');
+    expect(params).toEqual({
+      staking_address: stake,
+      request_id: 7,
+      session_id: stake.slice(0, 40),
+    });
+  });
+
+  it('returns 503 network_unavailable when ?network=mainnet is requested without mainnet config', async () => {
+    const res = await onRequestGet(makeContext(url('&network=mainnet')));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'network_unavailable' });
+    expect(vmFetch).not.toHaveBeenCalled();
   });
 });

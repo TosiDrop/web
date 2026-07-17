@@ -1,5 +1,5 @@
 import type { Env } from '../types/env';
-import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { resolveNetwork, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 const ADA_HANDLE_POLICY_ID = 'f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a';
 const KOIOS_BASE = 'https://api.koios.rest/api/v1';
@@ -34,6 +34,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   if (!handle) {
     return errorResponse('handle parameter is required', 400, origin);
+  }
+
+  if (resolveNetwork(request) === 'preview') {
+    return errorResponse('ADA Handle resolution is only available on mainnet', 400, origin);
   }
 
   const name = handle.startsWith('$') ? handle.slice(1) : handle;
