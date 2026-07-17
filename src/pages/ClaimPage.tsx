@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { IconCheck } from '@tabler/icons-react';
@@ -58,11 +58,12 @@ export default function ClaimPage() {
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const setSelected = useClaimStore((s) => s.setSelected);
   const setRequest = useClaimStore((s) => s.setRequest);
+  const lookupAddress = useClaimStore((s) => s.lookupAddress);
+  const setLookupAddress = useClaimStore((s) => s.setLookupAddress);
+  const initSelectionFor = useClaimStore((s) => s.initSelectionFor);
 
-  const [lookupAddress, setLookupAddress] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
-  const initializedFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (stakeAddress) {
@@ -83,10 +84,8 @@ export default function ClaimPage() {
 
   useEffect(() => {
     if (!rewards || !lookupAddress) return;
-    if (initializedFor.current === lookupAddress) return;
-    initializedFor.current = lookupAddress;
-    setSelected(rewards.map((r) => r.assetId));
-  }, [rewards, lookupAddress, setSelected]);
+    initSelectionFor(lookupAddress, rewards.map((r) => r.assetId));
+  }, [rewards, lookupAddress, initSelectionFor]);
 
   const handleLookup = useCallback(
     async (input: string) => {
@@ -108,7 +107,6 @@ export default function ClaimPage() {
       if (resolved === lookupAddress) {
         refetch();
       } else {
-        initializedFor.current = null;
         setLookupAddress(resolved);
       }
     },
