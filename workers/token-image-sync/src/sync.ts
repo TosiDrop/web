@@ -22,8 +22,11 @@ export interface SyncDeps {
   limit?: number;
 }
 
-const TOKENS_CACHE_KEY = '__internal:tokens_cache';
-const CURSOR_KEY = '__internal:image_sync_cursor';
+// Network this worker is pinned to. Change alongside this worker's VM_BASE_URL when pointing it at mainnet.
+const SYNC_NETWORK = 'preview';
+
+const TOKENS_CACHE_KEY = `__internal:tokens_cache:${SYNC_NETWORK}`;
+const CURSOR_KEY = `__internal:image_sync_cursor:${SYNC_NETWORK}`;
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_SCANS_PER_RUN = 500;
 
