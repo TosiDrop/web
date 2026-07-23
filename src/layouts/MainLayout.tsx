@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { MobileMenuProvider } from './MobileMenuContext';
@@ -7,6 +7,8 @@ import { NetworkMismatchBanner } from '@/features/wallet/components/NetworkMisma
 import { OnboardingModal } from '@/features/onboarding/components/OnboardingModal';
 import { useFirstTimeCheck } from '@/features/onboarding/hooks/useFirstTimeCheck';
 import { Toaster } from '@/components/common/Toaster';
+import { useNetworks } from '@/features/preferences/api/networks.queries';
+import { useNetworkStore } from '@/store/network-state';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -15,6 +17,15 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   useWalletSync();
   useFirstTimeCheck();
+
+  const { data: networks } = useNetworks();
+  useEffect(() => {
+    if (!networks) return;
+    const { selectedNetwork, setNetwork } = useNetworkStore.getState();
+    if (networks[selectedNetwork]) return;
+    const fallback = (['mainnet', 'preview'] as const).find((n) => networks[n]);
+    if (fallback) setNetwork(fallback);
+  }, [networks]);
 
   return (
     <MobileMenuProvider>
