@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { IconClock } from '@tabler/icons-react';
 import { apiClient } from '@/api/client';
+import { useNetworkStore } from '@/store/network-state';
 
 interface QueueResponse {
   pending_tx_count: number;
@@ -9,8 +10,9 @@ interface QueueResponse {
 const POLL_INTERVAL_MS = 60_000;
 
 function useQueueCount() {
+  const network = useNetworkStore((s) => s.selectedNetwork);
   return useQuery<QueueResponse, Error>({
-    queryKey: ['queue', 'pending_tx_count'],
+    queryKey: ['queue', 'pending_tx_count', network],
     queryFn: () => apiClient.get<QueueResponse>('/api/getQueue'),
     refetchInterval: POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,

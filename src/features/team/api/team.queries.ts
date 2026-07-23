@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { useNetworkStore } from '@/store/network-state';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
 
 export interface TeamPool {
@@ -25,8 +26,9 @@ export function flattenWhitelist(
 }
 
 export function useWhitelistedPools() {
+  const network = useNetworkStore((s) => s.selectedNetwork);
   return useQuery<TeamPool[], Error>({
-    queryKey: ['whitelisted-pools'],
+    queryKey: ['whitelisted-pools', network],
     staleTime: 300_000,
     queryFn: async () => {
       const [pools, whitelist] = await Promise.all([
