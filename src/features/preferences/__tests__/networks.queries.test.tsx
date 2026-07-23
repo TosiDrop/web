@@ -12,13 +12,12 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('useNetworks', () => {
   it('returns the availability map', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ networks: { mainnet: false, preview: true } }), { status: 200 }),
-      ),
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ networks: { mainnet: false, preview: true } }), { status: 200 }),
     );
+    vi.stubGlobal('fetch', fetchMock);
     const { result } = renderHook(() => useNetworks(), { wrapper });
     await waitFor(() => expect(result.current.data).toEqual({ mainnet: false, preview: true }));
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/networks');
   });
 });
