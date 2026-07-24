@@ -222,7 +222,7 @@ describe('POST /api/claim/create', () => {
     );
 
     expect(res.status).toBe(200);
-    expect((await res.json()).requestId).toBe('101');
+    expect(((await res.json()) as { requestId: string }).requestId).toBe('101');
   });
 
   it('returns 400 for invalid JSON', async () => {

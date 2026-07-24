@@ -11,6 +11,7 @@ const SECTION_LABELS: Record<string, string> = {
   '/': 'Claim',
   '/profile': 'Profile',
   '/team': 'Team',
+  '/analytics': 'Analytics',
   '/deposit': 'Deposit',
   '/api-tester': 'API',
 };

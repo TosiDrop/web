@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
 import { ProfileForm } from '@/features/profile/components/ProfileForm';
@@ -185,6 +186,9 @@ function HeroStakeChip() {
 }
 
 export default function ProfilePage() {
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'analytics' ? 2 : 0;
+
   return (
     <div className="space-y-7">
       <header>
@@ -201,7 +205,7 @@ export default function ProfilePage() {
         </p>
       </header>
 
-      <TabGroup>
+      <TabGroup defaultIndex={defaultTab}>
         <TabList className="flex gap-1 border-b border-border-subtle">
           {TABS.map(({ name, Icon }) => (
             <Tab

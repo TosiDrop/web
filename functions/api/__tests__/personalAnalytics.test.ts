@@ -143,7 +143,11 @@ describe('GET /api/personalAnalytics', () => {
     const response = await onRequestGet(
       ctx(`staking_address=${encodeURIComponent(STAKE)}`, { DB: db }),
     );
-    const body = await response.json();
+    const body = (await response.json()) as {
+      degraded: boolean;
+      feesUnavailable: boolean;
+      summary: { totalClaims: number; totalFeesLovelace: string };
+    };
 
     expect(response.status).toBe(200);
     expect(body.degraded).toBe(false);
