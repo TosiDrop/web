@@ -1,5 +1,14 @@
 import type { Env } from '../types/env';
-import { initVmSdk, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  resolveNetwork,
+  vmConfigFor,
+  vmFetch,
+  netCacheKey,
+  networkUnavailableResponse,
+  errorResponse,
+  optionsResponse,
+  type VmNetwork,
+} from '../services/vmClient';
 import { readResponseBodyWithLimit } from '../../src/shared/readLimitedBody';
 
 const MAX_ID_LEN = 120;
@@ -20,13 +29,12 @@ function redirect(location: string): Response {
 
 // Only URLs registered in token metadata are ever fetched — the caller cannot
 // supply one, which keeps this proxy SSRF-free.
-async function resolveLogo(env: Env, assetId: string): Promise<string | null> {
-  let tokens = (await env.VM_WEB_PROFILES.get(TOKENS_CACHE_KEY, { type: 'json' })) as
+async function resolveLogo(env: Env, network: VmNetwork, assetId: string): Promise<string | null> {
+  let tokens = (await env.VM_WEB_PROFILES.get(netCacheKey(TOKENS_CACHE_KEY, network), { type: 'json' })) as
     | Record<string, TokenInfo>
     | null;
   if (!tokens) {
-    const sdk = await initVmSdk(env);
-    tokens = (await sdk.getTokens()) as Record<string, TokenInfo>;
+    tokens = (await vmFetch(env, network, 'get_tokens')) as Record<string, TokenInfo>;
   }
   const logo = tokens?.[assetId]?.logo;
   return typeof logo === 'string' && /^https?:\/\//i.test(logo) ? logo : null;
@@ -35,15 +43,18 @@ async function resolveLogo(env: Env, assetId: string): Promise<string | null> {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
+  const network = resolveNetwork(request);
   const id = new URL(request.url).searchParams.get('id');
 
   if (!id || id.length > MAX_ID_LEN) {
     return errorResponse('id is required', 400, origin);
   }
 
+  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+
   let logo: string | null;
   try {
-    logo = await resolveLogo(env, id);
+    logo = await resolveLogo(env, network, id);
   } catch (err) {
     console.error('tokenImage metadata error:', err);
     return errorResponse('Failed to resolve token', 500, origin);

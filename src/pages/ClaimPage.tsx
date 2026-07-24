@@ -6,6 +6,7 @@ import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { useClaimStore } from '@/store/claim-state';
+import { useNetworkStore, networkFromId } from '@/store/network-state';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
 
@@ -54,7 +55,7 @@ function NoRewardsState() {
 
 export default function ClaimPage() {
   const navigate = useNavigate();
-  const { stakeAddress, connected } = useWalletStore();
+  const { stakeAddress, connected, networkId } = useWalletStore();
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const setSelected = useClaimStore((s) => s.setSelected);
   const setRequest = useClaimStore((s) => s.setRequest);
@@ -76,8 +77,14 @@ export default function ClaimPage() {
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
 
+  const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
+  const networkMatches = !connected || networkFromId(networkId) === selectedNetwork;
+
   const walletReady = connected && !!stakeAddress;
-  const canClaim = walletReady && lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
+  const canClaim =
+    walletReady &&
+    networkMatches &&
+    lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
   const hasRewards = !!rewards && rewards.length > 0;
   const total = rewards?.length ?? 0;
   const allSelected = total > 0 && rewards!.every((r) => selectedAssetIds.includes(r.assetId));

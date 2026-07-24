@@ -1,7 +1,10 @@
 import type { Env } from '../types/env';
 import {
-  initVmSdk,
-  requireApiKey,
+  resolveNetwork,
+  vmConfigFor,
+  vmFetch,
+  netCacheKey,
+  networkUnavailableResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -13,21 +16,21 @@ const CACHE_TTL = 86400; // 24h
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
+  const network = resolveNetwork(request);
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
 
   try {
-    const cached = await env.VM_WEB_PROFILES.get(CACHE_KEY, { type: 'json' });
+    const cacheKey = netCacheKey(CACHE_KEY, network);
+    const cached = await env.VM_WEB_PROFILES.get(cacheKey, { type: 'json' });
     if (cached !== null) {
       return jsonResponse(cached, 200, origin);
     }
 
-    const sdk = await initVmSdk(env);
-    const whitelist = await sdk.getWhitelist();
+    const whitelist = await vmFetch(env, network, 'get_whitelist');
 
     context.waitUntil(
-      env.VM_WEB_PROFILES.put(CACHE_KEY, JSON.stringify(whitelist), {
+      env.VM_WEB_PROFILES.put(cacheKey, JSON.stringify(whitelist), {
         expirationTtl: CACHE_TTL,
       }),
     );

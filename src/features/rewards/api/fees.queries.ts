@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { useNetworkStore } from '@/store/network-state';
 
 export interface EstimateFeesResponse {
   withdrawal_fee: string;
@@ -11,8 +12,9 @@ export interface EstimateFeesResponse {
 const STALE_MS = 5 * 60 * 1000;
 
 export function useEstimateFees(tokenCount: number) {
+  const network = useNetworkStore((s) => s.selectedNetwork);
   return useQuery<EstimateFeesResponse, Error>({
-    queryKey: ['estimateFees', tokenCount],
+    queryKey: ['estimateFees', tokenCount, network],
     queryFn: () =>
       apiClient.get<EstimateFeesResponse>(
         `/api/estimateFees?token_count=${tokenCount}`,
