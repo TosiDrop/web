@@ -26,7 +26,7 @@ export async function persistClaimQuote(
       'INSERT INTO claim_requests ' +
         '(request_id, stake_address, network, token_count, deposit, withdrawal_fee, tokens_fee, tx_fee) ' +
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?) ' +
-        'ON CONFLICT (request_id) DO NOTHING',
+        'ON CONFLICT (network, request_id) DO NOTHING',
     )
     .bind(
       quote.requestId,

@@ -35,6 +35,9 @@ describe('persistClaimQuote', () => {
     });
 
     expect(prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO claim_requests'));
+    expect(prepare).toHaveBeenCalledWith(
+      expect.stringContaining('ON CONFLICT (network, request_id)'),
+    );
     expect(bind).toHaveBeenCalledWith(
       '42',
       'stake_test1analytics',
