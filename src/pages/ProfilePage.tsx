@@ -9,6 +9,7 @@ import { NetworkSelector } from '@/features/preferences/components/NetworkSelect
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
+import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
@@ -75,7 +76,14 @@ function AnalyticsTab() {
           Reward <span className="font-semibold">analytics</span>
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Where your rewards came from — by pool, epoch, and distribution rule.
+          Delivered claim trends, fee history, and current reward sources.
+        </p>
+      </div>
+      <PersonalAnalytics />
+      <div className="pt-2">
+        <p className="label-eyebrow">Current allocations</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Rewards waiting for your next claim, grouped by source.
         </p>
       </div>
       <RewardBreakdown />
