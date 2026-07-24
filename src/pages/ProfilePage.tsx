@@ -206,12 +206,12 @@ export default function ProfilePage() {
       </header>
 
       <TabGroup defaultIndex={defaultTab}>
-        <TabList className="flex gap-1 border-b border-border-subtle">
+        <TabList className="grid grid-cols-4 border-b border-border-subtle sm:flex sm:gap-1">
           {TABS.map(({ name, Icon }) => (
             <Tab
               key={name}
               className={({ selected }) =>
-                'group -mb-px flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm transition focus:outline-none ' +
+                'group -mb-px flex min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 py-2.5 text-xs transition focus:outline-none sm:gap-2 sm:px-3.5 sm:text-sm ' +
                 (selected
                   ? 'border-accent font-semibold text-white'
                   : 'border-transparent font-medium text-slate-500 hover:text-slate-200')
@@ -222,7 +222,10 @@ export default function ProfilePage() {
                   <Icon
                     size={14}
                     stroke={1.6}
-                    className={selected ? 'text-accent-light' : ''}
+                    className={
+                      'hidden shrink-0 sm:block ' +
+                      (selected ? 'text-accent-light' : '')
+                    }
                   />
                   {name}
                 </>
