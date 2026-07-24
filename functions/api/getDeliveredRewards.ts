@@ -37,7 +37,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       // #181: accumulate history beyond the VM window. Append-only; a D1
       // hiccup must never break the read path.
       if (hasDb(env)) {
-        const stmts = buildWithdrawalUpserts(env.DB, staking_address, data);
+        const stmts = buildWithdrawalUpserts(env.DB, network, staking_address, data);
         if (stmts.length > 0) {
           context.waitUntil(
             env.DB.batch(stmts).then(
