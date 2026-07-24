@@ -19,6 +19,7 @@ export function toUnixSeconds(raw: string): number | null {
 
 export function buildWithdrawalUpserts(
   db: D1Database,
+  network: string,
   stakeAddress: string,
   rows: unknown,
 ): D1PreparedStatement[] {
@@ -44,11 +45,12 @@ export function buildWithdrawalUpserts(
     stmts.push(
       db
         .prepare(
-          'INSERT INTO withdrawals (stake_address, reward_id, token, amount, epoch, delivered_on, delivered_at, withdrawal_request) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?) ' +
-            'ON CONFLICT (stake_address, reward_id) DO NOTHING',
+          'INSERT INTO withdrawals (network, stake_address, reward_id, token, amount, epoch, delivered_on, delivered_at, withdrawal_request) ' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
+            'ON CONFLICT (network, stake_address, reward_id) DO NOTHING',
         )
         .bind(
+          network,
           stakeAddress,
           raw.id,
           raw.token,

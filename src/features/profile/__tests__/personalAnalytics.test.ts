@@ -7,6 +7,12 @@ import {
 const RAW: RawPersonalAnalyticsResponse = {
   degraded: false,
   feesUnavailable: false,
+  feeCoverage: {
+    trackedClaims: 2,
+    completeClaims: 2,
+    trackedSince: 1_760_000_000,
+    incomplete: true,
+  },
   summary: {
     totalClaims: 4,
     distinctTokens: 2,

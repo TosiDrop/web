@@ -27,7 +27,12 @@ function fakeDb(options: FakeDbOptions = {}) {
       }
       if (sql.includes('total_fees_lovelace')) {
         if (options.failFees) throw new Error('no such table: claim_requests');
-        return { total_fees_lovelace: 1_250_000 };
+        return {
+          total_fees_lovelace: 1_250_000,
+          tracked_claims: 3,
+          complete_claims: 2,
+          tracked_since: 1_760_000_000,
+        };
       }
       return null;
     },
@@ -89,6 +94,12 @@ describe('GET /api/personalAnalytics', () => {
     expect(await response.json()).toEqual({
       degraded: true,
       feesUnavailable: true,
+      feeCoverage: {
+        trackedClaims: 0,
+        completeClaims: 0,
+        trackedSince: null,
+        incomplete: true,
+      },
       summary: {
         totalClaims: 0,
         distinctTokens: 0,
@@ -111,6 +122,12 @@ describe('GET /api/personalAnalytics', () => {
     expect(await response.json()).toEqual({
       degraded: false,
       feesUnavailable: false,
+      feeCoverage: {
+        trackedClaims: 3,
+        completeClaims: 2,
+        trackedSince: 1_760_000_000,
+        incomplete: true,
+      },
       summary: {
         totalClaims: 4,
         distinctTokens: 2,
@@ -132,10 +149,13 @@ describe('GET /api/personalAnalytics', () => {
       ],
     });
     expect(calls).toHaveLength(5);
-    expect(calls.every((call) => call.binds[0] === STAKE)).toBe(true);
+    expect(calls.every((call) => call.binds.includes(STAKE))).toBe(true);
+    expect(calls.every((call) => call.binds.includes('preview'))).toBe(true);
+    expect(calls.slice(0, 4).every((call) => call.sql.includes('network = ?'))).toBe(true);
     const feeSql = calls.find((call) => call.sql.includes('total_fees_lovelace'))!.sql;
     expect(feeSql).toContain('EXISTS');
     expect(feeSql).toContain('withdrawal_request = claim_requests.request_id');
+    expect(feeSql).toContain('withdrawals.network = claim_requests.network');
   });
 
   it('keeps history analytics available when the fee table is unavailable', async () => {
@@ -146,12 +166,14 @@ describe('GET /api/personalAnalytics', () => {
     const body = (await response.json()) as {
       degraded: boolean;
       feesUnavailable: boolean;
+      feeCoverage: { incomplete: boolean };
       summary: { totalClaims: number; totalFeesLovelace: string };
     };
 
     expect(response.status).toBe(200);
     expect(body.degraded).toBe(false);
     expect(body.feesUnavailable).toBe(true);
+    expect(body.feeCoverage.incomplete).toBe(true);
     expect(body.summary.totalClaims).toBe(4);
     expect(body.summary.totalFeesLovelace).toBe('0');
   });

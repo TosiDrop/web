@@ -7,6 +7,12 @@ import {
 export interface RawPersonalAnalyticsResponse {
   degraded: boolean;
   feesUnavailable: boolean;
+  feeCoverage: {
+    trackedClaims: number;
+    completeClaims: number;
+    trackedSince: number | null;
+    incomplete: boolean;
+  };
   summary: {
     totalClaims: number;
     distinctTokens: number;
@@ -48,6 +54,12 @@ export interface TokenMixItem {
 export interface PersonalAnalyticsData {
   degraded: boolean;
   feesUnavailable: boolean;
+  feeCoverage: {
+    trackedClaims: number;
+    completeClaims: number;
+    trackedSince: Date | null;
+    incomplete: boolean;
+  };
   summary: {
     totalClaims: number;
     distinctTokens: number;
@@ -127,6 +139,13 @@ export function normalizePersonalAnalytics(
   return {
     degraded: raw.degraded,
     feesUnavailable: raw.feesUnavailable,
+    feeCoverage: {
+      ...raw.feeCoverage,
+      trackedSince:
+        raw.feeCoverage.trackedSince === null
+          ? null
+          : new Date(raw.feeCoverage.trackedSince * 1000),
+    },
     summary: {
       totalClaims: raw.summary.totalClaims,
       distinctTokens: raw.summary.distinctTokens,

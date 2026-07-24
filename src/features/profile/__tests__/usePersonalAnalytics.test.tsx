@@ -22,6 +22,12 @@ const STAKE = 'stake_test1' + 'x'.repeat(40);
 const RAW = {
   degraded: false,
   feesUnavailable: true,
+  feeCoverage: {
+    trackedClaims: 0,
+    completeClaims: 0,
+    trackedSince: null,
+    incomplete: true,
+  },
   summary: {
     totalClaims: 2,
     distinctTokens: 1,

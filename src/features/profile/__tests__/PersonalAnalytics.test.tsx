@@ -32,6 +32,12 @@ import { PersonalAnalytics } from '../components/PersonalAnalytics';
 const DATA = {
   degraded: false,
   feesUnavailable: false,
+  feeCoverage: {
+    trackedClaims: 3,
+    completeClaims: 2,
+    trackedSince: new Date('2026-06-01T00:00:00Z'),
+    incomplete: true,
+  },
   summary: {
     totalClaims: 4,
     distinctTokens: 2,
@@ -136,10 +142,14 @@ describe('PersonalAnalytics', () => {
     expect(within(screen.getByLabelText('Claim summary')).getByText('4')).toBeInTheDocument();
     expect(screen.getByText('2 token types')).toBeInTheDocument();
     expect(screen.getByText('1.25 ADA')).toBeInTheDocument();
+    expect(screen.getByText('Tracked fees')).toBeInTheDocument();
     expect(screen.getByText('May 1, 2026')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reward accumulation' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Claim frequency' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Tokens claimed' })).toBeInTheDocument();
+    expect(screen.getByText('May 2026: 1 ADA cumulative')).toBeInTheDocument();
+    expect(screen.getByText('May 2026: 1 claim')).toBeInTheDocument();
+    expect(screen.getByText('ADA: 3 rewards')).toBeInTheDocument();
 
     const selector = screen.getByLabelText('Reward token');
     expect(selector).toHaveValue('lovelace');

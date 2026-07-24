@@ -31,11 +31,20 @@ interface TokenMixRow {
 
 interface FeesRow {
   total_fees_lovelace: number | string | null;
+  tracked_claims: number | string | null;
+  complete_claims: number | string | null;
+  tracked_since: number | string | null;
 }
 
 const EMPTY_ANALYTICS = {
   degraded: true,
   feesUnavailable: true,
+  feeCoverage: {
+    trackedClaims: 0,
+    completeClaims: 0,
+    trackedSince: null,
+    incomplete: true,
+  },
   summary: {
     totalClaims: 0,
     distinctTokens: 0,
@@ -65,66 +74,78 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   try {
+    const network = resolveNetwork(request);
     const [summary, claimsResult, rewardsResult, tokenMixResult] = await Promise.all([
       env.DB.prepare(
         'SELECT ' +
           'COUNT(DISTINCT COALESCE(withdrawal_request, reward_id)) AS total_claims, ' +
           'COUNT(DISTINCT token) AS distinct_tokens, ' +
           'MIN(delivered_at) AS active_since ' +
-          'FROM withdrawals WHERE stake_address = ?',
+          'FROM withdrawals WHERE network = ? AND stake_address = ?',
       )
-        .bind(stakingAddress)
+        .bind(network, stakingAddress)
         .first<SummaryRow>(),
       env.DB.prepare(
         '/* claims_by_month */ ' +
           "SELECT strftime('%Y-%m', datetime(delivered_at, 'unixepoch')) AS month, " +
           'COUNT(DISTINCT COALESCE(withdrawal_request, reward_id)) AS claims ' +
           'FROM withdrawals ' +
-          'WHERE stake_address = ? AND delivered_at IS NOT NULL ' +
+          'WHERE network = ? AND stake_address = ? AND delivered_at IS NOT NULL ' +
           'GROUP BY month ORDER BY month ASC',
       )
-        .bind(stakingAddress)
+        .bind(network, stakingAddress)
         .all<ClaimsByMonthRow>(),
       env.DB.prepare(
         '/* rewards_by_month */ ' +
           "SELECT strftime('%Y-%m', datetime(delivered_at, 'unixepoch')) AS month, " +
           'token, CAST(SUM(CAST(amount AS INTEGER)) AS TEXT) AS amount ' +
           'FROM withdrawals ' +
-          'WHERE stake_address = ? AND delivered_at IS NOT NULL ' +
+          'WHERE network = ? AND stake_address = ? AND delivered_at IS NOT NULL ' +
           'GROUP BY month, token ORDER BY month ASC, token ASC',
       )
-        .bind(stakingAddress)
+        .bind(network, stakingAddress)
         .all<RewardsByMonthRow>(),
       env.DB.prepare(
         '/* token_mix */ ' +
           'SELECT token, COUNT(*) AS rewards ' +
-          'FROM withdrawals WHERE stake_address = ? ' +
+          'FROM withdrawals WHERE network = ? AND stake_address = ? ' +
           'GROUP BY token ORDER BY rewards DESC, token ASC',
       )
-        .bind(stakingAddress)
+        .bind(network, stakingAddress)
         .all<TokenMixRow>(),
     ]);
 
     let totalFeesLovelace = '0';
     let feesUnavailable = false;
+    let trackedClaims = 0;
+    let completeClaims = 0;
+    let trackedSince: number | null = null;
     try {
-      const network = resolveNetwork(request);
       const fees = await env.DB.prepare(
-        'SELECT CAST(COALESCE(SUM(' +
-          'COALESCE(CAST(withdrawal_fee AS INTEGER), 0) + ' +
-          'COALESCE(CAST(tokens_fee AS INTEGER), 0) + ' +
-          'COALESCE(CAST(tx_fee AS INTEGER), 0)' +
-          '), 0) AS TEXT) AS total_fees_lovelace ' +
+        'SELECT CAST(COALESCE(SUM(CASE WHEN ' +
+          'withdrawal_fee IS NOT NULL AND tokens_fee IS NOT NULL AND tx_fee IS NOT NULL ' +
+          'THEN CAST(withdrawal_fee AS INTEGER) + CAST(tokens_fee AS INTEGER) + CAST(tx_fee AS INTEGER) ' +
+          'ELSE 0 END), 0) AS TEXT) AS total_fees_lovelace, ' +
+          'COUNT(*) AS tracked_claims, ' +
+          'SUM(CASE WHEN withdrawal_fee IS NOT NULL AND tokens_fee IS NOT NULL AND tx_fee IS NOT NULL THEN 1 ELSE 0 END) AS complete_claims, ' +
+          "MIN(CAST(strftime('%s', created_at) AS INTEGER)) AS tracked_since " +
           'FROM claim_requests ' +
           'WHERE stake_address = ? AND network = ? AND EXISTS (' +
           'SELECT 1 FROM withdrawals ' +
           'WHERE withdrawals.stake_address = claim_requests.stake_address ' +
+          'AND withdrawals.network = claim_requests.network ' +
           'AND withdrawals.withdrawal_request = claim_requests.request_id' +
           ')',
       )
         .bind(stakingAddress, network)
         .first<FeesRow>();
       totalFeesLovelace = String(fees?.total_fees_lovelace ?? '0');
+      trackedClaims = finiteNumber(fees?.tracked_claims);
+      completeClaims = finiteNumber(fees?.complete_claims);
+      trackedSince =
+        fees?.tracked_since === null || fees?.tracked_since === undefined
+          ? null
+          : finiteNumber(fees.tracked_since);
     } catch (error) {
       feesUnavailable = true;
       console.error('personalAnalytics fee aggregate error:', error);
@@ -134,6 +155,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       {
         degraded: false,
         feesUnavailable,
+        feeCoverage: {
+          trackedClaims,
+          completeClaims,
+          trackedSince,
+          incomplete:
+            feesUnavailable ||
+            trackedClaims < finiteNumber(summary?.total_claims) ||
+            completeClaims < trackedClaims,
+        },
         summary: {
           totalClaims: finiteNumber(summary?.total_claims),
           distinctTokens: finiteNumber(summary?.distinct_tokens),

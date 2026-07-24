@@ -118,6 +118,10 @@ export function PersonalAnalytics() {
     () => data?.tokenMix.reduce((sum, item) => sum + item.rewards, 0) ?? 0,
     [data],
   );
+  const feeTrackedSince = data?.feeCoverage.trackedSince?.toLocaleDateString(
+    undefined,
+    { month: 'short', year: 'numeric', timeZone: 'UTC' },
+  );
 
   if (!stakeAddress) {
     return (
@@ -171,9 +175,15 @@ export function PersonalAnalytics() {
           value={`${data.summary.distinctTokens} token types`}
         />
         <Metric
-          label="Fees paid"
+          label="Tracked fees"
           value={`${formatReward(data.summary.totalFeesAda)} ADA`}
-          detail={data.feesUnavailable ? 'Tracking starts with new claims' : undefined}
+          detail={
+            data.feesUnavailable
+              ? 'Unavailable'
+              : `${data.feeCoverage.completeClaims} complete claim${
+                  data.feeCoverage.completeClaims === 1 ? '' : 's'
+                }${feeTrackedSince ? ` since ${feeTrackedSince}` : ''}`
+          }
         />
         <Metric label="Active since" value={activeSince ?? '—'} />
       </section>
@@ -208,6 +218,14 @@ export function PersonalAnalytics() {
           className="h-[300px] px-2 pb-3 pt-5 sm:px-5"
           aria-label={`${selectedSeries?.ticker ?? 'Reward'} accumulation chart`}
         >
+          <ul className="sr-only" aria-label="Reward accumulation data">
+            {(selectedSeries?.points ?? []).map((point) => (
+              <li key={point.month}>
+                {point.label}: {formatReward(point.cumulative)}{' '}
+                {selectedSeries?.ticker} cumulative
+              </li>
+            ))}
+          </ul>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={selectedSeries?.points ?? []}>
               <defs>
@@ -260,6 +278,13 @@ export function PersonalAnalytics() {
             </h3>
           </header>
           <div className="h-56 px-2 pb-3 pt-5 sm:px-4" aria-label="Claim frequency chart">
+            <ul className="sr-only" aria-label="Claim frequency data">
+              {data.claimsByMonth.map((point) => (
+                <li key={point.month}>
+                  {point.label}: {point.claims} claim{point.claims === 1 ? '' : 's'}
+                </li>
+              ))}
+            </ul>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.claimsByMonth}>
                 <CartesianGrid stroke="rgba(56,78,128,0.22)" vertical={false} />
@@ -293,6 +318,13 @@ export function PersonalAnalytics() {
           </header>
           <div className="grid min-h-56 grid-cols-[minmax(130px,0.8fr)_1fr] items-center gap-2 px-4 py-4">
             <div className="relative h-40" aria-label="Tokens claimed chart">
+              <ul className="sr-only" aria-label="Tokens claimed data">
+                {data.tokenMix.map((item) => (
+                  <li key={item.token}>
+                    {item.ticker}: {item.rewards} reward{item.rewards === 1 ? '' : 's'}
+                  </li>
+                ))}
+              </ul>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -341,10 +373,12 @@ export function PersonalAnalytics() {
         </section>
       </div>
 
-      {data.feesUnavailable && (
+      {(data.feesUnavailable || data.feeCoverage.incomplete) && (
         <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset/50 px-4 py-3 text-xs text-slate-500">
           <IconChartDots3 size={15} stroke={1.6} className="mt-0.5 shrink-0 text-accent" />
-          Fee history begins with claims created after this analytics release.
+          {data.feesUnavailable
+            ? 'Fee history is temporarily unavailable. '
+            : `The fee total covers ${data.feeCoverage.completeClaims} of ${data.summary.totalClaims} delivered claims. `}
           Earlier rewards remain included in every other chart.
         </div>
       )}

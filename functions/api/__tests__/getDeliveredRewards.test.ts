@@ -87,8 +87,11 @@ describe('getDeliveredRewards sync', () => {
     await Promise.all(waitUntil.mock.calls.map((call) => call[0]));
     expect(db.batch).toHaveBeenCalledTimes(1);
     expect(db.__calls[0].sql).toContain('ON CONFLICT');
+    expect(db.__calls[0].sql).toContain(
+      'ON CONFLICT (network, stake_address, reward_id)',
+    );
     expect(db.__calls[0].binds).toEqual([
-      STAKE, 'r1', 'lovelace', '1000000', 500, '1750000000', 1750000000, 'w1',
+      'preview', STAKE, 'r1', 'lovelace', '1000000', 500, '1750000000', 1750000000, 'w1',
     ]);
   });
 
@@ -105,9 +108,9 @@ describe('getDeliveredRewards sync', () => {
     await onRequestGet(ctx);
     await Promise.all(waitUntil.mock.calls.map((call) => call[0]));
     expect(db.__calls).toHaveLength(2);
-    expect(db.__calls.map((call) => call.binds[1])).toEqual(['r2', 'r6']);
-    expect(db.__calls[0].binds[6]).toBe(Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000));
-    expect(db.__calls[1].binds[4]).toBe(null); // epoch 'x' -> null
+    expect(db.__calls.map((call) => call.binds[2])).toEqual(['r2', 'r6']);
+    expect(db.__calls[0].binds[7]).toBe(Math.floor(Date.parse('2026-06-01T00:00:00Z') / 1000));
+    expect(db.__calls[1].binds[5]).toBe(null); // epoch 'x' -> null
   });
 
   it('skips rows without an id and survives a D1 failure', async () => {
