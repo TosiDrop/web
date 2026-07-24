@@ -1,6 +1,6 @@
--- Existing withdrawal rows predate network tracking and cannot be assigned
--- safely. Preserve them as legacy data, but exclude them from network-scoped
--- analytics until the VM sync observes them again for a specific network.
+-- Existing withdrawal rows were collected before network switching shipped,
+-- when the Worker used Preview exclusively. Backfill them to Preview so the
+-- accumulated archive remains visible; Mainnet starts its own clean history.
 CREATE TABLE withdrawals_networked (
   network            TEXT NOT NULL,
   stake_address      TEXT NOT NULL,
@@ -20,7 +20,7 @@ INSERT INTO withdrawals_networked (
   delivered_on, delivered_at, withdrawal_request, synced_at
 )
 SELECT
-  'legacy', stake_address, reward_id, token, amount, epoch,
+  'preview', stake_address, reward_id, token, amount, epoch,
   delivered_on, delivered_at, withdrawal_request, synced_at
 FROM withdrawals;
 
