@@ -28,6 +28,24 @@ function makeContext(body: unknown, env?: Partial<Env>): CFContext {
   } as unknown as CFContext;
 }
 
+function fakeDb(options: { fail?: boolean } = {}) {
+  const bind = vi.fn();
+  const run = options.fail
+    ? vi.fn().mockRejectedValue(new Error('D1 unavailable'))
+    : vi.fn().mockResolvedValue({ success: true });
+  const prepare = vi.fn(() => ({
+    bind: (...values: unknown[]) => {
+      bind(...values);
+      return { run };
+    },
+  }));
+  return {
+    db: { prepare } as unknown as D1Database,
+    bind,
+    run,
+  };
+}
+
 describe('POST /api/claim/create', () => {
   beforeEach(() => {
     vmFetch.mockReset();
@@ -113,6 +131,98 @@ describe('POST /api/claim/create', () => {
       makeContext({ stakeAddress: 'stake_test1x', assetIds: ['a'] }),
     );
     expect(res.status).toBe(502);
+  });
+
+  it('persists the accepted request with a fresh fee quote', async () => {
+    const { db, bind } = fakeDb();
+    vmFetch
+      .mockResolvedValueOnce({
+        request_id: 99,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({
+        withdrawal_fee: '500000',
+        tokens_fee: 300_000,
+        fee: 180_000,
+        deposit: 5_000_000,
+      });
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1', 'a2', 'a3'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect(vmFetch.mock.calls.map((call) => call[2])).toEqual([
+      'custom_request',
+      'estimate_fees',
+    ]);
+    expect(vmFetch.mock.calls[1][3]).toEqual({ token_count: 3 });
+    expect(bind).toHaveBeenCalledWith(
+      '99',
+      'stake_test1analytics',
+      'preview',
+      3,
+      '5000000',
+      '500000',
+      '300000',
+      '180000',
+    );
+  });
+
+  it('returns the accepted claim when fee lookup fails', async () => {
+    const { db, bind } = fakeDb();
+    vmFetch
+      .mockResolvedValueOnce({
+        request_id: 100,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockRejectedValueOnce(new Error('fee service unavailable'));
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect(bind).not.toHaveBeenCalled();
+  });
+
+  it('returns the accepted claim when quote persistence fails', async () => {
+    const { db } = fakeDb({ fail: true });
+    vmFetch
+      .mockResolvedValueOnce({
+        request_id: 101,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({
+        withdrawal_fee: '500000',
+        tokens_fee: 100_000,
+        fee: 180_000,
+      });
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).requestId).toBe('101');
   });
 
   it('returns 400 for invalid JSON', async () => {
