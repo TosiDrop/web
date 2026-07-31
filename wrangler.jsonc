@@ -3,6 +3,7 @@
   "name": "vm-web-profiles",
   "compatibility_date": "2025-02-04",
   "pages_build_output_dir": "dist",
+  "keep_vars": true,
   "observability": {
     "enabled": true
   },
