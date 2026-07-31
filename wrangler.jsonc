@@ -1,4 +1,6 @@
 {
+  // Keep this file local-only: Pages deployment variables and bindings are
+  // managed per environment by the infrastructure repository.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vm-web-profiles",
   "compatibility_date": "2025-02-04",
