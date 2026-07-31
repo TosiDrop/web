@@ -1,3 +1,5 @@
+import { normalizeDeploymentNetwork } from '../../../src/shared/network';
+
 // Pure, dependency-injected core of the nightly image-sync cron. Rotates
 // through tokens alphabetically with a KV cursor so each run fetches at most
 // `limit` new images (Workers subrequest limits) and the cache converges
@@ -19,14 +21,10 @@ export interface SyncDeps {
   fetchImage: (
     url: string,
   ) => Promise<{ ok: boolean; contentType: string; bytes: ArrayBuffer } | null>;
+  network?: string;
   limit?: number;
 }
 
-// Network this worker is pinned to. Change alongside this worker's VM_BASE_URL when pointing it at mainnet.
-const SYNC_NETWORK = 'preview';
-
-const TOKENS_CACHE_KEY = `__internal:tokens_cache:${SYNC_NETWORK}`;
-const CURSOR_KEY = `__internal:image_sync_cursor:${SYNC_NETWORK}`;
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_SCANS_PER_RUN = 500;
 
@@ -35,9 +33,13 @@ export async function syncTokenImages({
   bucket,
   fetchTokens,
   fetchImage,
+  network,
   limit = 40,
 }: SyncDeps): Promise<{ scanned: number; stored: number }> {
-  const cached = (await kv.get(TOKENS_CACHE_KEY, { type: 'json' })) as Record<
+  const deploymentNetwork = normalizeDeploymentNetwork(network);
+  const tokensCacheKey = `__internal:tokens_cache:${deploymentNetwork}`;
+  const cursorKey = `__internal:image_sync_cursor:${deploymentNetwork}`;
+  const cached = (await kv.get(tokensCacheKey, { type: 'json' })) as Record<
     string,
     { logo?: string }
   > | null;
@@ -51,7 +53,7 @@ export async function syncTokenImages({
     .sort();
   if (ids.length === 0) return { scanned: 0, stored: 0 };
 
-  const cursor = ((await kv.get(CURSOR_KEY, { type: 'json' })) as string | null) ?? '';
+  const cursor = ((await kv.get(cursorKey, { type: 'json' })) as string | null) ?? '';
   const startIdx = cursor ? ids.findIndex((id) => id > cursor) : 0;
   const rotation =
     startIdx <= 0 ? ids : [...ids.slice(startIdx), ...ids.slice(0, startIdx)];
@@ -65,8 +67,9 @@ export async function syncTokenImages({
     if (fetched >= limit || scanned >= MAX_SCANS_PER_RUN) break;
     scanned += 1;
     last = id;
+    const objectKey = `${id}:${deploymentNetwork}`;
     try {
-      if (await bucket.head(id)) continue;
+      if (await bucket.head(objectKey)) continue;
       fetched += 1;
       const img = await fetchImage(tokens[id]!.logo!);
       if (
@@ -77,13 +80,13 @@ export async function syncTokenImages({
       ) {
         continue;
       }
-      await bucket.put(id, img.bytes, { httpMetadata: { contentType: img.contentType } });
+      await bucket.put(objectKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
       stored += 1;
     } catch (err) {
       console.error(`image sync failed for ${id}:`, err);
     }
   }
 
-  await kv.put(CURSOR_KEY, JSON.stringify(last));
+  await kv.put(cursorKey, JSON.stringify(last));
   return { scanned, stored };
 }

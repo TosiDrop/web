@@ -1,10 +1,9 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  netCacheKey,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  deploymentCacheKey,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -16,16 +15,15 @@ const CACHE_TTL = 86400;
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const cacheKey = netCacheKey(CACHE_KEY, network);
+    const cacheKey = deploymentCacheKey(env, CACHE_KEY);
     const cached = await env.VM_WEB_PROFILES.get(cacheKey, { type: 'json' });
     if (cached !== null) return jsonResponse(cached, 200, origin);
 
-    const data = await vmFetch(env, network, 'get_tokens');
+    const data = await vmGet(env, 'get_tokens');
     await env.VM_WEB_PROFILES.put(cacheKey, JSON.stringify(data), { expirationTtl: CACHE_TTL });
     return jsonResponse(data, 200, origin);
   } catch (error) {

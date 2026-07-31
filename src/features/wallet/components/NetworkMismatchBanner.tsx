@@ -1,13 +1,13 @@
 import { IconAlertTriangle, IconArrowRight } from '@tabler/icons-react';
 import { useWalletStore } from '@/store/wallet-state';
-import { useNetworkStore, networkFromId, networkLabel } from '@/store/network-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { networkFromId, networkLabel } from '@/shared/network';
 
 export function NetworkMismatchBanner() {
-  const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
   const networkId = useWalletStore((s) => s.networkId);
   const walletNetwork = networkFromId(networkId);
 
-  if (!walletNetwork || walletNetwork === selectedNetwork) return null;
+  if (!walletNetwork || walletNetwork === DEPLOYMENT_NETWORK) return null;
 
   return (
     <div
@@ -20,8 +20,7 @@ export function NetworkMismatchBanner() {
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-semibold text-[#EDEEF2]">Wallet network mismatch</p>
         <p className="mt-0.5 text-[12.5px] text-[#8A8E9A]">
-          Your wallet is on a different network. Switch the wallet, or change the target in
-          Profile → Preferences.
+          Switch your wallet to the network configured for this TosiDrop deployment.
         </p>
       </div>
       <div className="ml-auto flex items-center gap-2.5 font-mono text-[11px]">
@@ -30,7 +29,7 @@ export function NetworkMismatchBanner() {
         </span>
         <IconArrowRight size={14} stroke={1.7} className="text-[#5A5E6A]" />
         <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[#A5F3FC]">
-          target · {networkLabel(selectedNetwork).toLowerCase()}
+          deployment · {networkLabel(DEPLOYMENT_NETWORK).toLowerCase()}
         </span>
       </div>
     </div>

@@ -1,9 +1,8 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   withCache,
   errorResponse,
   optionsResponse,
@@ -14,13 +13,12 @@ const CACHE_TTL = 60;
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    return await withCache(request, CACHE_TTL, async () => {
-      return vmFetch(env, network, 'get_pending_tx_count');
+    return await withCache(request, env, CACHE_TTL, async () => {
+      return vmGet(env, 'get_pending_tx_count');
     }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getQueue error:', error);

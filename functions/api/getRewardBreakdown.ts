@@ -1,9 +1,8 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   withCache,
   errorResponse,
   optionsResponse,
@@ -14,18 +13,17 @@ const CACHE_TTL = 300;
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
   const staking_address = new URL(request.url).searchParams.get('staking_address');
 
   if (!staking_address) {
     return errorResponse('staking_address is required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    return await withCache(request, CACHE_TTL, async () => {
-      return vmFetch(env, network, 'get_reward_breakdown', { staking_address });
+    return await withCache(request, env, CACHE_TTL, async () => {
+      return vmGet(env, 'get_reward_breakdown', { staking_address });
     }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getRewardBreakdown error:', error);

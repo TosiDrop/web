@@ -1,9 +1,8 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -12,17 +11,16 @@ import {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
   const address = new URL(request.url).searchParams.get('address');
 
   if (!address) {
     return errorResponse('address is required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const response = (await vmFetch(env, network, 'sanitize_address', { address })) as { address: string };
+    const response = (await vmGet(env, 'sanitize_address', { address })) as { address: string };
     return jsonResponse({ address: response.address }, 200, origin);
   } catch (error) {
     console.error('sanitizeAddress error:', error);

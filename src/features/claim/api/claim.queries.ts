@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { useNetworkStore } from '@/store/network-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { ClaimCreateRequest, ClaimStatus, DepositInfo } from '@/types/claim';
 
 export function useClaimCreate() {
@@ -22,9 +22,8 @@ export function useClaimStatus({
   enabled,
   refetchIntervalMs,
 }: UseClaimStatusArgs) {
-  const network = useNetworkStore((s) => s.selectedNetwork);
   return useQuery<ClaimStatus, Error>({
-    queryKey: ['claim-status', requestId, stakeAddress, network],
+    queryKey: ['claim-status', requestId, stakeAddress, DEPLOYMENT_NETWORK],
     queryFn: async () => {
       if (!requestId || !stakeAddress) throw new Error('requestId and stakeAddress required');
       const params = new URLSearchParams({

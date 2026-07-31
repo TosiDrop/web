@@ -1,6 +1,5 @@
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { truncateHash, explorerTxUrl } from '@/utils/format';
-import { useNetworkStore } from '@/store/network-state';
 import type { ClaimFlowStep } from '@/types/claim';
 
 interface ClaimStatusProps {
@@ -15,7 +14,6 @@ const INFO_MESSAGES: Partial<Record<ClaimFlowStep['step'], string>> = {
 };
 
 export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
-  const network = useNetworkStore((s) => s.selectedNetwork);
   if (state.step === 'idle' || state.step === 'awaiting_deposit') return null;
 
   if (state.step === 'success') {
@@ -32,7 +30,7 @@ export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
         />
         {state.txHash && (
           <a
-            href={explorerTxUrl(state.txHash, network)}
+            href={explorerTxUrl(state.txHash)}
             target="_blank"
             rel="noreferrer"
             className="text-xs text-brand-cyan underline hover:text-indigo-300"
@@ -74,7 +72,7 @@ export function ClaimStatusDisplay({ state, onReset }: ClaimStatusProps) {
       <FeedbackBanner tone="info" title="Claim in progress" message={message} />
       {state.step === 'polling' && state.txHash && (
         <a
-          href={explorerTxUrl(state.txHash, network)}
+          href={explorerTxUrl(state.txHash)}
           target="_blank"
           rel="noreferrer"
           className="text-xs text-brand-cyan underline hover:text-indigo-300"

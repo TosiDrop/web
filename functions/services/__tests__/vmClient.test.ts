@@ -1,112 +1,168 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  networksAvailable,
-  netCacheKey,
-  vmFetch,
-  networkUnavailableResponse,
+  deploymentCacheKey,
+  deploymentNetwork,
+  vmConfig,
+  vmConfigurationErrorResponse,
+  vmGet,
+  withCache,
 } from '../vmClient';
 import type { Env } from '../../types/env';
 
-const baseEnv = { VITE_VM_API_KEY: 'legacy-key', VM_WEB_PROFILES: {} as never } as Env;
-
-function req(url: string): Request {
-  return new Request(url);
-}
-
-describe('resolveNetwork', () => {
-  it('reads mainnet from the query param', () => {
-    expect(resolveNetwork(req('https://x/api/getPools?network=mainnet'))).toBe('mainnet');
+const { sdkGet, setApiToken, VmClient } = vi.hoisted(() => {
+  const sdkGet = vi.fn();
+  const setApiToken = vi.fn();
+  const VmClient = vi.fn(function (this: { get: typeof sdkGet }, _baseUrl: string) {
+    this.get = sdkGet;
   });
-  it('defaults to preview when absent', () => {
-    expect(resolveNetwork(req('https://x/api/getPools'))).toBe('preview');
-  });
-  it('defaults to preview on garbage values', () => {
-    expect(resolveNetwork(req('https://x/api/getPools?network=devnet'))).toBe('preview');
-  });
+  return { sdkGet, setApiToken, VmClient };
 });
 
-describe('vmConfigFor', () => {
-  it('preview falls back to legacy VM_BASE_URL and VITE_VM_API_KEY', () => {
-    const env = { ...baseEnv, VM_BASE_URL: 'https://legacy.example' };
-    expect(vmConfigFor(env, 'preview')).toEqual({
-      baseUrl: 'https://legacy.example',
-      apiKey: 'legacy-key',
+vi.mock('vm-sdk', () => ({
+  setApiToken,
+  GET_FROM_VM: VmClient,
+}));
+
+const previewEnv = {
+  VITE_NETWORK: 'preview',
+  VITE_VM_API_KEY: 'preview-key',
+  VM_WEB_PROFILES: {} as never,
+} as Env;
+
+describe('deploymentNetwork', () => {
+  it('selects mainnet only from the deployment environment', () => {
+    expect(deploymentNetwork({ ...previewEnv, VITE_NETWORK: 'mainnet' })).toBe('mainnet');
+  });
+
+  it.each([undefined, '', 'preview', 'MAINNET', 'invalid'])(
+    'defaults %j to preview',
+    (value) => {
+      expect(deploymentNetwork({ ...previewEnv, VITE_NETWORK: value })).toBe('preview');
+    },
+  );
+});
+
+describe('vmConfig', () => {
+  it('uses the preview VM default when Preview has no explicit base URL', () => {
+    expect(vmConfig(previewEnv)).toEqual({
+      baseUrl: 'https://vmprev.adaseal.eu',
+      apiKey: 'preview-key',
     });
   });
-  it('preview prefers the dedicated vars', () => {
-    const env = {
-      ...baseEnv,
-      VM_BASE_URL_PREVIEW: 'https://prev.example',
-      VM_API_KEY_PREVIEW: 'prev-key',
-    };
-    expect(vmConfigFor(env, 'preview')).toEqual({
-      baseUrl: 'https://prev.example',
-      apiKey: 'prev-key',
-    });
-  });
-  it('mainnet requires both dedicated vars', () => {
-    expect(vmConfigFor({ ...baseEnv, VM_BASE_URL_MAINNET: 'https://vm.example' }, 'mainnet')).toBeNull();
-    expect(vmConfigFor({ ...baseEnv, VM_API_KEY_MAINNET: 'main-key' }, 'mainnet')).toBeNull();
+
+  it('uses the deployment VM base URL and API key', () => {
     expect(
-      vmConfigFor(
-        { ...baseEnv, VM_BASE_URL_MAINNET: 'https://vm.example', VM_API_KEY_MAINNET: 'main-key' },
-        'mainnet',
-      ),
-    ).toEqual({ baseUrl: 'https://vm.example', apiKey: 'main-key' });
+      vmConfig({
+        ...previewEnv,
+        VITE_NETWORK: 'mainnet',
+        VM_BASE_URL: 'https://vm-mainnet.example',
+        VITE_VM_API_KEY: 'mainnet-key',
+      }),
+    ).toEqual({
+      baseUrl: 'https://vm-mainnet.example',
+      apiKey: 'mainnet-key',
+    });
   });
-  it('mainnet never falls back to the preview key', () => {
-    const env = { ...baseEnv, VM_BASE_URL_MAINNET: 'https://vm.example' };
-    expect(vmConfigFor(env, 'mainnet')).toBeNull();
+
+  it('fails closed when a Mainnet deployment has no explicit VM base URL', () => {
+    expect(vmConfig({ ...previewEnv, VITE_NETWORK: 'mainnet' })).toBeNull();
+  });
+
+  it('rejects an empty API key on either deployment network', () => {
+    expect(vmConfig({ ...previewEnv, VITE_VM_API_KEY: '' })).toBeNull();
+    expect(
+      vmConfig({
+        ...previewEnv,
+        VITE_NETWORK: 'mainnet',
+        VM_BASE_URL: 'https://vm-mainnet.example',
+        VITE_VM_API_KEY: ' ',
+      }),
+    ).toBeNull();
   });
 });
 
-describe('networksAvailable', () => {
-  it('reports preview-only under legacy config', () => {
-    expect(networksAvailable(baseEnv)).toEqual({ mainnet: false, preview: true });
-  });
-  it('reports mainnet when fully configured', () => {
-    const env = { ...baseEnv, VM_BASE_URL_MAINNET: 'https://vm.example', VM_API_KEY_MAINNET: 'k' };
-    expect(networksAvailable(env)).toEqual({ mainnet: true, preview: true });
-  });
-});
-
-describe('netCacheKey', () => {
-  it('suffixes with the network', () => {
-    expect(netCacheKey('__internal:pools_cache', 'mainnet')).toBe('__internal:pools_cache:mainnet');
-  });
-});
-
-describe('networkUnavailableResponse', () => {
-  it('returns 503 with the stable error body', async () => {
-    const res = networkUnavailableResponse('https://tosidrop.io');
-    expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({ error: 'network_unavailable' });
-  });
-});
-
-describe('vmFetch', () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it('builds the VM URL with action and params, skipping undefined', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+describe('deploymentCacheKey', () => {
+  it('isolates a shared cache by the deployment network', () => {
+    expect(deploymentCacheKey(previewEnv, '__internal:pools_cache')).toBe(
+      '__internal:pools_cache:preview',
     );
-    vi.stubGlobal('fetch', fetchMock);
-    const env = { ...baseEnv, VM_BASE_URL_PREVIEW: 'https://prev.example', VM_API_KEY_PREVIEW: 'pk' };
-    await vmFetch(env, 'preview', 'get_rewards', { staking_address: 'stake1x', token_id: undefined });
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://prev.example/api.php?action=get_rewards&staking_address=stake1x');
-    expect((init.headers as Record<string, string>)['X-API-Token']).toBe('pk');
+    expect(
+      deploymentCacheKey(
+        { ...previewEnv, VITE_NETWORK: 'mainnet' },
+        '__internal:pools_cache',
+      ),
+    ).toBe('__internal:pools_cache:mainnet');
+  });
+});
+
+describe('vmConfigurationErrorResponse', () => {
+  it('returns a server configuration error without advertising another network', async () => {
+    const res = vmConfigurationErrorResponse('https://tosidrop.io');
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Server configuration error' });
+  });
+});
+
+describe('vmGet', () => {
+  beforeEach(() => {
+    sdkGet.mockReset();
+    setApiToken.mockReset();
+    VmClient.mockClear();
   });
 
-  it('throws network_unavailable for unconfigured mainnet', async () => {
-    await expect(vmFetch(baseEnv, 'mainnet', 'get_pools')).rejects.toThrow('network_unavailable');
+  it('uses vm-sdk with the deployment base URL, key, action, and params', async () => {
+    sdkGet.mockResolvedValueOnce({ ok: true });
+    const env = {
+      ...previewEnv,
+      VITE_NETWORK: 'mainnet',
+      VM_BASE_URL: 'https://vm-mainnet.example',
+      VITE_VM_API_KEY: 'mainnet-key',
+    };
+
+    await expect(
+      vmGet(env, 'get_rewards', {
+        staking_address: 'stake1x',
+        token_id: undefined,
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(setApiToken).toHaveBeenCalledWith('mainnet-key');
+    expect(VmClient).toHaveBeenCalledWith('https://vm-mainnet.example');
+    expect(sdkGet).toHaveBeenCalledWith(
+      'get_rewards',
+      {
+        staking_address: 'stake1x',
+        token_id: undefined,
+      },
+    );
   });
 
-  it('throws on non-OK VM responses', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 502, statusText: 'Bad Gateway' })));
-    await expect(vmFetch(baseEnv, 'preview', 'get_pools')).rejects.toThrow('VM API 502');
+  it('refuses to call vm-sdk when deployment configuration is incomplete', async () => {
+    await expect(
+      vmGet({ ...previewEnv, VITE_NETWORK: 'mainnet' }, 'get_pools'),
+    ).rejects.toThrow('vm_configuration_error');
+    expect(sdkGet).not.toHaveBeenCalled();
+  });
+});
+
+describe('withCache', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('isolates edge-cache entries by the deployment network', async () => {
+    const match = vi.fn(async (_request: Request): Promise<Response | undefined> => undefined);
+    const put = vi.fn(async () => undefined);
+    vi.stubGlobal('caches', { default: { match, put } });
+
+    await withCache(
+      new Request('https://tosidrop.io/api/getQueue'),
+      { ...previewEnv, VITE_NETWORK: 'mainnet' },
+      60,
+      async () => ({ pending: 1 }),
+    );
+
+    const cacheRequest = match.mock.calls[0]?.[0] as Request;
+    expect(new URL(cacheRequest.url).searchParams.get('__deployment_network')).toBe('mainnet');
   });
 });

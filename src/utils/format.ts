@@ -1,4 +1,4 @@
-import type { Network } from '@/store/network-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 
 /**
  * Truncate a hex hash or bech32 address for display.
@@ -27,7 +27,7 @@ export function formatAda(lovelace: number): string {
   });
 }
 
-export function explorerTxUrl(txHash: string, network: Network = 'mainnet'): string {
-  const host = network === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
+export function explorerTxUrl(txHash: string): string {
+  const host = DEPLOYMENT_NETWORK === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
   return `https://${host}/tx/${txHash}`;
 }

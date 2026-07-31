@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { useNetworkStore } from '@/store/network-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 
 export interface Pool {
   id: string;
@@ -14,9 +14,8 @@ export interface Pool {
 export type GetPoolsResponse = Record<string, Pool>;
 
 export function usePools() {
-  const network = useNetworkStore((s) => s.selectedNetwork);
   return useQuery<GetPoolsResponse, Error>({
-    queryKey: ['pools', network],
+    queryKey: ['pools', DEPLOYMENT_NETWORK],
     queryFn: () => apiClient.get<GetPoolsResponse>('/api/getPools'),
     staleTime: 60 * 60 * 1000,
   });

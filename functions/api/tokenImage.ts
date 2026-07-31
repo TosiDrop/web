@@ -1,13 +1,11 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  netCacheKey,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  deploymentCacheKey,
+  vmConfigurationErrorResponse,
   errorResponse,
   optionsResponse,
-  type VmNetwork,
 } from '../services/vmClient';
 import { readResponseBodyWithLimit } from '../../src/shared/readLimitedBody';
 
@@ -29,12 +27,12 @@ function redirect(location: string): Response {
 
 // Only URLs registered in token metadata are ever fetched — the caller cannot
 // supply one, which keeps this proxy SSRF-free.
-async function resolveLogo(env: Env, network: VmNetwork, assetId: string): Promise<string | null> {
-  let tokens = (await env.VM_WEB_PROFILES.get(netCacheKey(TOKENS_CACHE_KEY, network), { type: 'json' })) as
+async function resolveLogo(env: Env, assetId: string): Promise<string | null> {
+  let tokens = (await env.VM_WEB_PROFILES.get(deploymentCacheKey(env, TOKENS_CACHE_KEY), { type: 'json' })) as
     | Record<string, TokenInfo>
     | null;
   if (!tokens) {
-    tokens = (await vmFetch(env, network, 'get_tokens')) as Record<string, TokenInfo>;
+    tokens = (await vmGet(env, 'get_tokens')) as Record<string, TokenInfo>;
   }
   const logo = tokens?.[assetId]?.logo;
   return typeof logo === 'string' && /^https?:\/\//i.test(logo) ? logo : null;
@@ -43,18 +41,17 @@ async function resolveLogo(env: Env, network: VmNetwork, assetId: string): Promi
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
   const id = new URL(request.url).searchParams.get('id');
 
   if (!id || id.length > MAX_ID_LEN) {
     return errorResponse('id is required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   let logo: string | null;
   try {
-    logo = await resolveLogo(env, network, id);
+    logo = await resolveLogo(env, id);
   } catch (err) {
     console.error('tokenImage metadata error:', err);
     return errorResponse('Failed to resolve token', 500, origin);
@@ -67,8 +64,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return redirect(logo);
   }
 
+  const objectKey = deploymentCacheKey(env, id);
+
   try {
-    const cached = await env.TOKEN_IMAGES.get(id);
+    const cached = await env.TOKEN_IMAGES.get(objectKey);
     if (cached) {
       return new Response(cached.body, {
         headers: {
@@ -92,7 +91,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return redirect(logo);
     }
 
-    await env.TOKEN_IMAGES.put(id, bytes, { httpMetadata: { contentType } });
+    await env.TOKEN_IMAGES.put(objectKey, bytes, { httpMetadata: { contentType } });
     return new Response(bytes, {
       headers: {
         'Content-Type': contentType,

@@ -5,7 +5,6 @@ import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
-import { NetworkSelector } from '@/features/preferences/components/NetworkSelector';
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
@@ -151,14 +150,13 @@ function PreferencesTab() {
 
       <section className="card-premium px-6 py-5">
         <div>
-          <p className="label-eyebrow">Appearance & network</p>
+          <p className="label-eyebrow">Appearance</p>
           <p className="mt-2 text-sm text-slate-400">
             Personal preferences. Stored on your device.
           </p>
         </div>
         <div className="mt-5 space-y-5">
           <ThemeToggle />
-          <NetworkSelector />
         </div>
       </section>
     </div>

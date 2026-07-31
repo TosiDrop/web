@@ -1,9 +1,8 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   withCache,
   errorResponse,
   optionsResponse,
@@ -16,7 +15,6 @@ const CACHE_TTL = 300;
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
   const url = new URL(request.url);
   const staking_address = url.searchParams.get('staking_address');
   const token_id = url.searchParams.get('token_id');
@@ -25,11 +23,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('staking_address is required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    return await withCache(request, CACHE_TTL, async () => {
-      const data = await vmFetch(env, network, 'delivered_rewards', {
+    return await withCache(request, env, CACHE_TTL, async () => {
+      const data = await vmGet(env, 'delivered_rewards', {
         staking_address,
         token_id: token_id || undefined,
       });
