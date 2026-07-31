@@ -28,8 +28,5 @@
   // /api/tokenImage feature-detects the binding and degrades to a redirect.
   "r2_buckets": [
     { "binding": "TOKEN_IMAGES", "bucket_name": "tosidrop-token-images" }
-  ],
-  "vars": {
-    "VITE_VM_API_KEY": "{{VITE_VM_API_KEY}}"
-  }
+  ]
 }
