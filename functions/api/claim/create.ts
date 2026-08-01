@@ -1,9 +1,9 @@
 import type { Env } from '../../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
+  deploymentNetwork,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -50,11 +50,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('unlocksSpecial must be a boolean', 400, origin);
   }
 
-  const network = resolveNetwork(request);
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
+  const network = deploymentNetwork(env);
   try {
-    const response = (await vmFetch(env, network, 'custom_request', {
+    const response = (await vmGet(env, 'custom_request', {
       staking_address: stakeAddress,
       session_id: sessionIdFor(stakeAddress),
       selected: body.assetIds.join(','),
@@ -70,7 +70,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (hasDb(env)) {
       try {
-        const fees = (await vmFetch(env, network, 'estimate_fees', {
+        const fees = (await vmGet(env, 'estimate_fees', {
           token_count: body.assetIds.length,
         })) as {
           withdrawal_fee?: string | number;

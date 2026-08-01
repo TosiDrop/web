@@ -1,54 +1,47 @@
-import type { Env } from '../types/env';
+import { normalizeDeploymentNetwork, type Network } from '../../src/shared/network';
 
 export const DEFAULT_VM_BASE_URL = 'https://vmprev.adaseal.eu';
 
-export type VmNetwork = 'mainnet' | 'preview';
-
-export function resolveNetwork(request: Request): VmNetwork {
-  const value = new URL(request.url).searchParams.get('network');
-  return value === 'mainnet' ? 'mainnet' : 'preview';
+export interface VmEnv {
+  VITE_NETWORK?: string;
+  VITE_VM_API_KEY: string;
+  VM_BASE_URL?: string;
 }
 
-export function vmConfigFor(env: Env, network: VmNetwork): { baseUrl: string; apiKey: string } | null {
-  if (network === 'mainnet') {
-    if (!env.VM_BASE_URL_MAINNET || !env.VM_API_KEY_MAINNET) return null;
-    return { baseUrl: env.VM_BASE_URL_MAINNET, apiKey: env.VM_API_KEY_MAINNET };
-  }
-  const apiKey = env.VM_API_KEY_PREVIEW || env.VITE_VM_API_KEY;
+export function deploymentNetwork(env: Pick<VmEnv, 'VITE_NETWORK'>): Network {
+  return normalizeDeploymentNetwork(env.VITE_NETWORK);
+}
+
+export function vmConfig(env: VmEnv): { baseUrl: string; apiKey: string } | null {
+  const apiKey = env.VITE_VM_API_KEY;
   if (!apiKey || apiKey.trim() === '') return null;
-  return { baseUrl: env.VM_BASE_URL_PREVIEW || env.VM_BASE_URL || DEFAULT_VM_BASE_URL, apiKey };
+  const network = deploymentNetwork(env);
+  if (network === 'mainnet' && !env.VM_BASE_URL) return null;
+  return {
+    baseUrl: env.VM_BASE_URL || DEFAULT_VM_BASE_URL,
+    apiKey,
+  };
 }
 
-export function networksAvailable(env: Env): { mainnet: boolean; preview: boolean } {
-  return { mainnet: vmConfigFor(env, 'mainnet') !== null, preview: vmConfigFor(env, 'preview') !== null };
+export function vmConfigurationErrorResponse(requestOrigin?: string | null): Response {
+  return errorResponse('Server configuration error', 500, requestOrigin ?? undefined);
 }
 
-export function networkUnavailableResponse(requestOrigin?: string | null): Response {
-  return errorResponse('network_unavailable', 503, requestOrigin ?? undefined);
+export function deploymentCacheKey(env: Pick<VmEnv, 'VITE_NETWORK'>, base: string): string {
+  return `${base}:${deploymentNetwork(env)}`;
 }
 
-export function netCacheKey(base: string, network: VmNetwork): string {
-  return `${base}:${network}`;
-}
-
-export async function vmFetch(
-  env: Env,
-  network: VmNetwork,
+export async function vmGet(
+  env: VmEnv,
   action: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): Promise<unknown> {
-  const config = vmConfigFor(env, network);
-  if (!config) throw new Error('network_unavailable');
-  const qs = new URLSearchParams({ action });
-  for (const [k, v] of Object.entries(params ?? {})) {
-    if (v === undefined) continue;
-    qs.append(k, String(v));
-  }
-  const res = await fetch(`${config.baseUrl}/api.php?${qs.toString()}`, {
-    headers: { 'X-API-Token': config.apiKey },
-  });
-  if (!res.ok) throw new Error(`VM API ${res.status}: ${res.statusText}`);
-  return res.json();
+  const config = vmConfig(env);
+  if (!config) throw new Error('vm_configuration_error');
+  const sdk = await import('vm-sdk');
+  sdk.setApiToken(config.apiKey);
+  const client = new sdk.GET_FROM_VM(config.baseUrl);
+  return client.get(action, params);
 }
 
 const ALLOWED_ORIGINS = [
@@ -69,12 +62,15 @@ function getCorsOrigin(requestOrigin?: string | null): string {
 
 export async function withCache(
   request: Request,
+  env: Pick<VmEnv, 'VITE_NETWORK'>,
   ttl: number,
   fetchFn: () => Promise<unknown>,
   waitUntil?: (promise: Promise<unknown>) => void,
 ): Promise<Response> {
   const cache = caches.default;
-  const cacheKey = new Request(new URL(request.url).toString());
+  const cacheUrl = new URL(request.url);
+  cacheUrl.searchParams.set('__deployment_network', deploymentNetwork(env));
+  const cacheKey = new Request(cacheUrl.toString());
   const origin = request.headers.get('Origin');
 
   // Cache stores body + Cache-Control only (no CORS headers). The Cloudflare

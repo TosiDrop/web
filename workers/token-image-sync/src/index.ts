@@ -1,29 +1,29 @@
 import { readResponseBodyWithLimit } from '../../../src/shared/readLimitedBody';
+import { vmConfig, vmGet } from '../../../functions/services/vmClient';
 import { MAX_IMAGE_BYTES, syncTokenImages } from './sync';
 
 interface Env {
   TOKEN_IMAGES: R2Bucket;
   VM_WEB_PROFILES: KVNamespace;
+  VITE_NETWORK?: string;
   VITE_VM_API_KEY: string;
   VM_BASE_URL?: string;
 }
 
-const DEFAULT_VM_BASE_URL = 'https://vmprev.adaseal.eu';
-
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (!vmConfig(env)) {
+      console.error('image sync: invalid VM deployment configuration');
+      return;
+    }
+
     ctx.waitUntil(
       syncTokenImages({
         kv: env.VM_WEB_PROFILES,
         bucket: env.TOKEN_IMAGES,
-        fetchTokens: async () => {
-          const res = await fetch(
-            `${env.VM_BASE_URL || DEFAULT_VM_BASE_URL}/api.php?action=get_tokens`,
-            { headers: { 'X-API-Token': env.VITE_VM_API_KEY } },
-          );
-          if (!res.ok) throw new Error(`VM API ${res.status}: ${res.statusText}`);
-          return res.json();
-        },
+        network: env.VITE_NETWORK,
+        fetchTokens: async () =>
+          vmGet(env, 'get_tokens') as Promise<Record<string, { logo?: string }>>,
         fetchImage: async (url) => {
           const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
           if (!res.ok) return null;

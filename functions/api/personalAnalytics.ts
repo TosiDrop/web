@@ -1,10 +1,10 @@
 import type { Env } from '../types/env';
 import { hasDb } from '../services/d1';
 import {
+  deploymentNetwork,
   errorResponse,
   jsonResponse,
   optionsResponse,
-  resolveNetwork,
 } from '../services/vmClient';
 
 interface SummaryRow {
@@ -74,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   try {
-    const network = resolveNetwork(request);
+    const network = deploymentNetwork(env);
     const [summary, claimsResult, rewardsResult, tokenMixResult] = await Promise.all([
       env.DB.prepare(
         'SELECT ' +

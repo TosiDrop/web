@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useClaimStore } from '@/store/claim-state';
 import { useWalletStore } from '@/store/wallet-state';
-import { useNetworkStore } from '@/store/network-state';
 import { useWalletDeposit } from '@/features/claim/hooks/useWalletDeposit';
 import {
   useClaimStatus,
@@ -44,7 +43,6 @@ const STATUS_COPY: Record<
 export default function DepositPage() {
   const navigate = useNavigate();
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
-  const network = useNetworkStore((s) => s.selectedNetwork);
   const request = useClaimStore((s) => s.request);
   const reset = useClaimStore((s) => s.reset);
 
@@ -56,7 +54,6 @@ export default function DepositPage() {
   const { status, txExplorerUrl } = useClaimStatus({
     request_id: request?.requestId ?? null,
     staking_address: stakeAddress,
-    network,
   });
 
   useEffect(() => {

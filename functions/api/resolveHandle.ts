@@ -1,8 +1,11 @@
 import type { Env } from '../types/env';
-import { resolveNetwork, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { deploymentNetwork, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 
 const ADA_HANDLE_POLICY_ID = 'f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a';
-const KOIOS_BASE = 'https://api.koios.rest/api/v1';
+const KOIOS_BASES = {
+  mainnet: 'https://api.koios.rest/api/v1',
+  preview: 'https://preview.koios.rest/api/v1',
+} as const;
 
 // CIP-68 asset name prefixes used by ADA Handle.
 // Most active handles live on label 222 (user NFT). Legacy pre-CIP-68 handles
@@ -16,8 +19,8 @@ function textToHex(text: string): string {
     .join('');
 }
 
-async function lookupHolder(assetName: string): Promise<string | null> {
-  const res = await fetch(`${KOIOS_BASE}/asset_nft_address`, {
+async function lookupHolder(koiosBase: string, assetName: string): Promise<string | null> {
+  const res = await fetch(`${koiosBase}/asset_nft_address`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ _asset_policy: ADA_HANDLE_POLICY_ID, _asset_name: assetName }),
@@ -28,16 +31,12 @@ async function lookupHolder(assetName: string): Promise<string | null> {
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  const { request } = context;
+  const { request, env } = context;
   const origin = request.headers.get('Origin');
   const handle = new URL(request.url).searchParams.get('handle');
 
   if (!handle) {
     return errorResponse('handle parameter is required', 400, origin);
-  }
-
-  if (resolveNetwork(request) === 'preview') {
-    return errorResponse('ADA Handle resolution is only available on mainnet', 400, origin);
   }
 
   const name = handle.startsWith('$') ? handle.slice(1) : handle;
@@ -46,6 +45,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('Invalid handle format', 400, origin);
   }
   const hexName = textToHex(name.toLowerCase());
+  const koiosBase = KOIOS_BASES[deploymentNetwork(env)];
 
   try {
     const candidates = [
@@ -56,7 +56,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     let paymentAddress: string | null = null;
     for (const assetName of candidates) {
-      paymentAddress = await lookupHolder(assetName);
+      paymentAddress = await lookupHolder(koiosBase, assetName);
       if (paymentAddress) break;
     }
 
@@ -64,7 +64,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return errorResponse(`Handle "$${name}" not found`, 404, origin);
     }
 
-    const addrRes = await fetch(`${KOIOS_BASE}/address_info`, {
+    const addrRes = await fetch(`${koiosBase}/address_info`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ _addresses: [paymentAddress] }),

@@ -9,8 +9,7 @@ export function isAdaHandle(input: string): boolean {
 
 /**
  * Resolve an ADA handle (e.g. "$wolf31o2") to a stake address.
- * Calls our backend which proxies to Koios (avoids CORS). Routed through
- * apiClient so the selected network is sent as a query param.
+ * Calls our backend which proxies to the deployment's Koios network (avoids CORS).
  */
 export async function resolveAdaHandle(handle: string): Promise<string> {
   const data = await apiClient.get<{ stakeAddress: string }>(

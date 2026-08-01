@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Env } from '../../../types/env';
 
-const { vmFetch } = vi.hoisted(() => ({ vmFetch: vi.fn() }));
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
 vi.mock('../../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../services/vmClient')>();
-  return { ...actual, vmFetch };
+  return { ...actual, vmGet };
 });
 
 import { onRequestPost } from '../create';
@@ -48,12 +48,12 @@ function fakeDb(options: { fail?: boolean } = {}) {
 
 describe('POST /api/claim/create', () => {
   beforeEach(() => {
-    vmFetch.mockReset();
+    vmGet.mockReset();
   });
 
   it('maps SDK response to camelCase and uses session_id = stake[:40]', async () => {
     const stake = 'stake_test1' + 'x'.repeat(50);
-    vmFetch.mockResolvedValueOnce({
+    vmGet.mockResolvedValueOnce({
       request_id: 99,
       deposit: 5_000_000,
       overhead_fee: 200_000,
@@ -74,7 +74,7 @@ describe('POST /api/claim/create', () => {
       withdrawalAddress: 'addr1abc',
       isWhitelisted: true,
     });
-    const [, , action, params] = vmFetch.mock.calls[0];
+    const [, action, params] = vmGet.mock.calls[0];
     expect(action).toBe('custom_request');
     expect(params.staking_address).toBe(stake);
     expect(params.session_id).toBe(stake.slice(0, 40));
@@ -114,19 +114,19 @@ describe('POST /api/claim/create', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 503 network_unavailable when the preview API key is missing', async () => {
+  it('returns 500 when the deployment API key is missing', async () => {
     const res = await onRequestPost(
       makeContext(
         { stakeAddress: 'stake_test1x', assetIds: ['a'] },
         { VITE_VM_API_KEY: '' },
       ),
     );
-    expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({ error: 'network_unavailable' });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Server configuration error' });
   });
 
   it('returns 502 when the VM API throws', async () => {
-    vmFetch.mockRejectedValueOnce(new Error('upstream down'));
+    vmGet.mockRejectedValueOnce(new Error('upstream down'));
     const res = await onRequestPost(
       makeContext({ stakeAddress: 'stake_test1x', assetIds: ['a'] }),
     );
@@ -135,7 +135,7 @@ describe('POST /api/claim/create', () => {
 
   it('persists the accepted request with a fresh fee quote', async () => {
     const { db, bind } = fakeDb();
-    vmFetch
+    vmGet
       .mockResolvedValueOnce({
         request_id: 99,
         deposit: 5_000_000,
@@ -158,11 +158,11 @@ describe('POST /api/claim/create', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(vmFetch.mock.calls.map((call) => call[2])).toEqual([
+    expect(vmGet.mock.calls.map((call) => call[1])).toEqual([
       'custom_request',
       'estimate_fees',
     ]);
-    expect(vmFetch.mock.calls[1][3]).toEqual({ token_count: 3 });
+    expect(vmGet.mock.calls[1][2]).toEqual({ token_count: 3 });
     expect(bind).toHaveBeenCalledWith(
       '99',
       'stake_test1analytics',
@@ -177,7 +177,7 @@ describe('POST /api/claim/create', () => {
 
   it('returns the accepted claim when fee lookup fails', async () => {
     const { db, bind } = fakeDb();
-    vmFetch
+    vmGet
       .mockResolvedValueOnce({
         request_id: 100,
         deposit: 5_000_000,
@@ -200,7 +200,7 @@ describe('POST /api/claim/create', () => {
 
   it('returns the accepted claim when quote persistence fails', async () => {
     const { db } = fakeDb({ fail: true });
-    vmFetch
+    vmGet
       .mockResolvedValueOnce({
         request_id: 101,
         deposit: 5_000_000,

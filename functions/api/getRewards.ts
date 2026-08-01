@@ -6,11 +6,9 @@ import {
 } from '../../src/shared/rewards';
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
-  type VmNetwork,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -49,10 +47,10 @@ function toClaimableTokens(
     });
 }
 
-async function getRewards(stakeAddress: string, env: Env, network: VmNetwork): Promise<ClaimableToken[]> {
+async function getRewards(stakeAddress: string, env: Env): Promise<ClaimableToken[]> {
   const [rewardsResponse, tokensRaw] = await Promise.all([
-    vmFetch(env, network, 'get_rewards', { staking_address: stakeAddress }) as Promise<GetRewardsDto | null>,
-    vmFetch(env, network, 'get_tokens'),
+    vmGet(env, 'get_rewards', { staking_address: stakeAddress }) as Promise<GetRewardsDto | null>,
+    vmGet(env, 'get_tokens'),
   ]);
 
   let tokens = tokensRaw as unknown as Record<string, TokenInfo> | null;
@@ -70,7 +68,7 @@ async function getRewards(stakeAddress: string, env: Env, network: VmNetwork): P
   const allAssetIds = [...Object.keys(regular), ...Object.keys(premium)];
   for (const assetId of allAssetIds) {
     if (!tokens[assetId]) {
-      tokens = (await vmFetch(env, network, 'get_tokens')) as unknown as Record<string, TokenInfo> | null;
+      tokens = (await vmGet(env, 'get_tokens')) as unknown as Record<string, TokenInfo> | null;
       if (!tokens) {
         console.warn('getRewards: token re-fetch returned null', { stakeAddress });
         return [];
@@ -88,17 +86,16 @@ async function getRewards(stakeAddress: string, env: Env, network: VmNetwork): P
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
   const stakeAddress = new URL(request.url).searchParams.get('walletId');
 
   if (!stakeAddress) {
     return errorResponse('walletId is required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const claimableTokens = await getRewards(stakeAddress, env, network);
+    const claimableTokens = await getRewards(stakeAddress, env);
     return jsonResponse({ rewards: claimableTokens }, 200, origin);
   } catch (error) {
     console.error('getRewards error:', error);

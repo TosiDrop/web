@@ -1,11 +1,11 @@
-import type { VmNetwork } from './vmClient';
+import type { Network } from '../../src/shared/network';
 
 type MonetaryValue = string | number | null | undefined;
 
 export interface ClaimQuote {
   requestId: string;
   stakeAddress: string;
-  network: VmNetwork;
+  network: Network;
   tokenCount: number;
   deposit: string | number;
   withdrawalFee?: MonetaryValue;

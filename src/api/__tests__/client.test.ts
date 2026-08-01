@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiClient } from '@/api/client';
-import { useNetworkStore } from '@/store/network-state';
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  useNetworkStore.setState({ selectedNetwork: 'mainnet' });
 });
 
 function stubFetch() {
@@ -15,25 +13,22 @@ function stubFetch() {
   return fetchMock;
 }
 
-describe('apiClient network param', () => {
-  it('appends network to bare URLs', async () => {
+describe('apiClient deployment-fixed routing', () => {
+  it('leaves bare URLs unchanged', async () => {
     const fetchMock = stubFetch();
-    useNetworkStore.setState({ selectedNetwork: 'preview' });
     await apiClient.get('/api/getPools');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/getPools?network=preview');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/getPools');
   });
 
-  it('appends with & when a query string exists', async () => {
+  it('preserves existing query strings without adding a network', async () => {
     const fetchMock = stubFetch();
-    useNetworkStore.setState({ selectedNetwork: 'mainnet' });
     await apiClient.get('/api/getRewards?walletId=stake1x');
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/getRewards?walletId=stake1x&network=mainnet');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/getRewards?walletId=stake1x');
   });
 
-  it('appends on POST too', async () => {
+  it('leaves POST URLs unchanged', async () => {
     const fetchMock = stubFetch();
-    useNetworkStore.setState({ selectedNetwork: 'preview' });
     await apiClient.post('/api/getCustomRewards', { a: 1 });
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/getCustomRewards?network=preview');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/getCustomRewards');
   });
 });

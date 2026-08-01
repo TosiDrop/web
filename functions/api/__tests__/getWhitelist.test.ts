@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../types/env';
 
-const { vmFetch } = vi.hoisted(() => ({ vmFetch: vi.fn() }));
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
 vi.mock('../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vmClient')>();
-  return { ...actual, vmFetch };
+  return { ...actual, vmGet };
 });
 
 import { onRequestGet } from '../getWhitelist';
@@ -37,28 +37,28 @@ describe('GET /api/getWhitelist', () => {
   // Block body on purpose: beforeEach treats a returned function as a
   // teardown hook, and mockReset() returns the mock itself.
   beforeEach(() => {
-    vmFetch.mockReset();
-    vmFetch.mockResolvedValue(WHITELIST);
+    vmGet.mockReset();
+    vmGet.mockResolvedValue(WHITELIST);
   });
 
-  it('503 network_unavailable when the preview API key is not configured', async () => {
+  it('returns 500 when the deployment API key is not configured', async () => {
     const res = await onRequestGet(ctx({ VITE_VM_API_KEY: '', VM_WEB_PROFILES: fakeKv() }));
-    expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({ error: 'network_unavailable' });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Server configuration error' });
   });
 
   it('serves from KV without calling the VM API on a cache hit', async () => {
     const kv = fakeKv({ '__internal:whitelist_cache:preview': WHITELIST });
     const res = await onRequestGet(ctx({ VM_WEB_PROFILES: kv }));
     expect(await res.json()).toEqual(WHITELIST);
-    expect(vmFetch).not.toHaveBeenCalled();
+    expect(vmGet).not.toHaveBeenCalled();
   });
 
   it('fetches, stores with a daily TTL, and serves on a cache miss', async () => {
     const kv = fakeKv();
     const res = await onRequestGet(ctx({ VM_WEB_PROFILES: kv }));
     expect(await res.json()).toEqual(WHITELIST);
-    expect(vmFetch).toHaveBeenCalledTimes(1);
+    expect(vmGet).toHaveBeenCalledTimes(1);
     expect(kv.put).toHaveBeenCalledWith(
       '__internal:whitelist_cache:preview',
       JSON.stringify(WHITELIST),
@@ -67,16 +67,16 @@ describe('GET /api/getWhitelist', () => {
   });
 
   it('maps VM API failures to a 500', async () => {
-    vmFetch.mockRejectedValue(new Error('vm down'));
+    vmGet.mockRejectedValue(new Error('vm down'));
     const res = await onRequestGet(ctx({ VM_WEB_PROFILES: fakeKv() }));
     expect(res.status).toBe(500);
   });
 
-  it('503 network_unavailable when requesting mainnet without mainnet config', async () => {
+  it('ignores a caller-supplied network query parameter', async () => {
     const res = await onRequestGet(
       ctx({ VM_WEB_PROFILES: fakeKv() }, 'https://x/api/getWhitelist?network=mainnet'),
     );
-    expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({ error: 'network_unavailable' });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(WHITELIST);
   });
 });

@@ -1,9 +1,8 @@
 import type { Env } from '../types/env';
 import {
-  resolveNetwork,
-  vmConfigFor,
-  vmFetch,
-  networkUnavailableResponse,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -24,16 +23,15 @@ async function handleRequest(
   { staking_address, session_id, selected, overhead_fee }: CustomRewardsInput,
 ) {
   const origin = request.headers.get('Origin');
-  const network = resolveNetwork(request);
 
   if (!staking_address || !session_id || !selected) {
     return errorResponse('staking_address, session_id, and selected are required', 400, origin);
   }
 
-  if (!vmConfigFor(env, network)) return networkUnavailableResponse(origin);
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const result = (await vmFetch(env, network, 'custom_request', {
+    const result = (await vmGet(env, 'custom_request', {
       staking_address,
       session_id,
       selected,

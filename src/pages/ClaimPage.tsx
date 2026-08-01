@@ -6,7 +6,8 @@ import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { useClaimStore } from '@/store/claim-state';
-import { useNetworkStore, networkFromId } from '@/store/network-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
 
@@ -77,8 +78,7 @@ export default function ClaimPage() {
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
 
-  const selectedNetwork = useNetworkStore((s) => s.selectedNetwork);
-  const networkMatches = !connected || networkFromId(networkId) === selectedNetwork;
+  const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
 
   const walletReady = connected && !!stakeAddress;
   const canClaim =
