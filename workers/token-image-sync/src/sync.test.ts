@@ -37,17 +37,35 @@ function deps(overrides: Partial<SyncDeps> = {}): SyncDeps & {
 }
 
 describe('syncTokenImages', () => {
+  it('isolates cache and cursor keys by the deployment network', async () => {
+    const d = deps();
+    d.kvStore.set('__internal:tokens_cache:mainnet', {
+      z: { logo: 'https://img/z.png' },
+    });
+    const fetchTokens = vi.fn();
+
+    await syncTokenImages({
+      ...d,
+      fetchTokens,
+      network: 'mainnet',
+    } as SyncDeps & { network: string });
+
+    expect(fetchTokens).not.toHaveBeenCalled();
+    expect(d.r2Store.has('z:mainnet')).toBe(true);
+    expect(d.kvStore.get('__internal:image_sync_cursor:mainnet')).toBe('z');
+  });
+
   it('stores http-logo tokens and records the cursor', async () => {
     const d = deps();
     const result = await syncTokenImages(d);
     expect(result.stored).toBe(2);
-    expect([...d.r2Store.keys()].sort()).toEqual(['a', 'b']);
-    expect(d.kvStore.get('__internal:image_sync_cursor')).toBe('b');
+    expect([...d.r2Store.keys()].sort()).toEqual(['a:preview', 'b:preview']);
+    expect(d.kvStore.get('__internal:image_sync_cursor:preview')).toBe('b');
   });
 
   it('skips images already in R2', async () => {
     const d = deps();
-    d.r2Store.set('a', PNG);
+    d.r2Store.set('a:preview', PNG);
     const result = await syncTokenImages(d);
     expect(result.stored).toBe(1);
     expect(d.fetchImage).toHaveBeenCalledTimes(1);
@@ -56,12 +74,12 @@ describe('syncTokenImages', () => {
   it('honors the fetch limit and resumes from the cursor', async () => {
     const d = deps({ limit: 1 });
     await syncTokenImages(d);
-    expect(d.r2Store.has('a')).toBe(true);
-    expect(d.r2Store.has('b')).toBe(false);
-    expect(d.kvStore.get('__internal:image_sync_cursor')).toBe('a');
+    expect(d.r2Store.has('a:preview')).toBe(true);
+    expect(d.r2Store.has('b:preview')).toBe(false);
+    expect(d.kvStore.get('__internal:image_sync_cursor:preview')).toBe('a');
 
     await syncTokenImages(deps({ limit: 1, kv: d.kv, bucket: d.bucket }));
-    expect(d.r2Store.has('b')).toBe(true);
+    expect(d.r2Store.has('b:preview')).toBe(true);
   });
 
   it('survives per-image failures and rejects non-images', async () => {
@@ -73,15 +91,15 @@ describe('syncTokenImages', () => {
     });
     const result = await syncTokenImages(d);
     expect(result.stored).toBe(0);
-    expect(d.kvStore.get('__internal:image_sync_cursor')).toBe('b');
+    expect(d.kvStore.get('__internal:image_sync_cursor:preview')).toBe('b');
   });
 
   it('prefers the KV tokens cache over fetching', async () => {
     const d = deps();
-    d.kvStore.set('__internal:tokens_cache', { z: { logo: 'https://img/z.png' } });
+    d.kvStore.set('__internal:tokens_cache:preview', { z: { logo: 'https://img/z.png' } });
     const fetchTokens = vi.fn();
     await syncTokenImages({ ...d, fetchTokens });
     expect(fetchTokens).not.toHaveBeenCalled();
-    expect(d.r2Store.has('z')).toBe(true);
+    expect(d.r2Store.has('z:preview')).toBe(true);
   });
 });

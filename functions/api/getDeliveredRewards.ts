@@ -1,5 +1,12 @@
 import type { Env } from '../types/env';
-import { initVmSdk, requireApiKey, withCache, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
+  withCache,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 import { hasDb } from '../services/d1';
 import { buildWithdrawalUpserts } from '../services/withdrawalsSync';
 
@@ -16,15 +23,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('staking_address is required', 400, origin);
   }
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    return await withCache(request, CACHE_TTL, async () => {
-      const sdk = await initVmSdk(env);
-      const input: { staking_address: string; token_id?: string } = { staking_address };
-      if (token_id) input.token_id = token_id;
-      const data = await sdk.getDeliveredRewards(input);
+    return await withCache(request, env, CACHE_TTL, async () => {
+      const data = await vmGet(env, 'delivered_rewards', {
+        staking_address,
+        token_id: token_id || undefined,
+      });
 
       // #181: accumulate history beyond the VM window. Append-only; a D1
       // hiccup must never break the read path.

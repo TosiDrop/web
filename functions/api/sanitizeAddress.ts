@@ -1,5 +1,12 @@
 import type { Env } from '../types/env';
-import { initVmSdk, requireApiKey, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
+  jsonResponse,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -10,12 +17,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('address is required', 400, origin);
   }
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const sdk = await initVmSdk(env);
-    const response = await sdk.getSanitizedAddress(address);
+    const response = (await vmGet(env, 'sanitize_address', { address })) as { address: string };
     return jsonResponse({ address: response.address }, 200, origin);
   } catch (error) {
     console.error('sanitizeAddress error:', error);

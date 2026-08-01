@@ -1,5 +1,12 @@
 import type { Env } from '../types/env';
-import { initVmSdk, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  vmConfig,
+  vmGet,
+  deploymentCacheKey,
+  vmConfigurationErrorResponse,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 import { readResponseBodyWithLimit } from '../../src/shared/readLimitedBody';
 
 const MAX_ID_LEN = 120;
@@ -21,12 +28,11 @@ function redirect(location: string): Response {
 // Only URLs registered in token metadata are ever fetched — the caller cannot
 // supply one, which keeps this proxy SSRF-free.
 async function resolveLogo(env: Env, assetId: string): Promise<string | null> {
-  let tokens = (await env.VM_WEB_PROFILES.get(TOKENS_CACHE_KEY, { type: 'json' })) as
+  let tokens = (await env.VM_WEB_PROFILES.get(deploymentCacheKey(env, TOKENS_CACHE_KEY), { type: 'json' })) as
     | Record<string, TokenInfo>
     | null;
   if (!tokens) {
-    const sdk = await initVmSdk(env);
-    tokens = (await sdk.getTokens()) as Record<string, TokenInfo>;
+    tokens = (await vmGet(env, 'get_tokens')) as Record<string, TokenInfo>;
   }
   const logo = tokens?.[assetId]?.logo;
   return typeof logo === 'string' && /^https?:\/\//i.test(logo) ? logo : null;
@@ -40,6 +46,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!id || id.length > MAX_ID_LEN) {
     return errorResponse('id is required', 400, origin);
   }
+
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   let logo: string | null;
   try {
@@ -56,8 +64,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return redirect(logo);
   }
 
+  const objectKey = deploymentCacheKey(env, id);
+
   try {
-    const cached = await env.TOKEN_IMAGES.get(id);
+    const cached = await env.TOKEN_IMAGES.get(objectKey);
     if (cached) {
       return new Response(cached.body, {
         headers: {
@@ -81,7 +91,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return redirect(logo);
     }
 
-    await env.TOKEN_IMAGES.put(id, bytes, { httpMetadata: { contentType } });
+    await env.TOKEN_IMAGES.put(objectKey, bytes, { httpMetadata: { contentType } });
     return new Response(bytes, {
       headers: {
         'Content-Type': contentType,

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Env } from '../../types/env';
 
-const sdkGetTokens = vi.fn();
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
 vi.mock('../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vmClient')>();
-  return { ...actual, initVmSdk: async () => ({ getTokens: sdkGetTokens }) };
+  return { ...actual, vmGet };
 });
 
 import { onRequestGet } from '../tokenImage';
@@ -19,7 +19,7 @@ const TOKENS = {
 function fakeKv(tokens: unknown = TOKENS) {
   return {
     get: vi.fn(async (key: string) =>
-      key === '__internal:tokens_cache' ? tokens : null,
+      key === '__internal:tokens_cache:preview' ? tokens : null,
     ),
   } as unknown as KVNamespace;
 }
@@ -53,8 +53,8 @@ describe('GET /api/tokenImage', () => {
   // Block body on purpose: beforeEach treats a returned function as a
   // teardown hook, and mockReset() returns the mock itself.
   beforeEach(() => {
-    sdkGetTokens.mockReset();
-    sdkGetTokens.mockResolvedValue(TOKENS);
+    vmGet.mockReset();
+    vmGet.mockResolvedValue(TOKENS);
     vi.stubGlobal('fetch', vi.fn(async () =>
       new Response(PNG, { headers: { 'Content-Type': 'image/png', 'Content-Length': '4' } }),
     ));
@@ -81,7 +81,7 @@ describe('GET /api/tokenImage', () => {
   });
 
   it('serves a cached image from R2 with immutable headers', async () => {
-    const bucket = fakeR2({ 'pol.aaaa': { body: PNG, contentType: 'image/png' } });
+    const bucket = fakeR2({ 'pol.aaaa:preview': { body: PNG, contentType: 'image/png' } });
     const res = await onRequestGet(ctx('?id=pol.aaaa', { TOKEN_IMAGES: bucket }));
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/png');
@@ -94,7 +94,26 @@ describe('GET /api/tokenImage', () => {
     const res = await onRequestGet(ctx('?id=pol.aaaa', { TOKEN_IMAGES: bucket }));
     expect(res.status).toBe(200);
     expect(bucket.put).toHaveBeenCalledWith(
-      'pol.aaaa',
+      'pol.aaaa:preview',
+      expect.anything(),
+      { httpMetadata: { contentType: 'image/png' } },
+    );
+  });
+
+  it('isolates R2 objects by the deployment network', async () => {
+    const bucket = fakeR2();
+
+    await onRequestGet(
+      ctx('?id=pol.aaaa&network=preview', {
+        VITE_NETWORK: 'mainnet',
+        VM_BASE_URL: 'https://vm-mainnet.example',
+        TOKEN_IMAGES: bucket,
+      }),
+    );
+
+    expect(bucket.get).toHaveBeenCalledWith('pol.aaaa:mainnet');
+    expect(bucket.put).toHaveBeenCalledWith(
+      'pol.aaaa:mainnet',
       expect.anything(),
       { httpMetadata: { contentType: 'image/png' } },
     );
@@ -131,9 +150,10 @@ describe('GET /api/tokenImage', () => {
     expect(pulls).toBeLessThan(6);
   });
 
-  it('falls back to the SDK when the KV tokens cache is empty', async () => {
+  it('falls back to the VM API when the KV tokens cache is empty', async () => {
     const res = await onRequestGet(ctx('?id=pol.aaaa', { VM_WEB_PROFILES: fakeKv(null) }));
-    expect(res.status).toBe(302); // no bucket bound, but resolution succeeded via SDK
-    expect(sdkGetTokens).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(302); // no bucket bound, but resolution succeeded via the VM API
+    expect(vmGet).toHaveBeenCalledTimes(1);
+    expect(vmGet).toHaveBeenCalledWith(expect.anything(), 'get_tokens');
   });
 });

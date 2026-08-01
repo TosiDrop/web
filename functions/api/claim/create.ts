@@ -1,7 +1,8 @@
 import type { Env } from '../../types/env';
 import {
-  initVmSdk,
-  requireApiKey,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -46,18 +47,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return errorResponse('unlocksSpecial must be a boolean', 400, origin);
   }
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const sdk = await initVmSdk(env);
-    const response = await sdk.getCustomRequest({
+    const response = (await vmGet(env, 'custom_request', {
       staking_address: stakeAddress,
       session_id: sessionIdFor(stakeAddress),
       selected: body.assetIds.join(','),
       overhead_fee: body.overheadFee,
       unlocks_special: body.unlocksSpecial,
-    });
+    })) as {
+      request_id: unknown;
+      deposit: unknown;
+      overhead_fee: unknown;
+      withdrawal_address: unknown;
+      is_whitelisted: unknown;
+    };
 
     return jsonResponse(
       {

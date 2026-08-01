@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { IconClock } from '@tabler/icons-react';
 import { apiClient } from '@/api/client';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 
 interface QueueResponse {
   pending_tx_count: number;
@@ -10,7 +11,7 @@ const POLL_INTERVAL_MS = 60_000;
 
 function useQueueCount() {
   return useQuery<QueueResponse, Error>({
-    queryKey: ['queue', 'pending_tx_count'],
+    queryKey: ['queue', 'pending_tx_count', DEPLOYMENT_NETWORK],
     queryFn: () => apiClient.get<QueueResponse>('/api/getQueue'),
     refetchInterval: POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,

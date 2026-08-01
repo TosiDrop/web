@@ -1,7 +1,9 @@
 import type { Env } from '../types/env';
 import {
-  initVmSdk,
-  requireApiKey,
+  vmConfig,
+  vmGet,
+  deploymentCacheKey,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -14,20 +16,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const cached = await env.VM_WEB_PROFILES.get(CACHE_KEY, { type: 'json' });
+    const cacheKey = deploymentCacheKey(env, CACHE_KEY);
+    const cached = await env.VM_WEB_PROFILES.get(cacheKey, { type: 'json' });
     if (cached !== null) {
       return jsonResponse(cached, 200, origin);
     }
 
-    const sdk = await initVmSdk(env);
-    const whitelist = await sdk.getWhitelist();
+    const whitelist = await vmGet(env, 'get_whitelist');
 
     context.waitUntil(
-      env.VM_WEB_PROFILES.put(CACHE_KEY, JSON.stringify(whitelist), {
+      env.VM_WEB_PROFILES.put(cacheKey, JSON.stringify(whitelist), {
         expirationTtl: CACHE_TTL,
       }),
     );

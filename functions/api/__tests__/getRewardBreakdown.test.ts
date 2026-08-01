@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../types/env';
 
-const sdkBreakdown = vi.fn();
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
 vi.mock('../../services/vmClient', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../services/vmClient')>();
   return {
     ...actual,
-    initVmSdk: async () => ({ getRewardBreakdown: sdkBreakdown }),
-    withCache: async (_req: Request, _ttl: number, fetchFn: () => Promise<unknown>) =>
+    vmGet,
+    withCache: async (
+      _req: Request,
+      _env: Env,
+      _ttl: number,
+      fetchFn: () => Promise<unknown>,
+    ) =>
       new Response(JSON.stringify(await fetchFn()), { status: 200 }),
   };
 });
@@ -30,8 +35,8 @@ function ctx(qs: string, env: Partial<Env> = {}): Ctx {
 
 describe('GET /api/getRewardBreakdown', () => {
   beforeEach(() => {
-    sdkBreakdown.mockReset();
-    sdkBreakdown.mockResolvedValue({
+    vmGet.mockReset();
+    vmGet.mockResolvedValue({
       rewards: [{ token: 'lovelace', amount: '1000000' }],
       promises: [],
       vending_address: 'addr1x',
@@ -44,22 +49,32 @@ describe('GET /api/getRewardBreakdown', () => {
     expect(res.status).toBe(400);
   });
 
-  it('500 when the API key is not configured', async () => {
+  it('returns 500 when the deployment API key is not configured', async () => {
     const res = await onRequestGet(ctx(`?staking_address=${STAKE}`, { VITE_VM_API_KEY: '' }));
     expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Server configuration error' });
   });
 
-  it('passes the staking address through to the SDK and returns its payload', async () => {
+  it('ignores a caller-supplied network query parameter', async () => {
+    const res = await onRequestGet(ctx(`?staking_address=${STAKE}&network=mainnet`));
+    expect(res.status).toBe(200);
+  });
+
+  it('passes the staking address through to the VM API and returns its payload', async () => {
     const res = await onRequestGet(ctx(`?staking_address=${STAKE}`));
     expect(res.status).toBe(200);
-    expect(sdkBreakdown).toHaveBeenCalledWith(STAKE);
+    expect(vmGet).toHaveBeenCalledWith(
+      expect.anything(),
+      'get_reward_breakdown',
+      { staking_address: STAKE },
+    );
     const body = (await res.json()) as { vending_address: string; rewards: unknown[] };
     expect(body.vending_address).toBe('addr1x');
     expect(body.rewards).toHaveLength(1);
   });
 
-  it('maps SDK failures to a 500', async () => {
-    sdkBreakdown.mockRejectedValue(new Error('vm down'));
+  it('maps VM API failures to a 500', async () => {
+    vmGet.mockRejectedValue(new Error('vm down'));
     const res = await onRequestGet(ctx(`?staking_address=${STAKE}`));
     expect(res.status).toBe(500);
   });

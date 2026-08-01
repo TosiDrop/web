@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { explorerTxUrl } from '@/utils/format';
-import type { Network } from '@/store/network-state';
 
 export type ClaimStatusKind = 'waiting' | 'processing' | 'success' | 'failure';
 
@@ -16,7 +16,6 @@ interface UseClaimStatusArgs {
   staking_address: string | null;
   enabled?: boolean;
   pollIntervalMs?: number;
-  network?: Network;
 }
 
 export interface UseClaimStatusResult {
@@ -38,12 +37,11 @@ export function useClaimStatus({
   staking_address,
   enabled = true,
   pollIntervalMs = DEFAULT_INTERVAL_MS,
-  network = 'mainnet',
 }: UseClaimStatusArgs): UseClaimStatusResult {
   const ready = !!request_id && !!staking_address && enabled;
 
   const query = useQuery<ClaimStatus, Error>({
-    queryKey: ['claim-status', request_id, staking_address, network],
+    queryKey: ['claim-status', request_id, staking_address, DEPLOYMENT_NETWORK],
     queryFn: async () => {
       if (!request_id || !staking_address) {
         throw new Error('request_id and staking_address are required');
@@ -51,7 +49,6 @@ export function useClaimStatus({
       const params = new URLSearchParams({
         requestId: request_id,
         stakeAddress: staking_address,
-        network,
       });
       return apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
     },
@@ -68,7 +65,7 @@ export function useClaimStatus({
   const status = query.data;
   const txExplorerUrl =
     status?.kind === 'success' && status.txHash
-      ? explorerTxUrl(status.txHash, network)
+      ? explorerTxUrl(status.txHash)
       : null;
 
   return {
