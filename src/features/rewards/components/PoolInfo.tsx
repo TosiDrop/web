@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
-import { usePools, type Pool } from '@/features/rewards/api/pools.queries';
+import { usePools, useWhitelist, type Pool } from '@/features/rewards/api/pools.queries';
 
 interface PoolInfoProps {
   poolId: string | null;
+  /** True while the caller is still resolving which pool the wallet delegates to. */
+  isLoading?: boolean;
 }
 
 function PoolLogo({ pool }: { pool: Pool }) {
@@ -43,17 +45,11 @@ function WhitelistBadge({ enabled }: { enabled: boolean }) {
   );
 }
 
-export function PoolInfo({ poolId }: PoolInfoProps) {
-  const { data: pools, isLoading, isError } = usePools();
-
-  if (!poolId) {
-    return (
-      <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
-        <p className="label-eyebrow">Delegation</p>
-        <p className="mt-2 text-sm text-slate-500">No delegated pool detected.</p>
-      </div>
-    );
-  }
+export function PoolInfo({ poolId, isLoading: resolving = false }: PoolInfoProps) {
+  const { data: pools, isLoading: poolsLoading, isError } = usePools();
+  const { data: whitelist } = useWhitelist();
+  const isLoading = resolving || (!!poolId && poolsLoading);
+  const whitelisted = !!poolId && !!whitelist?.has(poolId);
 
   if (isLoading) {
     return (
@@ -66,6 +62,15 @@ export function PoolInfo({ poolId }: PoolInfoProps) {
             <div className="h-2.5 w-20 animate-pulse rounded bg-surface-inset/60" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!poolId) {
+    return (
+      <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
+        <p className="label-eyebrow">Delegation</p>
+        <p className="mt-2 text-sm text-slate-500">No delegated pool detected.</p>
       </div>
     );
   }
@@ -87,20 +92,20 @@ export function PoolInfo({ poolId }: PoolInfoProps) {
         <p className="label-eyebrow">Delegation</p>
         <p className="mt-2 text-sm text-white">Unknown pool</p>
         <p className="mt-1 font-mono text-[11px] text-slate-500">{poolId}</p>
-        <div className="mt-3">
-          <WhitelistBadge enabled={false} />
-        </div>
+        {whitelist && (
+          <div className="mt-3">
+            <WhitelistBadge enabled={whitelisted} />
+          </div>
+        )}
       </div>
     );
   }
-
-  const whitelisted = pool.enabled === '1';
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
       <div className="flex items-center justify-between">
         <p className="label-eyebrow">Delegation</p>
-        <WhitelistBadge enabled={whitelisted} />
+        {whitelist && <WhitelistBadge enabled={whitelisted} />}
       </div>
       <div className="mt-3 flex items-center gap-3">
         <PoolLogo pool={pool} />

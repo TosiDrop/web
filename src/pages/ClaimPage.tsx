@@ -19,6 +19,8 @@ import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatus
 import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocation';
 import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
+import { PoolInfo } from '@/features/rewards/components/PoolInfo';
+import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 
 function LoadingTokens() {
   return (
@@ -77,6 +79,7 @@ export default function ClaimPage() {
   }, [stakeAddress, connected, setLookupAddress]);
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
+  const { poolId, isLoading: poolLoading } = useDelegatedPool(lookupAddress);
 
   const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
 
@@ -209,6 +212,7 @@ export default function ClaimPage() {
           </div>
 
           <div className="space-y-[18px]">
+            <PoolInfo poolId={poolId} isLoading={poolLoading} />
             <RewardsSummary tokenCount={selectedAssetIds.length} />
             <RewardsAllocation tokens={rewards ?? []} />
             <WalletComposition />
