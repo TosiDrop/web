@@ -9,6 +9,7 @@ export interface Pool {
   enabled: string;
   logo: string;
   description?: string | null;
+  delegator_count?: string;
 }
 
 export type GetPoolsResponse = Record<string, Pool>;
