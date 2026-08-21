@@ -10,6 +10,7 @@ import { truncateHash, getNetworkLabel } from '@/utils/format';
 const SECTION_LABELS: Record<string, string> = {
   '/': 'Claim',
   '/profile': 'Profile',
+  '/projects': 'Projects',
   '/team': 'Team',
   '/deposit': 'Deposit',
   '/api-tester': 'API',

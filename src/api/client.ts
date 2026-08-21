@@ -17,9 +17,9 @@ async function apiGet<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function apiPost<T>(url: string, body: unknown): Promise<T> {
+async function apiSend<T>(method: 'POST' | 'PUT', url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
@@ -27,4 +27,8 @@ async function apiPost<T>(url: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const apiClient = { get: apiGet, post: apiPost };
+export const apiClient = {
+  get: apiGet,
+  post: <T>(url: string, body: unknown) => apiSend<T>('POST', url, body),
+  put: <T>(url: string, body: unknown) => apiSend<T>('PUT', url, body),
+};

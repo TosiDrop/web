@@ -5,6 +5,7 @@ import {
   IconUserCircle,
   IconUsers,
   IconFileText,
+  IconRocket,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -16,6 +17,7 @@ import TosiDropLogo from '@/assets/tosidrop_logo.png';
 const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
   { name: 'Profile', href: '/profile', icon: IconUserCircle },
+  { name: 'Projects', href: '/projects', icon: IconRocket },
   { name: 'Team', href: '/team', icon: IconUsers },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },
 ];
