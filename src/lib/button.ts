@@ -9,8 +9,7 @@ const SIZES: Record<ButtonSize, string> = {
 };
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    'bg-[linear-gradient(180deg,#22D3EE,#06B6D4)] text-accent-contrast shadow-glow hover:brightness-110 disabled:shadow-none',
+  primary: 'bg-accent text-accent-contrast hover:bg-accent-light',
   secondary:
     'border border-border-default bg-white/[0.04] text-text-secondary hover:bg-white/[0.07] hover:text-text-primary',
   ghost: 'text-text-muted hover:bg-white/[0.04] hover:text-text-primary',

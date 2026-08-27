@@ -62,7 +62,7 @@ function SettingsTab() {
   return (
     <div className="space-y-5">
       <Card as="section" className="p-6">
-        <p className="label-eyebrow">Connected wallet</p>
+        <h2 className="text-sm font-semibold text-text-primary">Connected wallet</h2>
         <p className="mt-2 text-base font-medium text-text-primary">
           {connected ? walletName ?? 'Wallet' : 'Not connected'}
         </p>
@@ -92,7 +92,7 @@ function SettingsTab() {
 
       <Card as="section" className="p-6">
         <div className="mb-4">
-          <p className="label-eyebrow">Display name</p>
+          <h2 className="text-sm font-semibold text-text-primary">Display name</h2>
           <p className="mt-2 text-sm text-text-muted">
             Sign a message to update the display name shown across TosiDrop.
           </p>
@@ -138,8 +138,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-7">
       <header>
-        <p className="label-eyebrow">Account</p>
-        <div className="mt-2 flex flex-wrap items-baseline gap-3">
+        <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Your profile</h1>
           <HeroStakeChip />
         </div>

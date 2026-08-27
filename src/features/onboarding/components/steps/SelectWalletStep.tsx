@@ -1,10 +1,9 @@
 import { useWallet, useWalletList } from '@meshsdk/react';
-import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
+import { IconArrowRight } from '@tabler/icons-react';
 import type { Wallet } from '@meshsdk/common';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { GradientButton } from '@/components/common/GradientButton';
 import { StepHeading } from './StepHeading';
 
 const WALLET_FALLBACK_ICON =
@@ -33,17 +32,8 @@ export function SelectWalletStep() {
 
   return (
     <div className="flex flex-col">
-      <GradientButton
-        variant="ghost"
-        size="sm"
-        className="mb-6 -ml-3.5 self-start"
-        onClick={() => setStep('welcome')}
-      >
-        <IconArrowLeft size={14} aria-hidden />
-        Back
-      </GradientButton>
 
-      <StepHeading className="mb-6 text-xl font-semibold text-text-primary">Pick a wallet</StepHeading>
+      <StepHeading className="mb-6 text-xl font-semibold text-text-primary">Connect a wallet</StepHeading>
 
       {connectError && (
         <div className="mb-4">
@@ -52,9 +42,9 @@ export function SelectWalletStep() {
       )}
 
       {wallets.length === 0 ? (
-        <Card variant="inset" className="p-6 text-center">
-          <p className="label-eyebrow">No wallets found</p>
-          <p className="mt-2 text-sm text-text-muted">
+        <Card variant="inset" className="rounded-xl p-6 text-center">
+          <p className="text-sm font-semibold text-text-primary">No wallets found</p>
+          <p className="mt-1.5 text-sm text-text-muted">
             Install one like Eternl, Lace, or Yoroi to continue.
           </p>
         </Card>
@@ -70,7 +60,7 @@ export function SelectWalletStep() {
               <img
                 src={w.icon}
                 alt=""
-                className="h-8 w-8 rounded-lg"
+                className="h-8 w-8 rounded-md"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = WALLET_FALLBACK_ICON;
                 }}

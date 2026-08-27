@@ -79,16 +79,14 @@ export default function TeamPage() {
   return (
     <div className="space-y-7">
       <header>
-        <p className="label-eyebrow">About</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">The team</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">The team</h1>
         <p className="mt-2 max-w-md text-sm text-text-muted">
           Who builds TosiDrop, and the stake pools that keep it running.
         </p>
       </header>
 
       <Card as="section" className="px-6 py-5">
-        <p className="label-eyebrow">Built by</p>
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-text-primary">Blink Labs</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-text-primary">Built by Blink Labs</h2>
         <p className="mt-2 max-w-xl text-sm text-text-muted">
           TosiDrop is developed by Blink Labs, building open-source tooling and infrastructure
           for the Cardano ecosystem.
@@ -136,8 +134,8 @@ export default function TeamPage() {
           </div>
         ) : !pools || pools.length === 0 ? (
           <Card variant="inset" className="px-6 py-16 text-center">
-            <p className="label-eyebrow">No pools listed</p>
-            <p className="mx-auto mt-3 max-w-sm text-sm text-text-muted">
+            <p className="text-sm font-semibold text-text-primary">No pools listed</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">
               The whitelist is empty right now — check back soon.
             </p>
           </Card>

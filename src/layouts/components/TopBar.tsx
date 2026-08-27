@@ -70,7 +70,7 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
           <button
             type="button"
             onClick={copy}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
           >
             <IconCopy size={14} stroke={1.6} />
             Copy address
@@ -80,7 +80,7 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
           <button
             type="button"
             onClick={disconnect}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error/10"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error/10"
           >
             <IconLogout size={14} stroke={1.6} />
             Disconnect wallet

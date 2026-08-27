@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { IconCheck } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
@@ -36,9 +35,6 @@ function LoadingTokens() {
 function NoRewardsState() {
   return (
     <Card variant="inset" className="flex flex-col items-center px-8 py-12 text-center">
-      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-status-success/[0.12] text-status-success-light">
-        <IconCheck size={24} stroke={2.4} />
-      </span>
       <p className="text-base font-semibold text-text-primary">Nothing to claim right now</p>
       <p className="mt-1.5 max-w-xs text-md leading-relaxed text-text-muted">
         New distributions land every epoch. Check back soon, or look up another address.

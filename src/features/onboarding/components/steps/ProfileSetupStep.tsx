@@ -1,13 +1,11 @@
 import { useState, useRef } from 'react';
-import {
-  IconCamera,
-  IconArrowRight,
-  IconArrowLeft,
-  IconX,
-  IconAlertCircle,
-} from '@tabler/icons-react';
-import { useOnboardingStore } from '@/store/onboarding-state';
+import { IconCamera, IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
+import { useOnboardingStore, PROFILE_SKIPPED_KEY } from '@/store/onboarding-state';
+import { useWalletStore } from '@/store/wallet-state';
+import { apiClient } from '@/api/client';
+import { signProfileUpdate } from '@/features/profile/utils/signProfileUpdate';
 import { GradientButton } from '@/components/common/GradientButton';
+import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { StepHeading } from './StepHeading';
 
 const MAX_NAME = 50;
@@ -42,11 +40,15 @@ export function ProfileSetupStep() {
     profileBio,
     profileAvatar,
     isFirstTime,
+    saveError,
     setProfileName,
     setProfileBio,
     setProfileAvatar,
-    setStep,
+    setSaveError,
+    closeModal,
   } = useOnboardingStore();
+  const { wallet, stakeAddress, walletName } = useWalletStore();
+  const [saving, setSaving] = useState(false);
 
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -91,8 +93,36 @@ export function ProfileSetupStep() {
     setAvatarError(null);
   }
 
-  function handleContinue() {
-    setStep('onboarding-tour');
+  async function handleFinish() {
+    if (!wallet || !stakeAddress) {
+      setSaveError('Wallet disconnected — reconnect and try again.');
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const auth = await signProfileUpdate(wallet, stakeAddress);
+      await apiClient.post('/api/user', {
+        stakeAddress,
+        displayName: profileName.trim() || null,
+        bio: profileBio.trim() || null,
+        avatarUrl: profileAvatar,
+        walletProvider: walletName,
+        onboardingCompleted: true,
+        ...auth,
+      });
+      closeModal();
+    } catch (err) {
+      console.error('Failed to save user profile:', err);
+      setSaveError(err instanceof Error ? err.message : 'Could not save your profile. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleSkip() {
+    localStorage.setItem(PROFILE_SKIPPED_KEY, '1');
+    closeModal();
   }
 
   const nameTrimmed = profileName.trim();
@@ -100,23 +130,12 @@ export function ProfileSetupStep() {
 
   return (
     <div className="flex flex-col">
-      {isFirstTime ? (
-        <GradientButton
-          variant="ghost"
-          size="sm"
-          className="mb-6 -ml-3.5 self-start"
-          onClick={() => setStep('select-wallet')}
-        >
-          <IconArrowLeft size={14} aria-hidden />
-          Back
-        </GradientButton>
-      ) : (
-        <div className="mb-6 h-9" aria-hidden />
-      )}
-
-      <StepHeading className="mb-6 text-xl font-semibold text-text-primary">
+      <StepHeading className="mb-1 text-xl font-semibold text-text-primary">
         {isFirstTime ? 'Set up your profile' : 'Finish your profile'}
       </StepHeading>
+      <p className="mb-6 text-sm text-text-muted">
+        Optional. You can change this any time in Settings.
+      </p>
 
       {/* Avatar */}
       <div className="mb-6 flex flex-col items-center gap-2">
@@ -236,14 +255,19 @@ export function ProfileSetupStep() {
         />
       </div>
 
-      {/* Actions */}
+      {saveError && (
+        <div className="mb-4">
+          <FeedbackBanner tone="error" message={saveError} />
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
-        <GradientButton className="flex-1" onClick={handleContinue} disabled={!canContinue}>
-          Continue
-          <IconArrowRight size={16} aria-hidden />
+        <GradientButton className="flex-1" onClick={handleFinish} disabled={!canContinue || saving}>
+          <IconCheck size={16} aria-hidden />
+          {saving ? 'Saving…' : 'Save and finish'}
         </GradientButton>
-        <GradientButton variant="ghost" onClick={handleContinue}>
-          Skip
+        <GradientButton variant="ghost" onClick={handleSkip} disabled={saving}>
+          Skip for now
         </GradientButton>
       </div>
     </div>

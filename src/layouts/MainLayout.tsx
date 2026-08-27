@@ -26,7 +26,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-surface-base text-text-secondary">
         <Sidebar />
         <div className="lg:ml-60">
-          <div className="relative min-h-screen bg-[radial-gradient(1100px_420px_at_82%_-6%,rgba(34,211,238,0.045),transparent_70%)]">
+          <div className="relative min-h-screen">
             <TopBar />
             <main id="main" className="mx-auto w-full max-w-6xl px-5 py-8 lg:px-9 lg:py-10">
               <NetworkMismatchBanner />

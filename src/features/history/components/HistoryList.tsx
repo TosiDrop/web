@@ -87,11 +87,11 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
   );
 }
 
-function StateMessage({ eyebrow, message }: { eyebrow: string; message: string }) {
+function StateMessage({ title, message }: { title: string; message: string }) {
   return (
     <Card variant="inset" className="px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-text-muted">{message}</p>
+      <p className="text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
     </Card>
   );
 }
@@ -147,7 +147,7 @@ export function HistoryList() {
 
   if (!stakeAddress) {
     return (
-      <StateMessage eyebrow="Not connected" message="Connect a wallet to view your claim history." />
+      <StateMessage title="Not connected" message="Connect a wallet to view your claim history." />
     );
   }
 
@@ -168,7 +168,7 @@ export function HistoryList() {
   }
 
   if (!serverMode && (!data || data.length === 0)) {
-    return <StateMessage eyebrow="No claims yet" message="Tokens you claim will appear here." />;
+    return <StateMessage title="No claims yet" message="Tokens you claim will appear here." />;
   }
 
   const totalPages = serverMode

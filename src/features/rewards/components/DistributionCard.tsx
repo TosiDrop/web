@@ -46,14 +46,14 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl text-xs font-bold tracking-tight text-accent-contrast ring-1 ring-white/10"
+              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg text-xs font-bold tracking-tight text-accent-contrast ring-1 ring-white/10"
               style={hasImage ? undefined : { backgroundColor: colorFor(token.ticker) }}
             >
               {hasImage ? (
                 <img
                   src={img.src}
                   alt=""
-                  className="h-10 w-10 rounded-xl object-cover"
+                  className="h-10 w-10 rounded-lg object-cover"
                   onError={img.onError}
                 />
               ) : (

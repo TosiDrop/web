@@ -93,8 +93,7 @@ export default function DepositPage() {
       </GradientButton>
 
       <header>
-        <p className="label-eyebrow">Step 2 · Deposit</p>
-        <h1 className="mt-2 text-2xl font-semibold text-text-primary">Send your deposit</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">Send your deposit</h1>
         <p className="mt-2 text-sm text-text-muted">
           Send exactly{' '}
           <span className="font-mono text-text-primary">{formatAda(deposit)} ADA</span> to the

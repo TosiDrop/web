@@ -37,11 +37,11 @@ function TokenList({ children }: { children: React.ReactNode }) {
   );
 }
 
-function EmptyState({ eyebrow, message }: { eyebrow: string; message: string }) {
+function EmptyState({ title, message }: { title: string; message: string }) {
   return (
     <Card variant="inset" className="px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-text-muted">{message}</p>
+      <p className="text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
     </Card>
   );
 }
@@ -85,7 +85,7 @@ export function FavoritesTab() {
       </div>
 
       {!connected ? (
-        <EmptyState eyebrow="Not connected" message="Connect a wallet to manage your saved tokens." />
+        <EmptyState title="Not connected" message="Connect a wallet to manage your saved tokens." />
       ) : loadError ? (
         <div className="space-y-3">
           <FeedbackBanner tone="error" title="Couldn't load saved tokens" message={loadError.message} />
@@ -102,7 +102,7 @@ export function FavoritesTab() {
             <>
               {favorites.length === 0 ? (
                 <EmptyState
-                  eyebrow="No saved tokens"
+                  title="No saved tokens"
                   message="Star a token on the claim page to keep it here."
                 />
               ) : (

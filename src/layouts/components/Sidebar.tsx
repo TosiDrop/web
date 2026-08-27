@@ -33,7 +33,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const location = useLocation();
 
   return (
-    <div className="flex h-full flex-col border-r border-border-subtle bg-[linear-gradient(180deg,#0B1322,#070D1A)]">
+    <div className="flex h-full flex-col border-r border-border-subtle bg-surface-sidebar">
       <div className="px-6 pb-7 pt-7">
         <Link to="/" className="flex items-center gap-2.5 rounded-md" onClick={onLinkClick}>
           <img src={TosiDropLogo} alt="" className="h-7 w-7" />

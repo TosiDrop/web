@@ -90,11 +90,11 @@ function GroupRow({ group }: { group: BreakdownGroup }) {
   );
 }
 
-function StateMessage({ eyebrow, message }: { eyebrow: string; message: string }) {
+function StateMessage({ title, message }: { title: string; message: string }) {
   return (
     <Card variant="inset" className="px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-text-muted">{message}</p>
+      <p className="text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
     </Card>
   );
 }
@@ -106,7 +106,7 @@ export function RewardBreakdown() {
   if (!stakeAddress) {
     return (
       <StateMessage
-        eyebrow="Not connected"
+        title="Not connected"
         message="Connect a wallet to see where your rewards come from."
       />
     );
@@ -136,7 +136,7 @@ export function RewardBreakdown() {
   if (!data || data.length === 0) {
     return (
       <StateMessage
-        eyebrow="No breakdown data yet"
+        title="No breakdown data yet"
         message="Once rewards are allocated to you, their source pools and rules show up here."
       />
     );

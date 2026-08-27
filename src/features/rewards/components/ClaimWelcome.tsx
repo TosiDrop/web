@@ -4,63 +4,48 @@ import { GradientButton } from '@/components/common/GradientButton';
 import { UmbrellaMark } from '@/components/icons/UmbrellaMark';
 import { useOnboardingStore } from '@/store/onboarding-state';
 
+// The claim flow really is a sequence, so the numbers carry information.
 const STEPS = [
-  {
-    n: 1,
-    title: 'Connect or paste',
-    desc: 'Link a wallet, or paste any stake address to preview without connecting.',
-  },
-  {
-    n: 2,
-    title: 'Review rewards',
-    desc: 'See every claimable token across all active distributions.',
-  },
-  {
-    n: 3,
-    title: 'Claim to wallet',
-    desc: 'Approve once and your tokens settle straight to your wallet.',
-  },
+  ['Connect a wallet, or paste any stake address to preview.'],
+  ['Review every claimable token across active distributions.'],
+  ['Approve once. Tokens settle straight to your wallet.'],
 ];
 
 export function ClaimWelcome() {
   const openModal = useOnboardingStore((s) => s.openModal);
 
   return (
-    <Card as="section" className="px-8 py-12">
-      <div className="flex flex-col items-center text-center">
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-cream/20 bg-cream/[0.06]">
-          <UmbrellaMark className="h-9 w-9" strokeWidth={3} />
-        </div>
+    <Card as="section" className="relative overflow-hidden p-6 sm:p-8">
+      <UmbrellaMark
+        className="pointer-events-none absolute -right-10 -top-6 hidden h-64 w-64 opacity-[0.07] sm:block"
+        strokeWidth={1.6}
+      />
 
-        <p className="label-eyebrow text-cream">Cardano token rewards</p>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight text-text-primary">
+      <div className="relative max-w-xl">
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-text-primary text-balance">
           Claim what you're owed
         </h1>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-text-muted">
-          Connect your wallet or paste a stake address to see every token waiting for you across
-          TosiDrop distributions.
+        <p className="mt-3 text-sm leading-relaxed text-text-muted">
+          TosiDrop delivers token rewards to delegators of whitelisted Cardano stake pools.
+          Connect a wallet to claim, or paste a stake address above to see what's waiting.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <GradientButton onClick={openModal}>
             <IconWallet size={16} stroke={1.8} />
             Connect wallet
           </GradientButton>
-          <span className="text-md text-text-muted">or paste a stake address above</span>
         </div>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-3">
-        {STEPS.map((s) => (
-          <Card key={s.n} variant="inset" className="p-5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cream/[0.1] text-md font-semibold text-cream">
-              {s.n}
-            </div>
-            <p className="mt-4 text-sm font-semibold text-text-primary">{s.title}</p>
-            <p className="mt-1 text-md leading-relaxed text-text-muted">{s.desc}</p>
-          </Card>
+      <ol className="relative mt-8 max-w-xl divide-y divide-border-subtle border-t border-border-subtle">
+        {STEPS.map(([text], i) => (
+          <li key={text} className="flex gap-4 py-3 text-sm">
+            <span className="w-4 shrink-0 font-mono text-text-faint tabular-nums">{i + 1}</span>
+            <span className="text-text-secondary">{text}</span>
+          </li>
         ))}
-      </div>
+      </ol>
     </Card>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
-import { useOnboardingStore } from '@/store/onboarding-state';
+import { useOnboardingStore, profileSetupSkipped } from '@/store/onboarding-state';
+import { toast } from '@/store/toast-state';
 import { apiClient } from '@/api/client';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { StepHeading } from './StepHeading';
@@ -26,14 +27,8 @@ const PROFILE_ERROR_ADVANCE_MS = 2400;
  */
 export function ConnectingStep() {
   const { connected, stakeAddress } = useWalletStore();
-  const {
-    setStep,
-    setProfileName,
-    setProfileBio,
-    setProfileAvatar,
-    setIsFirstTime,
-    setReturningUserName,
-  } = useOnboardingStore();
+  const { setStep, setProfileName, setProfileBio, setProfileAvatar, setIsFirstTime, closeModal } =
+    useOnboardingStore();
   const advancedRef = useRef(false);
   const [profileError, setProfileError] = useState(false);
 
@@ -44,10 +39,11 @@ export function ConnectingStep() {
     apiClient
       .get<UserResponse>(`/api/user?stakeAddress=${encodeURIComponent(stakeAddress)}`)
       .then((data) => {
-        if (data.exists && data.user?.onboardingCompleted) {
+        if ((data.exists && data.user?.onboardingCompleted) || profileSetupSkipped()) {
           setIsFirstTime(false);
-          setReturningUserName(data.user.displayName ?? null);
-          setStep('welcome-back');
+          closeModal();
+          const name = data.user?.displayName;
+          toast.success(name ? `Welcome back, ${name}` : 'Wallet connected');
         } else if (data.exists && data.user) {
           setIsFirstTime(false);
           if (data.user.displayName) setProfileName(data.user.displayName);
@@ -72,7 +68,7 @@ export function ConnectingStep() {
     setProfileBio,
     setProfileAvatar,
     setIsFirstTime,
-    setReturningUserName,
+    closeModal,
   ]);
 
   // Let the error banner be read before continuing as a new user.
