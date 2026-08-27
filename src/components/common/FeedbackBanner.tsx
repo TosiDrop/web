@@ -13,7 +13,7 @@ interface FeedbackBannerProps {
 
 interface ToneStyle {
   icon: Icon;
-  box: string;
+  color: string;
   border: string;
   message: string;
 }
@@ -21,19 +21,19 @@ interface ToneStyle {
 const toneStyles: Record<NonNullable<FeedbackBannerProps['tone']>, ToneStyle> = {
   error: {
     icon: IconAlertTriangle,
-    box: 'bg-status-error/[0.12] text-status-error-light',
+    color: 'text-status-error-light',
     border: 'border-status-error/20',
     message: 'text-status-error-light',
   },
   success: {
     icon: IconCircleCheck,
-    box: 'bg-status-success/[0.12] text-status-success-light',
+    color: 'text-status-success-light',
     border: 'border-status-success/20',
     message: 'text-status-success-light',
   },
   info: {
     icon: IconInfoCircle,
-    box: 'bg-accent/[0.12] text-accent-light',
+    color: 'text-accent-light',
     border: 'border-accent/25',
     message: 'text-accent-light',
   },
@@ -54,9 +54,7 @@ export function FeedbackBanner({ tone = 'info', title, message }: FeedbackBanner
       role={ariaRoles[tone]}
       className={`card-premium flex items-start gap-3 ${style.border} px-4 py-3.5`}
     >
-      <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${style.box}`}>
-        <Icon size={17} stroke={1.8} />
-      </span>
+      <Icon size={18} stroke={1.8} className={`mt-0.5 flex-shrink-0 ${style.color}`} aria-hidden />
       <div className="min-w-0 flex-1">
         {title && <p className="text-sm font-semibold text-text-primary">{title}</p>}
         <p className={`text-xs ${title ? 'mt-0.5 text-text-secondary' : style.message}`}>{message}</p>

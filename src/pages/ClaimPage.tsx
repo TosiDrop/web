@@ -16,7 +16,6 @@ import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
 import { ClaimHero } from '@/features/rewards/components/ClaimHero';
 import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
 import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
-import { RewardsAllocation } from '@/features/rewards/components/RewardsAllocation';
 import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 
@@ -199,7 +198,6 @@ export default function ClaimPage() {
 
           <div className="space-y-5">
             <RewardsSummary tokenCount={selectedAssetIds.length} />
-            <RewardsAllocation tokens={rewards ?? []} />
             {connected && (
               <>
                 <WalletComposition />

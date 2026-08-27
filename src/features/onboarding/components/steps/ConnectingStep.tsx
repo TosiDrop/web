@@ -80,11 +80,10 @@ export function ConnectingStep() {
 
   return (
     <div className="flex flex-col items-center py-12 text-center" role="status" aria-live="polite">
-      <div className="relative mb-8 flex h-20 w-20 items-center justify-center" aria-hidden>
-        <div className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
-        <div className="absolute inset-2 animate-ping rounded-full bg-accent/30 [animation-delay:200ms]" />
-        <div className="relative h-10 w-10 rounded-full bg-accent" />
-      </div>
+      <span
+        aria-hidden
+        className="mb-6 inline-block h-8 w-8 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light"
+      />
 
       <StepHeading className="mb-2 text-xl font-semibold text-text-primary">
         {connected ? 'Almost there' : 'Connecting'}

@@ -1,6 +1,5 @@
 import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
-import { UmbrellaMark } from '@/components/icons/UmbrellaMark';
 import { QueueCount } from './QueueCount';
 
 interface ClaimHeroProps {
@@ -28,7 +27,6 @@ export function ClaimHero({
 
   return (
     <Card as="section" className="relative overflow-hidden p-6">
-      <UmbrellaMark className="pointer-events-none absolute -right-4 -bottom-9 h-60 w-60 opacity-[0.06]" />
 
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>

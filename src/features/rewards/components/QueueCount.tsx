@@ -3,15 +3,16 @@ import { IconClock } from '@tabler/icons-react';
 import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 
+/** VM `get_pending_tx_count` is proxied raw by /api/getQueue. */
 interface QueueResponse {
-  pending_tx_count: number;
+  pending_tx: number;
 }
 
 const POLL_INTERVAL_MS = 60_000;
 
 function useQueueCount() {
   return useQuery<QueueResponse, Error>({
-    queryKey: ['queue', 'pending_tx_count', DEPLOYMENT_NETWORK],
+    queryKey: ['queue', 'pending_tx', DEPLOYMENT_NETWORK],
     queryFn: () => apiClient.get<QueueResponse>('/api/getQueue'),
     refetchInterval: POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,
@@ -22,11 +23,10 @@ function useQueueCount() {
 export function QueueCount() {
   const { data, isLoading, error } = useQueueCount();
 
-  if (isLoading || error || !data) {
+  const count = data?.pending_tx;
+  if (isLoading || error || typeof count !== 'number') {
     return null;
   }
-
-  const count = data.pending_tx_count;
 
   return (
     <span

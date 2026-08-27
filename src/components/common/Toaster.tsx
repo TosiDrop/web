@@ -8,20 +8,20 @@ import {
 } from '@tabler/icons-react';
 import { useToastStore, type ToastTone } from '@/store/toast-state';
 
-const TONE: Record<ToastTone, { icon: Icon; box: string; border: string }> = {
+const TONE: Record<ToastTone, { icon: Icon; color: string; border: string }> = {
   error: {
     icon: IconAlertTriangle,
-    box: 'bg-status-error/[0.12] text-status-error-light',
+    color: 'text-status-error-light',
     border: 'border-status-error/25',
   },
   success: {
     icon: IconCircleCheck,
-    box: 'bg-status-success/[0.12] text-status-success-light',
+    color: 'text-status-success-light',
     border: 'border-status-success/25',
   },
   info: {
     icon: IconInfoCircle,
-    box: 'bg-accent/[0.12] text-accent-light',
+    color: 'text-accent-light',
     border: 'border-accent/25',
   },
 };
@@ -51,11 +51,7 @@ export function Toaster() {
               className={`card-premium pointer-events-auto flex items-start gap-3 ${tone.border} px-4 py-3.5 shadow-pop`}
               role={t.tone === 'error' ? 'alert' : undefined}
             >
-              <span
-                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${tone.box}`}
-              >
-                <Icon size={17} stroke={1.8} />
-              </span>
+              <Icon size={18} stroke={1.8} className={`mt-0.5 flex-shrink-0 ${tone.color}`} aria-hidden />
               <div className="min-w-0 flex-1 pt-0.5">
                 {t.title && (
                   <p className="text-md font-semibold text-text-primary">{t.title}</p>

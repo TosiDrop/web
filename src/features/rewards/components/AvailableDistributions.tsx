@@ -15,7 +15,6 @@ interface AvailableDistributionsProps {
 export function AvailableDistributions({ tokens }: AvailableDistributionsProps) {
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
-  const setSelected = useClaimStore((s) => s.setSelected);
 
   const {
     connected,
@@ -33,13 +32,6 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
     () => partitionPreferences(tokens, favoriteIds, dislikedIds),
     [tokens, favoriteIds, dislikedIds],
   );
-
-  const allSelected =
-    visible.length > 0 && visible.every((t) => selectedAssetIds.includes(t.assetId));
-
-  const toggleAll = () => {
-    setSelected(allSelected ? [] : visible.map((t) => t.assetId));
-  };
 
   // Disliking a selected token also deselects it so hidden tokens can't ride
   // along into a claim unnoticed.
@@ -86,9 +78,6 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
         <span className="rounded-md bg-white/[0.05] px-2 py-0.5 font-mono text-2xs text-text-muted">
           {visible.length}
         </span>
-        <GradientButton variant="ghost" size="sm" onClick={toggleAll} className="ml-auto">
-          {allSelected ? 'Clear selection' : 'Select all'}
-        </GradientButton>
       </div>
 
       <FavoritesSaveBar />
