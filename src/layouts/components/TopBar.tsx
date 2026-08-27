@@ -1,9 +1,9 @@
 import { useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconCopy } from '@tabler/icons-react';
-import { ConnectWallet } from '@/components/common/ConnectWallet';
+import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconWallet } from '@tabler/icons-react';
+import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
-import { useClaimStore } from '@/store/claim-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { toast } from '@/store/toast-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
@@ -22,16 +22,24 @@ function usePageTitle() {
   return match ? PAGE_TITLES[match] : '';
 }
 
-function NetworkChip({ networkId }: { networkId: number | null }) {
+/** Deterministic two-tone identicon so the same address always looks the same. */
+function Identicon({ seed }: { seed: string }) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const a = `var(--color-chart-${(h % 6) + 1})`;
+  const b = `var(--color-chart-${((h >> 3) % 6) + 1})`;
   return (
-    <span className="hidden h-9 items-center rounded-lg border border-border-default px-2.5 font-mono text-2xs uppercase tracking-[0.1em] text-text-muted sm:inline-flex">
-      {getNetworkLabel(networkId)}
-    </span>
+    <span
+      aria-hidden
+      className="h-5 w-5 shrink-0 rounded-full ring-1 ring-white/10"
+      style={{ background: `linear-gradient(135deg, ${a} 50%, ${b} 50%)` }}
+    />
   );
 }
 
-function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
+function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networkId: number | null }) {
   const disconnect = useWalletStore((s) => s.disconnect);
+  const walletName = useWalletStore((s) => s.walletName);
 
   const copy = async () => {
     try {
@@ -44,24 +52,33 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
 
   return (
     <Menu>
-      <MenuButton className="group flex h-9 items-center gap-2 rounded-lg border border-border-default px-3 transition hover:bg-white/[0.04] data-[open]:bg-white/[0.04]">
+      <MenuButton
+        aria-label="Wallet menu"
+        className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-white/[0.03] pl-2 pr-3 transition hover:bg-white/[0.06] data-[open]:bg-white/[0.06]"
+      >
+        <Identicon seed={stakeAddress} />
         <span className="font-mono text-xs text-text-secondary group-hover:text-text-primary">
-          {truncateHash(stakeAddress)}
+          {truncateHash(stakeAddress, 6, 4)}
         </span>
         <IconChevronDown
           size={13}
           stroke={1.8}
-          className="text-text-muted transition group-data-[open]:rotate-180 group-data-[open]:text-accent-light"
+          className="text-text-muted transition group-data-[open]:rotate-180"
         />
       </MenuButton>
       <MenuItems
         anchor={{ to: 'bottom end', gap: 8 }}
         transition
-        className="z-50 w-[260px] max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-border-subtle bg-surface-overlay/95 p-1 shadow-pop backdrop-blur-md transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="z-50 w-[280px] max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-border-subtle bg-surface-overlay/95 p-1 shadow-pop backdrop-blur-md transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
       >
         <div className="px-3 py-2.5">
-          <p className="label-eyebrow">Stake address</p>
-          <p className="mt-1 break-all font-mono text-2xs leading-relaxed text-text-secondary">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-text-primary">{walletName ?? 'Wallet'}</p>
+            <span className="rounded-md border border-border-default px-1.5 py-0.5 text-2xs text-text-muted">
+              {getNetworkLabel(networkId)}
+            </span>
+          </div>
+          <p className="mt-1.5 break-all font-mono text-2xs leading-relaxed text-text-muted">
             {stakeAddress}
           </p>
         </div>
@@ -73,7 +90,7 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
           >
             <IconCopy size={14} stroke={1.6} />
-            Copy address
+            Copy stake address
           </button>
         </MenuItem>
         <MenuItem>
@@ -83,7 +100,7 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error/10"
           >
             <IconLogout size={14} stroke={1.6} />
-            Disconnect wallet
+            Disconnect
           </button>
         </MenuItem>
       </MenuItems>
@@ -93,13 +110,9 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
 
 export function TopBar() {
   const { connected, stakeAddress, networkId } = useWalletStore();
-  const lookupAddress = useClaimStore((s) => s.lookupAddress);
+  const openModal = useOnboardingStore((s) => s.openModal);
   const { open: openMobileMenu } = useMobileMenu();
-  const { pathname } = useLocation();
   const title = usePageTitle();
-
-  // On the claim landing the hero owns the connect call-to-action.
-  const heroOwnsCta = pathname === '/' && !connected && !lookupAddress;
 
   return (
     <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface-base/70 backdrop-blur-md">
@@ -116,14 +129,14 @@ export function TopBar() {
           <p className="text-sm font-medium text-text-muted">{title}</p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          {connected && <NetworkChip networkId={networkId} />}
-          {connected && stakeAddress ? (
-            <WalletMenu stakeAddress={stakeAddress} />
-          ) : (
-            !heroOwnsCta && <ConnectWallet />
-          )}
-        </div>
+        {connected && stakeAddress ? (
+          <AccountMenu stakeAddress={stakeAddress} networkId={networkId} />
+        ) : (
+          <GradientButton variant="secondary" className="h-10 rounded-full px-4" onClick={openModal}>
+            <IconWallet size={16} stroke={1.8} />
+            Connect wallet
+          </GradientButton>
+        )}
       </div>
     </header>
   );
