@@ -29,7 +29,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Pre-bundle the lazy wallet stack so first connect doesn't trigger a dev reload.
-    include: ['@meshsdk/react'],
+    include: ['@meshsdk/react', '@meshsdk/core', 'bech32', 'qrcode.react'],
     esbuildOptions: {
       define: {
         global: 'globalThis',
