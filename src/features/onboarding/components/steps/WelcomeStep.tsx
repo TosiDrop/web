@@ -1,5 +1,8 @@
 import { IconArrowRight, IconShieldLock, IconSparkles, IconCoin } from '@tabler/icons-react';
 import { useOnboardingStore } from '@/store/onboarding-state';
+import { GradientButton } from '@/components/common/GradientButton';
+import { UmbrellaMark } from '@/components/icons/UmbrellaMark';
+import { StepHeading } from './StepHeading';
 
 const highlights = [
   {
@@ -21,46 +24,35 @@ export function WelcomeStep() {
 
   return (
     <div className="flex flex-col items-center text-center">
-      {/* Brand mark */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] p-[1.5px] shadow-lg shadow-brand-cyan/20">
-        <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-surface-raised">
-          <span className="bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] bg-clip-text text-2xl font-bold text-transparent">
-            T
-          </span>
-        </div>
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-cream/20 bg-cream/[0.06]">
+        <UmbrellaMark className="h-9 w-9" strokeWidth={3} />
       </div>
 
-      <h2 className="mb-2 text-2xl font-semibold tracking-tight text-white">
-        Welcome to Tosi
-      </h2>
-      <p className="mb-6 max-w-xs text-sm leading-relaxed text-slate-400">
+      <StepHeading className="mb-2 text-2xl font-semibold tracking-tight text-text-primary">
+        Welcome to TosiDrop
+      </StepHeading>
+      <p className="mb-6 max-w-xs text-sm leading-relaxed text-text-muted">
         Connect your wallet to claim rewards and manage your tokens.
       </p>
 
-      {/* Trust highlights */}
       <ul className="mb-8 w-full space-y-2">
         {highlights.map(({ icon: Icon, label }) => (
           <li
             key={label}
-            className="flex items-center gap-3 rounded-lg border border-border-subtle/60 bg-surface-inset/60 px-3.5 py-2"
+            className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-inset px-3.5 py-2"
           >
-            <Icon size={16} className="text-brand-cyan" stroke={1.75} />
-            <span className="text-xs text-slate-300">{label}</span>
+            <Icon size={16} className="text-accent" stroke={1.75} aria-hidden />
+            <span className="text-xs text-text-secondary">{label}</span>
           </li>
         ))}
       </ul>
 
-      <button
-        onClick={() => setStep('select-wallet')}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3.5 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
-      >
-        Get Started
-        <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-      </button>
+      <GradientButton size="md" className="w-full" onClick={() => setStep('select-wallet')}>
+        Get started
+        <IconArrowRight size={16} aria-hidden />
+      </GradientButton>
 
-      <p className="mt-4 text-[11px] text-slate-600">
-        Been here before? We'll recognize you.
-      </p>
+      <p className="mt-4 text-2xs text-text-muted">Been here before? We'll recognize you.</p>
     </div>
   );
 }

@@ -7,35 +7,35 @@ import {
   IconCheck,
   IconArrowRight,
   IconArrowLeft,
-  IconAlertCircle,
 } from '@tabler/icons-react';
 import { useWallet } from '@meshsdk/react';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { useWalletStore } from '@/store/wallet-state';
 import { apiClient } from '@/api/client';
 import { signProfileUpdate } from '@/features/profile/utils/signProfileUpdate';
+import { cn } from '@/lib/utils';
+import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { GradientButton } from '@/components/common/GradientButton';
+import { StepHeading } from './StepHeading';
 
 const tourSlides = [
   {
     icon: IconMapPin,
     title: 'Enter your address',
     description: 'Paste your wallet address to see what you can claim.',
-    gradient: 'from-brand-cyan/20 to-indigo-500/5',
-    iconColor: 'text-brand-cyan',
+    tile: 'bg-accent/10 text-accent',
   },
   {
     icon: IconCoin,
     title: 'Claim your tokens',
     description: 'Pick what you want and send it to your wallet in one step.',
-    gradient: 'from-brand-teal/20 to-emerald-500/5',
-    iconColor: 'text-brand-teal',
+    tile: 'bg-cream/[0.08] text-cream',
   },
   {
     icon: IconHistory,
     title: 'Track your history',
     description: 'See every claim you have made and what is still coming.',
-    gradient: 'from-brand-primary/20 to-purple-500/5',
-    iconColor: 'text-brand-primary',
+    tile: 'bg-accent/10 text-accent-light',
   },
 ] as const;
 
@@ -110,14 +110,16 @@ export function OnboardingTourStep() {
 
   return (
     <div className="flex flex-col">
-      <button
+      <GradientButton
+        variant="ghost"
+        size="sm"
+        className="mb-6 -ml-3.5 self-start"
         onClick={handleBack}
         disabled={saving}
-        className="mb-6 flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
       >
-        <IconArrowLeft size={14} />
+        <IconArrowLeft size={14} aria-hidden />
         Back
-      </button>
+      </GradientButton>
 
       {/* Animated slide */}
       <div className="relative mb-8 min-h-[180px] overflow-hidden">
@@ -132,78 +134,81 @@ export function OnboardingTourStep() {
             className="flex flex-col items-center text-center"
           >
             <div
-              className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${slide.gradient} ring-1 ring-white/5`}
+              className={cn(
+                'mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-border-subtle',
+                slide.tile,
+              )}
+              aria-hidden
             >
-              <slide.icon size={28} className={slide.iconColor} stroke={1.5} />
+              <slide.icon size={28} stroke={1.5} />
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-white">{slide.title}</h3>
-            <p className="max-w-xs text-sm leading-relaxed text-slate-400">
-              {slide.description}
-            </p>
+            <StepHeading className="mb-2 text-lg font-semibold text-text-primary">
+              {slide.title}
+            </StepHeading>
+            <p className="max-w-xs text-sm leading-relaxed text-text-muted">{slide.description}</p>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Slide dots */}
-      <div className="mb-6 flex items-center justify-center gap-2">
+      <div className="mb-6 flex items-center justify-center">
         {tourSlides.map((_, i) => (
           <button
             key={i}
+            type="button"
             onClick={() => {
               setDirection(i > slideIndex ? 1 : -1);
               setSlideIndex(i);
             }}
-            aria-label={`Go to slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === slideIndex ? 'w-6 bg-brand-cyan' : 'w-1.5 bg-slate-600 hover:bg-slate-500'
-            }`}
-          />
+            aria-label={`Slide ${i + 1}`}
+            aria-current={i === slideIndex ? 'step' : undefined}
+            className="flex h-10 min-w-10 items-center justify-center rounded-lg p-2.5"
+          >
+            <span
+              className={cn(
+                'block h-1.5 rounded-full transition-all duration-300',
+                i === slideIndex ? 'w-6 bg-accent' : 'w-1.5 bg-border-strong',
+              )}
+            />
+          </button>
         ))}
       </div>
 
       {saveError && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-status-error/30 bg-status-error/10 px-3 py-2.5">
-          <IconAlertCircle size={16} className="mt-0.5 shrink-0 text-status-error" />
-          <p className="text-xs text-status-error">{saveError}</p>
+        <div className="mb-4">
+          <FeedbackBanner tone="error" message={saveError} />
         </div>
       )}
 
       {/* Actions */}
-      <button
-        onClick={handleNext}
-        disabled={saving}
-        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3.5 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/20 transition-all hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
-      >
+      <GradientButton className="w-full" onClick={handleNext} disabled={saving}>
         {saving ? (
           <>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-surface-base" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-transparent border-t-accent-contrast" />
             Saving...
           </>
         ) : saveError && isLast ? (
           <>
-            <IconArrowRight size={16} />
-            Retry
+            <IconArrowRight size={16} aria-hidden />
+            Try again
           </>
         ) : isLast ? (
           <>
-            <IconCheck size={16} />
-            Start using Tosi
+            <IconCheck size={16} aria-hidden />
+            Start using TosiDrop
           </>
         ) : (
           <>
             Next
-            <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            <IconArrowRight size={16} aria-hidden />
           </>
         )}
-      </button>
+      </GradientButton>
 
       {!isLast && !saving && (
-        <button
-          onClick={handleFinish}
-          className="mt-3 text-xs text-slate-500 transition hover:text-slate-300"
-        >
+        <GradientButton variant="ghost" size="sm" className="mt-3 self-center" onClick={handleFinish}>
           Skip tour
-        </button>
+        </GradientButton>
       )}
     </div>
   );

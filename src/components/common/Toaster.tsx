@@ -11,13 +11,13 @@ import { useToastStore, type ToastTone } from '@/store/toast-state';
 const TONE: Record<ToastTone, { icon: Icon; box: string; border: string }> = {
   error: {
     icon: IconAlertTriangle,
-    box: 'bg-[#EF4444]/[0.12] text-[#F87171]',
-    border: 'border-[#EF4444]/25',
+    box: 'bg-status-error/[0.12] text-status-error-light',
+    border: 'border-status-error/25',
   },
   success: {
     icon: IconCircleCheck,
-    box: 'bg-[#22C55E]/[0.12] text-[#4ADE80]',
-    border: 'border-[#22C55E]/25',
+    box: 'bg-status-success/[0.12] text-status-success-light',
+    border: 'border-status-success/25',
   },
   info: {
     icon: IconInfoCircle,
@@ -31,7 +31,11 @@ export function Toaster() {
   const dismiss = useToastStore((s) => s.dismiss);
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-[200] flex w-[360px] max-w-[calc(100vw-2.5rem)] flex-col gap-2.5">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-5 right-5 z-[200] flex w-[360px] max-w-[calc(100vw-2.5rem)] flex-col gap-3"
+    >
       <AnimatePresence initial={false}>
         {toasts.map((t) => {
           const tone = TONE[t.tone];
@@ -44,19 +48,19 @@ export function Toaster() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.98 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
-              className={`pointer-events-auto flex items-start gap-3 rounded-2xl border ${tone.border} bg-[linear-gradient(180deg,#161B2E,#121726)] px-4 py-3.5 shadow-2xl shadow-black/50`}
-              role="status"
+              className={`card-premium pointer-events-auto flex items-start gap-3 ${tone.border} px-4 py-3.5 shadow-pop`}
+              role={t.tone === 'error' ? 'alert' : undefined}
             >
               <span
-                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] ${tone.box}`}
+                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${tone.box}`}
               >
                 <Icon size={17} stroke={1.8} />
               </span>
               <div className="min-w-0 flex-1 pt-0.5">
                 {t.title && (
-                  <p className="text-[13.5px] font-semibold text-[#EDEEF2]">{t.title}</p>
+                  <p className="text-md font-semibold text-text-primary">{t.title}</p>
                 )}
-                <p className={`text-[12.5px] text-[#9AA0AE] ${t.title ? 'mt-0.5' : ''}`}>
+                <p className={`text-xs text-text-secondary ${t.title ? 'mt-0.5' : ''}`}>
                   {t.message}
                 </p>
               </div>
@@ -64,7 +68,7 @@ export function Toaster() {
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss"
-                className="-mr-1 -mt-0.5 rounded-md p-1 text-[#5A6075] transition hover:text-slate-200"
+                className="-m-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-text-muted transition hover:text-text-primary"
               >
                 <IconX size={15} stroke={1.8} />
               </button>

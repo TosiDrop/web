@@ -1,14 +1,6 @@
 import { useMemo } from 'react';
 import type { ClaimableToken } from '@/shared/rewards';
-
-// Color pairs (base → highlight) for the gradient bars, assigned by rank.
-const BAR_COLORS: [string, string][] = [
-  ['#14B8A6', '#2DD4BF'],
-  ['#3B82F6', '#60A5FA'],
-  ['#22C55E', '#4ADE80'],
-  ['#EF4444', '#F87171'],
-  ['#F59E0B', '#FBBF24'],
-];
+import { Card } from '@/components/common/Card';
 
 const MAX_ROWS = 5;
 
@@ -33,53 +25,50 @@ export function RewardsAllocation({ tokens }: RewardsAllocationProps) {
       pct: formatPct(t.amount / total),
       // Bar scaled to the leader for a clean ranked read, with a visible floor.
       width: `${Math.max(8, Math.round(((t.amount || 0) / max) * 100))}%`,
-      colors: BAR_COLORS[i % BAR_COLORS.length],
+      color: `var(--color-chart-${(i % 6) + 1})`,
     }));
     return { rows: top, remaining: Math.max(0, sorted.length - MAX_ROWS) };
   }, [tokens]);
 
   if (tokens.length === 0) {
     return (
-      <div className="card-premium p-5">
-        <h3 className="text-[13.5px] font-semibold text-[#C5C8D2]">Rewards allocation</h3>
-        <p className="mt-3 text-center text-xs text-[#6B6F7B]">No rewards available</p>
-      </div>
+      <Card className="p-5">
+        <h3 className="text-sm font-semibold text-text-secondary">Rewards allocation</h3>
+        <p className="mt-3 text-xs text-text-muted">No rewards to show.</p>
+      </Card>
     );
   }
 
   return (
-    <div className="card-premium p-5">
+    <Card className="p-5">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-[13.5px] font-semibold text-[#C5C8D2]">Rewards allocation</h3>
-        <span className="font-mono text-[11px] text-[#6B6F7B]">
+        <h3 className="text-sm font-semibold text-text-secondary">Rewards allocation</h3>
+        <span className="font-mono text-2xs tabular-nums text-text-muted">
           {tokens.length} {tokens.length === 1 ? 'token' : 'tokens'}
         </span>
       </div>
 
-      <div className="mt-[18px] flex flex-col gap-[13px]">
+      <div className="mt-4 flex flex-col gap-3">
         {rows.map((row) => (
           <div key={row.ticker}>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[12.5px] text-[#C5C8D2]">{row.ticker}</span>
-              <span className="font-mono text-[11px] text-[#8A8E9A]">{row.pct}</span>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-md text-text-secondary">{row.ticker}</span>
+              <span className="font-mono text-2xs tabular-nums text-text-muted">{row.pct}</span>
             </div>
-            <div className="h-[7px] overflow-hidden rounded-[5px] bg-white/[0.06]">
+            <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-[5px]"
-                style={{
-                  width: row.width,
-                  background: `linear-gradient(90deg, ${row.colors[0]}, ${row.colors[1]})`,
-                }}
+                className="h-full rounded-full"
+                style={{ width: row.width, backgroundColor: row.color }}
               />
             </div>
           </div>
         ))}
         {remaining > 0 && (
-          <div className="text-[12px] text-[#6B6F7B]">
+          <div className="text-xs text-text-muted">
             +{remaining} more {remaining === 1 ? 'token' : 'tokens'}
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

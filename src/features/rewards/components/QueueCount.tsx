@@ -27,16 +27,17 @@ export function QueueCount() {
   }
 
   const count = data.pending_tx_count;
-  const label = count === 1 ? 'tx in queue' : 'tx in queue';
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-raised px-2.5 py-1 text-[11px] font-medium text-slate-300"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-raised px-2.5 py-1 text-2xs font-medium text-text-secondary"
       title="Pending withdrawal transactions across the platform"
     >
-      <IconClock size={12} stroke={1.8} className="text-slate-400" />
-      <span className="tabular-nums text-white">{count.toLocaleString()}</span>
-      <span className="text-slate-400">{label}</span>
+      <IconClock size={12} stroke={1.8} className="text-text-muted" />
+      <span className="tabular-nums text-text-primary">{count.toLocaleString()}</span>
+      <span className="text-text-muted">
+        {count === 1 ? 'transaction queued' : 'transactions queued'}
+      </span>
     </span>
   );
 }

@@ -28,6 +28,8 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    // Pre-bundle the lazy wallet stack so first connect doesn't trigger a dev reload.
+    include: ['@meshsdk/react'],
     esbuildOptions: {
       define: {
         global: 'globalThis',

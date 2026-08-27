@@ -17,3 +17,12 @@ export async function resolveAdaHandle(handle: string): Promise<string> {
   );
   return data.stakeAddress;
 }
+
+const STAKE_ADDRESS_RE = /^(stake1|stake_test1)[qpzry9x8gf2tvdw0s3jn54khce6mua7l]+$/;
+
+/**
+ * Returns true if the input is a lowercase bech32 stake address (mainnet or testnet).
+ */
+export function isStakeAddress(input: string): boolean {
+  return input.length >= 59 && input.length <= 64 && STAKE_ADDRESS_RE.test(input);
+}

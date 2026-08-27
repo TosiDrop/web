@@ -1,21 +1,16 @@
-import { useWallet } from '@meshsdk/react';
 import { IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useOnboardingStore } from '@/store/onboarding-state';
+import { useWalletStore } from '@/store/wallet-state';
 
 export function ConnectWallet() {
-  const { disconnect, connected } = useWallet();
-  const { openModal } = useOnboardingStore();
+  const connected = useWalletStore((s) => s.connected);
+  const disconnect = useWalletStore((s) => s.disconnect);
+  const openModal = useOnboardingStore((s) => s.openModal);
 
   if (connected) {
     return (
-      <GradientButton
-        variant="secondary"
-        size="sm"
-        onClick={disconnect}
-        aria-label="Disconnect wallet"
-        className="text-slate-400 hover:border-rose-500/30 hover:bg-rose-500/[0.06] hover:text-rose-200"
-      >
+      <GradientButton variant="danger" size="sm" onClick={disconnect} aria-label="Disconnect wallet">
         Disconnect
       </GradientButton>
     );
