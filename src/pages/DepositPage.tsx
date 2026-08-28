@@ -8,9 +8,11 @@ import {
   useClaimStatus,
   type ClaimStatusKind,
 } from '@/features/deposit/hooks/useClaimStatus';
+import { Card } from '@/components/common/Card';
 import { QRCode } from '@/components/common/QRCode';
 import { CopyButton } from '@/components/common/CopyButton';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { GradientButton } from '@/components/common/GradientButton';
 import { truncateHash, formatAda } from '@/utils/format';
 
 const STATUS_COPY: Record<
@@ -19,23 +21,22 @@ const STATUS_COPY: Record<
 > = {
   waiting: {
     title: 'Waiting for deposit',
-    message:
-      'Send the deposit from your wallet (or another wallet) so the vending machine can release your rewards.',
+    message: 'Send the deposit from any wallet and TosiDrop will release your rewards.',
     tone: 'info',
   },
   processing: {
     title: 'Processing claim',
-    message: 'Deposit received. The vending machine is preparing the reward delivery transaction.',
+    message: 'Deposit received. TosiDrop is preparing your reward delivery.',
     tone: 'info',
   },
   success: {
     title: 'Rewards delivered',
-    message: 'The vending machine has sent your rewards.',
+    message: 'Your rewards are on their way to your wallet.',
     tone: 'success',
   },
   failure: {
     title: 'Claim failed',
-    message: 'The vending machine could not complete this claim.',
+    message: "TosiDrop couldn't complete this claim. Try again or contact support on Discord.",
     tone: 'error',
   },
 };
@@ -86,34 +87,29 @@ export default function DepositPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <button
-        type="button"
-        onClick={handleCancel}
-        className="inline-flex items-center gap-1.5 text-xs text-slate-400 transition hover:text-slate-200"
-      >
-        <IconArrowLeft size={14} stroke={1.6} />
+      <GradientButton variant="ghost" size="sm" className="-ml-3.5" onClick={handleCancel}>
+        <IconArrowLeft size={14} stroke={1.6} aria-hidden />
         Back to claim
-      </button>
+      </GradientButton>
 
       <header>
-        <p className="label-eyebrow">Step 2 · Deposit</p>
-        <h1 className="mt-2 text-2xl font-semibold text-white">Send your deposit</h1>
-        <p className="mt-2 text-sm text-slate-400">
+        <h1 className="text-2xl font-semibold text-text-primary">Send your deposit</h1>
+        <p className="mt-2 text-sm text-text-muted">
           Send exactly{' '}
-          <span className="font-mono text-white">{formatAda(deposit)} ADA</span> to the
-          withdrawal address below. The vending machine releases your rewards once
-          the deposit is detected.
+          <span className="font-mono text-text-primary">{formatAda(deposit)} ADA</span> to the
+          withdrawal address below. TosiDrop releases your rewards once the deposit is
+          detected.
         </p>
       </header>
 
-      <section className="card-premium overflow-hidden">
+      <Card as="section" className="overflow-hidden">
         <div className="flex flex-col items-center gap-5 p-6">
           <QRCode value={withdrawalAddress} amountLovelace={deposit} size={184} />
 
           <div className="w-full space-y-3">
             <div>
               <p className="label-eyebrow">Amount</p>
-              <p className="mt-1 font-mono text-lg font-semibold text-white">
+              <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">
                 {formatAda(deposit)} ADA
               </p>
             </div>
@@ -121,7 +117,7 @@ export default function DepositPage() {
             <div>
               <p className="label-eyebrow">Withdrawal address</p>
               <div className="mt-1 flex items-start gap-2">
-                <p className="break-all font-mono text-[12px] leading-relaxed text-slate-300">
+                <p className="min-w-0 break-all font-mono text-xs leading-relaxed text-text-secondary">
                   {withdrawalAddress}
                 </p>
                 <CopyButton value={withdrawalAddress} ariaLabel="Copy withdrawal address" />
@@ -129,39 +125,41 @@ export default function DepositPage() {
             </div>
 
             <div>
-              <p className="label-eyebrow">Request id</p>
-              <p className="mt-1 font-mono text-xs text-slate-400">{requestId}</p>
+              <p className="label-eyebrow">Request ID</p>
+              <div className="mt-1 flex items-start gap-2">
+                <p className="min-w-0 break-all font-mono text-xs text-text-muted">{requestId}</p>
+                <CopyButton value={requestId} ariaLabel="Copy request ID" />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border-subtle bg-surface-inset/40 p-5">
+        <div className="border-t border-border-subtle bg-surface-inset p-5">
           <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
+            <GradientButton
+              className="flex-1"
               onClick={handleSend}
               disabled={!canSend || isSending || isTerminal}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-cyan px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-cyan/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
             >
               {isSending ? 'Signing...' : 'Send from wallet'}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-surface-overlay hover:text-white"
-            >
+            </GradientButton>
+            <GradientButton variant="secondary" onClick={handleCancel}>
               Cancel
-            </button>
+            </GradientButton>
           </div>
-          {sendError && <p className="mt-3 text-xs text-rose-300">{sendError}</p>}
+          {sendError && (
+            <div className="mt-3">
+              <FeedbackBanner tone="error" title="Deposit not sent" message={sendError} />
+            </div>
+          )}
           {!canSend && (
-            <p className="mt-3 text-xs text-slate-500">
-              Connect your wallet here, or send the deposit manually from another wallet — either way the
-              status below updates once the deposit is detected.
+            <p className="mt-3 text-xs text-text-muted">
+              Connect your wallet here, or send the deposit manually from another wallet — either
+              way the status below updates once the deposit is detected.
             </p>
           )}
         </div>
-      </section>
+      </Card>
 
       <FeedbackBanner
         tone={statusCopy.tone}
@@ -172,37 +170,37 @@ export default function DepositPage() {
       />
 
       {(txHash || txExplorerUrl) && (
-        <section className="card-premium space-y-3 p-5">
+        <Card as="section" className="space-y-3 p-5">
           {txHash && (
             <div>
-              <p className="label-eyebrow">Your deposit tx</p>
-              <p className="mt-1 font-mono text-xs text-slate-300">
-                {truncateHash(txHash, 12, 8)}
-              </p>
+              <p className="label-eyebrow">Your deposit transaction</p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="font-mono text-xs text-text-secondary">
+                  {truncateHash(txHash, 12, 8)}
+                </p>
+                <CopyButton value={txHash} ariaLabel="Copy deposit transaction hash" />
+              </div>
             </div>
           )}
           {txExplorerUrl && (
             <a
               href={txExplorerUrl}
               target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-brand-cyan transition hover:text-indigo-300"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-accent transition hover:text-accent-light"
             >
-              View delivery tx
-              <IconExternalLink size={12} stroke={1.6} />
+              View delivery transaction
+              <IconExternalLink size={14} stroke={1.6} aria-hidden />
+              <span className="sr-only">(opens in new tab)</span>
             </a>
           )}
-        </section>
+        </Card>
       )}
 
       {isTerminal && (
-        <button
-          type="button"
-          onClick={handleCancel}
-          className="inline-flex w-full items-center justify-center rounded-xl border border-border-subtle px-4 py-3 text-sm font-medium text-slate-300 transition hover:bg-surface-overlay hover:text-white"
-        >
+        <GradientButton variant="secondary" className="w-full" onClick={handleCancel}>
           Done
-        </button>
+        </GradientButton>
       )}
     </div>
   );

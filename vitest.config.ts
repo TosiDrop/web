@@ -1,6 +1,10 @@
 import path from 'path';
 import { defineConfig } from 'vitest/config';
 
+// Date formatting in components pins 'en-US'; pin the zone too so assertions
+// on rendered dates hold on every machine.
+process.env.TZ = 'UTC';
+
 export default defineConfig({
   resolve: {
     alias: {

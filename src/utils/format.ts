@@ -27,6 +27,15 @@ export function formatAda(lovelace: number): string {
   });
 }
 
+/**
+ * Token amounts anywhere in the profile: more decimals as the value shrinks.
+ * Locale is pinned so charts, tables and captions agree with each other.
+ */
+export function formatTokenAmount(amount: number): string {
+  const maximumFractionDigits = amount >= 1000 ? 2 : amount >= 1 ? 4 : 6;
+  return amount.toLocaleString('en-US', { maximumFractionDigits });
+}
+
 export function explorerTxUrl(txHash: string): string {
   const host = DEPLOYMENT_NETWORK === 'mainnet' ? 'cexplorer.io' : 'preview.cexplorer.io';
   return `https://${host}/tx/${txHash}`;
