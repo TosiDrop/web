@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { IconAlertCircle, IconSearch, IconShieldCheck } from '@tabler/icons-react';
 import { usePoolData } from '@/features/analytics/hooks/usePoolData';
-import type { PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
+import { describeEligibility, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : n >= 1 ? 2 : 4 });
@@ -21,7 +21,7 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
       <div className="min-w-0">
         <p className="flex items-center gap-1.5 text-sm font-medium text-white">
           <span className="truncate">{row.ticker || row.name || 'Pool'}</span>
-          {row.whitelisted && (
+          {row.whitelisted === true && (
             <IconShieldCheck size={14} stroke={1.8} className="shrink-0 text-emerald-300" aria-label="Whitelisted" />
           )}
         </p>
@@ -35,16 +35,22 @@ function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] })
   if (!offerings.length) return <span className="text-xs text-slate-600">—</span>;
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {offerings.map((o) => (
-        <li
-          key={o.token}
-          className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-[11px] text-slate-200"
-          title={o.promise ? 'Promised per epoch' : 'Distributed per epoch'}
-        >
-          <span className="text-emerald-300/95">{fmt(o.amountPerEpoch)}</span>
-          {o.ticker}
-        </li>
-      ))}
+      {offerings.map((o) => {
+        const eligibility = describeEligibility(o);
+        return (
+          <li
+            key={o.id}
+            className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-[11px] text-slate-200"
+            title={`Rule ${o.id}${o.target ? ` · ${o.target}` : ''}${o.model ? ` · model ${o.model}` : ''} · ${
+              o.promise ? 'promised' : 'distributed'
+            } per epoch${eligibility ? ` · ${eligibility}` : ''}`}
+          >
+            <span className="text-emerald-300/95">{fmt(o.amountPerEpoch)}</span>
+            {o.ticker}
+            {eligibility && <span className="text-slate-500">· {eligibility}</span>}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -70,8 +76,12 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
                 {row.delegators === null ? '—' : row.delegators.toLocaleString()}
               </td>
               <td className="px-5 py-3"><Offerings offerings={row.offerings} /></td>
-              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">{row.withdrawals.toLocaleString()}</td>
-              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">₳ {fmt(row.collectedFeesAda)}</td>
+              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
+                {row.withdrawals === null ? '—' : row.withdrawals.toLocaleString()}
+              </td>
+              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
+                {row.collectedFeesAda === null ? '—' : `₳ ${fmt(row.collectedFeesAda)}`}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -83,16 +93,17 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
 export function PoolComparison() {
   const { data, isLoading, error } = usePoolData();
   const [query, setQuery] = useState('');
+  const allRows = useMemo(() => data?.rows ?? [], [data]);
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return data ?? [];
-    return (data ?? []).filter(
+    if (!q) return allRows;
+    return allRows.filter(
       (r) =>
         r.ticker.toLowerCase().includes(q) ||
         r.name.toLowerCase().includes(q) ||
         r.offerings.some((o) => o.ticker.toLowerCase().includes(q)),
     );
-  }, [data, query]);
+  }, [allRows, query]);
 
   if (isLoading) {
     return (
@@ -123,11 +134,16 @@ export function PoolComparison() {
           className="w-full rounded-lg border border-border-subtle bg-surface-inset py-2 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none"
         />
       </label>
+      {data && data.unavailable.length > 0 && (
+        <p role="status" className="text-xs text-slate-500">
+          {data.unavailable.join(', ')} unavailable right now — those columns show “—”.
+        </p>
+      )}
       {rows.length ? (
         <PoolComparisonTable rows={rows} />
       ) : (
         <p className="card-premium px-6 py-10 text-center text-sm text-slate-400">
-          {data?.length ? 'No pools match that filter.' : 'No pools are registered on this network yet.'}
+          {allRows.length ? 'No pools match that filter.' : 'No pools are registered on this network yet.'}
         </p>
       )}
     </div>
