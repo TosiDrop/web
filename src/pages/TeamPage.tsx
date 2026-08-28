@@ -65,7 +65,7 @@ function PoolsSkeleton() {
 }
 
 export default function TeamPage() {
-  const { data: pools, isLoading, error } = useWhitelistedPools();
+  const { data: pools, isLoading, error, refetch } = useWhitelistedPools();
 
   return (
     <div className="space-y-7">
@@ -126,6 +126,7 @@ export default function TeamPage() {
             <div>
               <p className="font-medium text-white">Couldn't load pools</p>
               <p className="mt-0.5 text-xs text-slate-400">{error.message}</p>
+              <button type="button" onClick={() => refetch()} className="mt-2 text-xs text-brand-cyan hover:underline">Try again</button>
             </div>
           </div>
         ) : !pools || pools.length === 0 ? (

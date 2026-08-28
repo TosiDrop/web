@@ -46,6 +46,9 @@ export function FavoritesTab() {
     toggleFavorite,
     toggleDislike,
     isLoading,
+    preferencesError,
+    refetchPreferences,
+    preferencesReady,
   } = usePreferences();
 
   return (
@@ -71,7 +74,14 @@ export function FavoritesTab() {
           <FavoritesSaveBar />
           {isLoading ? (
             <p className="text-sm text-slate-500 animate-pulse">Loading preferences…</p>
-          ) : (
+          ) : preferencesError ? (
+            <div role="alert" className="card-premium px-6 py-8 text-center">
+              <p className="text-sm text-rose-200">Couldn't load preferences.</p>
+              <button type="button" onClick={() => refetchPreferences()} className="mt-3 text-xs text-accent-light hover:underline">
+                Try again
+              </button>
+            </div>
+          ) : !preferencesReady ? null : (
             <>
               {favorites.length === 0 ? (
                 <div className="card-premium px-6 py-16 text-center">

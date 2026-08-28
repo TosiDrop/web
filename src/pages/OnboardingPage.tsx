@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ConnectWallet } from '@/components/common/ConnectWallet';
 import { useWalletStore } from '@/store/wallet-state';
 import { useToastStore } from '@/store/toast-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
 import { tickerFor } from '@/features/history/api/history.queries';
 import { truncateHash } from '@/utils/format';
 import { EMPTY_DISTRIBUTION, validateProjectInput, normalizeProjectInput, type ProjectInput } from '@/shared/projects';
@@ -143,6 +144,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { connected, stakeAddress, walletName } = useWalletStore();
   const pushToast = useToastStore((s) => s.push);
+  const openWalletModal = useOnboardingStore((s) => s.openModal);
   const { submit, isPending } = useProjectSubmit();
   const { data: tokens } = useTokenMap();
 
@@ -201,7 +203,13 @@ export default function OnboardingPage() {
             ) : (
               <p className="text-sm text-slate-400">Connect the wallet that owns the project token.</p>
             )}
-            {!walletReady && <ConnectWallet />}
+            {!walletReady && (
+              connected ? (
+                <button type="button" onClick={openWalletModal} className="text-xs text-accent-light hover:underline">
+                  Change wallet
+                </button>
+              ) : <ConnectWallet />
+            )}
           </div>
         )}
         {step === 1 && <ProjectDetailsFields value={input} onChange={patch} />}

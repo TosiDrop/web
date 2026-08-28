@@ -40,6 +40,7 @@ export function RewardsSummary({ tokenCount }: RewardsSummaryProps) {
 
       {isLoading && (
         <div className="mt-3 space-y-2">
+          <div role="status" aria-live="polite" className="sr-only">Loading fee estimate</div>
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-3 w-full animate-pulse rounded bg-surface-inset" />
           ))}

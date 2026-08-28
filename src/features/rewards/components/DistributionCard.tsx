@@ -107,7 +107,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
         <div
           className={cn(
             'absolute bottom-3.5 right-3.5 z-10 flex items-center gap-0.5 transition',
-            actionsActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            actionsActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-sm:opacity-100',
           )}
         >
           {favorite && (

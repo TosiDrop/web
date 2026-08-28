@@ -33,6 +33,7 @@ export function GradientButton({
   children,
   variant = 'primary',
   size = 'md',
+  type = 'button',
   className,
   disabled,
   ...props
@@ -46,6 +47,7 @@ export function GradientButton({
         className,
       )}
       disabled={disabled}
+      type={type}
       {...props}
     >
       {children}

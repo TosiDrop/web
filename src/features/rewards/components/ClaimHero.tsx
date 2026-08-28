@@ -53,7 +53,7 @@ export function ClaimHero({
             {allSelected ? 'Clear' : 'Select all'}
           </GradientButton>
           <GradientButton onClick={onClaim} disabled={claimDisabled}>
-            {isPending ? 'Preparing…' : 'Claim all'}
+            {isPending ? 'Preparing…' : allSelected ? 'Claim all' : `Claim selected (${selectedCount})`}
           </GradientButton>
         </div>
       </div>

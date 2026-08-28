@@ -84,7 +84,7 @@ function GroupRow({ group }: { group: BreakdownGroup }) {
 
 export function RewardBreakdown() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
-  const { data, isLoading, error } = useRewardBreakdown(stakeAddress);
+  const { data, isLoading, error, refetch } = useRewardBreakdown(stakeAddress);
 
   if (!stakeAddress) {
     return (
@@ -112,6 +112,7 @@ export function RewardBreakdown() {
         <div>
           <p className="font-medium text-white">Couldn't load the breakdown</p>
           <p className="mt-0.5 text-xs text-slate-400">{error.message}</p>
+          <button type="button" onClick={() => refetch()} className="mt-2 text-xs text-brand-cyan hover:underline">Try again</button>
         </div>
       </div>
     );

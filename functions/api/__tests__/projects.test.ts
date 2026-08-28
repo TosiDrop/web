@@ -194,7 +194,7 @@ describe('/api/projects', () => {
   });
 
   it('GET /:id does not expose pending project submissions', async () => {
-    const db = fakeDb({ all: [ROW] });
+    const db = fakeDb({ first: [ROW] });
     const res = await getOne(
       ctx(new Request('https://x/api/projects/p1', { headers: ORIGIN }), env(db), { id: 'p1' }),
     );

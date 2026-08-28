@@ -25,6 +25,7 @@ import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 function LoadingTokens() {
   return (
     <div className="card-premium p-[22px]">
+      <div role="status" aria-live="polite" className="sr-only">Scanning stake address for rewards</div>
       <div className="mb-[18px] flex items-center gap-3">
         <span className="inline-block h-[18px] w-[18px] animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light" />
         <span className="text-[13.5px] text-[#C5C8D2]">Scanning stake address…</span>
@@ -194,6 +195,10 @@ export default function ClaimPage() {
       )}
 
       {!lookupAddress && <ClaimWelcome />}
+
+      {lookupAddress && !loading && hasRewards && (
+        <h1 className="sr-only">Claimable rewards</h1>
+      )}
 
       {lookupAddress && !loading && hasRewards && (
         <ClaimHero

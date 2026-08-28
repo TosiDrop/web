@@ -32,7 +32,7 @@ export default function App() {
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/history" element={<Navigate to="/profile" replace />} />
-                <Route path="/preferences" element={<Navigate to="/profile" replace />} />
+                <Route path="/preferences" element={<Navigate to="/profile?tab=preferences" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

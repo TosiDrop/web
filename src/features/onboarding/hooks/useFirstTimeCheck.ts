@@ -37,8 +37,8 @@ export function useFirstTimeCheck() {
       .get<UserResponse>(`/api/user?stakeAddress=${encodeURIComponent(stakeAddress)}`)
       .then((data) => {
         if (!data.exists || !data.user?.onboardingCompleted) {
-          setIsFirstTime(!data.exists);
           openModal();
+          setIsFirstTime(!data.exists);
           // Skip the welcome + wallet-select screens since they're already in.
           setStep('profile-setup');
         }

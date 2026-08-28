@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Dialog, DialogPanel } from '@headlessui/react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
   IconGift,
   IconUserCircle,
@@ -138,6 +138,7 @@ export function Sidebar() {
           aria-hidden="true"
         />
         <DialogPanel className="fixed inset-y-0 left-0 w-60 shadow-2xl shadow-black/60">
+          <DialogTitle className="sr-only">Navigation menu</DialogTitle>
           <div className="absolute right-2 top-2 z-10">
             <button
               onClick={close}

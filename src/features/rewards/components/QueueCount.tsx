@@ -26,7 +26,9 @@ export function QueueCount() {
     return null;
   }
 
-  const count = data.pending_tx_count;
+  const count = Number.isFinite(data.pending_tx_count) && data.pending_tx_count >= 0
+    ? Math.floor(data.pending_tx_count)
+    : 0;
   const label = count === 1 ? 'tx in queue' : 'tx in queue';
 
   return (

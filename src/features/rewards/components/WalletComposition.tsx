@@ -36,12 +36,11 @@ export function WalletComposition() {
   const adaBalance = lovelace ? Number(lovelace) / 1_000_000 : 0;
   const tokenList = useMemo(() => assets ?? [], [assets]);
 
-  const { parts, total, totalTokens } = useMemo(() => {
+  const { parts, totalTokens } = useMemo(() => {
     const result: Part[] = [];
     if (adaBalance > 0) {
       result.push({ label: 'ADA', value: adaBalance, color: PALETTE[0] });
     }
-    const tokenSliceValue = adaBalance > 0 ? adaBalance * 0.1 : 1;
     const visible = tokenList.slice(0, MAX_TOKENS);
     const remaining = tokenList.length - visible.length;
 
@@ -49,7 +48,7 @@ export function WalletComposition() {
       const ticker = token.assetName ? decodeAssetName(token.assetName) : `Token ${i + 1}`;
       result.push({
         label: ticker,
-        value: tokenSliceValue,
+        value: Number(token.quantity) || 0,
         color: PALETTE[(i + 1) % PALETTE.length],
       });
     });
@@ -57,13 +56,12 @@ export function WalletComposition() {
     if (remaining > 0) {
       result.push({
         label: `+${remaining} more`,
-        value: tokenSliceValue,
+        value: 0,
         color: PALETTE[PALETTE.length - 1],
       });
     }
 
-    const sum = result.reduce((acc, p) => acc + p.value, 0) || 1;
-    return { parts: result, total: sum, totalTokens: tokenList.length };
+    return { parts: result, totalTokens: tokenList.length };
   }, [adaBalance, tokenList]);
 
   if (!connected) {
@@ -93,15 +91,6 @@ export function WalletComposition() {
         </span>
       </div>
 
-      <div className="my-4 flex h-[9px] gap-[2px] overflow-hidden rounded-[6px]">
-        {parts.map((p) => (
-          <div
-            key={p.label}
-            style={{ width: `${(p.value / total) * 100}%`, backgroundColor: p.color }}
-          />
-        ))}
-      </div>
-
       <div className="flex flex-col gap-[9px]">
         {parts.map((p) => (
           <div key={p.label} className="flex items-center gap-2.5">
@@ -110,9 +99,7 @@ export function WalletComposition() {
               style={{ backgroundColor: p.color }}
             />
             <span className="flex-1 truncate text-[12.5px] text-[#C5C8D2]">{p.label}</span>
-            <span className="font-mono text-[11px] text-[#8A8E9A]">
-              {Math.round((p.value / total) * 100)}%
-            </span>
+            {p.label !== 'ADA' && p.value > 0 && <span className="font-mono text-[11px] text-[#8A8E9A]">{p.value.toLocaleString()}</span>}
           </div>
         ))}
       </div>

@@ -118,5 +118,8 @@ export function usePreferences() {
     saving: save.isPending,
     error: signError ?? (save.error instanceof Error ? save.error.message : null),
     isLoading: query.isLoading,
+    preferencesError: query.error,
+    refetchPreferences: query.refetch,
+    preferencesReady: query.isSuccess,
   };
 }

@@ -45,7 +45,7 @@ export function Toaster() {
               exit={{ opacity: 0, x: 40, scale: 0.98 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className={`pointer-events-auto flex items-start gap-3 rounded-2xl border ${tone.border} bg-[linear-gradient(180deg,#161B2E,#121726)] px-4 py-3.5 shadow-2xl shadow-black/50`}
-              role="status"
+              role={t.tone === 'error' ? 'alert' : 'status'}
             >
               <span
                 className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] ${tone.box}`}

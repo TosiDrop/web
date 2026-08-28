@@ -128,7 +128,7 @@ function SkeletonList() {
 
 export function HistoryList() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
-  const { data, isLoading, error } = useDeliveredRewards(stakeAddress);
+  const { data, isLoading, error, refetch: refetchDelivered } = useDeliveredRewards(stakeAddress);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState(1);
   const [order, setOrder] = useState<HistoryOrder>('desc');
@@ -170,6 +170,7 @@ export function HistoryList() {
         <div>
           <p className="font-medium text-white">Couldn't load history</p>
           <p className="mt-0.5 text-xs text-slate-400">{error.message}</p>
+          <button type="button" onClick={() => refetchDelivered()} className="mt-2 text-xs text-brand-cyan hover:underline">Try again</button>
         </div>
       </div>
     );
