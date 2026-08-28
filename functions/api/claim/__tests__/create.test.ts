@@ -209,6 +209,38 @@ describe('POST /api/claim/create', () => {
     expect(bind.mock.calls[0][2]).toBe('mainnet');
   });
 
+  it('preserves the submitted overhead fee when the VM omits it', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 8,
+        deposit: 1,
+        withdrawal_address: 'addr1',
+        is_whitelisted: false,
+      })
+      .mockResolvedValueOnce({ withdrawal_fee: 1, tokens_fee: 2, fee: 3 });
+
+    await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1fallback', assetIds: ['a1'], overheadFee: 200_000 },
+        { DB: db },
+      ),
+    );
+    await flushDeferred();
+
+    expect(bind).toHaveBeenCalledWith(
+      '8',
+      'stake_test1fallback',
+      'preview',
+      1,
+      '1',
+      '1',
+      '2',
+      '3',
+      '200000',
+    );
+  });
+
   it('still records the claim, with unknown fees, when fee lookup fails', async () => {
     const { db, bind } = fakeDb();
     vmGet

@@ -55,7 +55,7 @@ function fakeDb(options: FakeDbOptions = {}) {
           results: options.feeRows ?? [
             { withdrawal_fee: '500000', tokens_fee: '200000', tx_fee: '180000', overhead_fee: '370000' },
             { withdrawal_fee: '0', tokens_fee: '0', tx_fee: '0', overhead_fee: '0' },
-            { withdrawal_fee: null, tokens_fee: null, tx_fee: null, overhead_fee: null },
+            { withdrawal_fee: '100000', tokens_fee: '0', tx_fee: '0', overhead_fee: null },
           ],
         };
       }
