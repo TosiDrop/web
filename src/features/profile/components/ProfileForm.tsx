@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useWallet } from '@meshsdk/react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { GradientButton } from '@/components/common/GradientButton';
 import { useSaveProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { signProfileUpdateMessage } from '@/utils/profile-helpers';
@@ -10,8 +10,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ currentName }: ProfileFormProps) {
-  const { wallet, connected } = useWallet();
-  const { stakeAddress, changeAddress } = useWalletStore();
+  const { wallet, connected, stakeAddress, changeAddress } = useWalletStore();
   const saveProfile = useSaveProfile();
   const [name, setName] = useState(currentName ?? '');
   const [signError, setSignError] = useState<string | null>(null);
@@ -56,7 +55,7 @@ export function ProfileForm({ currentName }: ProfileFormProps) {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div>
-        <label htmlFor="display-name" className="block text-xs text-slate-400 mb-1">
+        <label htmlFor="display-name" className="mb-1 block text-xs text-text-muted">
           Display name
         </label>
         <input
@@ -65,34 +64,30 @@ export function ProfileForm({ currentName }: ProfileFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter a name"
-          className="w-full rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none"
+          className="w-full rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-sm text-text-primary placeholder:text-text-faint focus-visible:border-accent"
           required
         />
       </div>
 
-      {showSuccess && (
-        <FeedbackBanner tone="success" message="Profile saved." />
-      )}
+      {showSuccess && <FeedbackBanner tone="success" message="Name saved." />}
 
       {(saveProfile.isError || signError) && (
         <FeedbackBanner
           tone="error"
-          message={saveProfile.error?.message || signError || 'Error saving profile.'}
+          title="Couldn't save your name"
+          message={saveProfile.error?.message || signError || 'Try again.'}
         />
       )}
 
       <div className="flex items-center gap-3">
-        <button
+        <GradientButton
           type="submit"
           disabled={saveProfile.isPending || !connected || !hasChanged || !name.trim()}
-          className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {saveProfile.isPending ? 'Saving...' : 'Save'}
-        </button>
+          {saveProfile.isPending ? 'Saving…' : 'Save name'}
+        </GradientButton>
         {!connected && (
-          <span className="text-xs text-slate-500">
-            Connect a wallet first.
-          </span>
+          <span className="text-xs text-text-muted">Connect a wallet to save your name.</span>
         )}
       </div>
     </form>

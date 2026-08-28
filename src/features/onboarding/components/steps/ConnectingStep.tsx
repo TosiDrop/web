@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
-import { useOnboardingStore } from '@/store/onboarding-state';
+import { useOnboardingStore, profileSetupSkipped } from '@/store/onboarding-state';
+import { toast } from '@/store/toast-state';
 import { apiClient } from '@/api/client';
+import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { StepHeading } from './StepHeading';
 
 interface UserResponse {
   exists: boolean;
@@ -15,6 +18,8 @@ interface UserResponse {
   degraded?: boolean;
 }
 
+const PROFILE_ERROR_ADVANCE_MS = 2400;
+
 /**
  * Waits reactively for the wallet sync to populate `stakeAddress`, then pings
  * D1 to decide whether this is a returning user (skip onboarding) or a first-
@@ -22,15 +27,10 @@ interface UserResponse {
  */
 export function ConnectingStep() {
   const { connected, stakeAddress } = useWalletStore();
-  const {
-    setStep,
-    setProfileName,
-    setProfileBio,
-    setProfileAvatar,
-    setIsFirstTime,
-    setReturningUserName,
-  } = useOnboardingStore();
+  const { setStep, setProfileName, setProfileBio, setProfileAvatar, setIsFirstTime, closeModal } =
+    useOnboardingStore();
   const advancedRef = useRef(false);
+  const [profileError, setProfileError] = useState(false);
 
   useEffect(() => {
     if (!connected || !stakeAddress || advancedRef.current) return;
@@ -39,10 +39,11 @@ export function ConnectingStep() {
     apiClient
       .get<UserResponse>(`/api/user?stakeAddress=${encodeURIComponent(stakeAddress)}`)
       .then((data) => {
-        if (data.exists && data.user?.onboardingCompleted) {
+        if ((data.exists && data.user?.onboardingCompleted) || profileSetupSkipped()) {
           setIsFirstTime(false);
-          setReturningUserName(data.user.displayName ?? null);
-          setStep('welcome-back');
+          closeModal();
+          const name = data.user?.displayName;
+          toast.success(name ? `Welcome back, ${name}` : 'Wallet connected');
         } else if (data.exists && data.user) {
           setIsFirstTime(false);
           if (data.user.displayName) setProfileName(data.user.displayName);
@@ -57,7 +58,7 @@ export function ConnectingStep() {
       .catch((err) => {
         console.error('First-time check failed:', err);
         setIsFirstTime(true);
-        setStep('profile-setup');
+        setProfileError(true);
       });
   }, [
     connected,
@@ -67,26 +68,38 @@ export function ConnectingStep() {
     setProfileBio,
     setProfileAvatar,
     setIsFirstTime,
-    setReturningUserName,
+    closeModal,
   ]);
 
-  return (
-    <div className="flex flex-col items-center py-12 text-center">
-      {/* Premium pulse ring */}
-      <div className="relative mb-8 flex h-20 w-20 items-center justify-center">
-        <div className="absolute inset-0 animate-ping rounded-full bg-brand-cyan/20" />
-        <div className="absolute inset-2 animate-ping rounded-full bg-brand-cyan/30 [animation-delay:200ms]" />
-        <div className="relative h-10 w-10 rounded-full bg-gradient-to-br from-[#22D3EE] to-[#06B6D4] shadow-lg shadow-brand-cyan/40" />
-      </div>
+  // Let the error banner be read before continuing as a new user.
+  useEffect(() => {
+    if (!profileError) return;
+    const id = setTimeout(() => setStep('profile-setup'), PROFILE_ERROR_ADVANCE_MS);
+    return () => clearTimeout(id);
+  }, [profileError, setStep]);
 
-      <h2 className="mb-2 text-xl font-semibold text-white">
+  return (
+    <div className="flex flex-col items-center py-12 text-center" role="status" aria-live="polite">
+      <span
+        aria-hidden
+        className="mb-6 inline-block h-8 w-8 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light"
+      />
+
+      <StepHeading className="mb-2 text-xl font-semibold text-text-primary">
         {connected ? 'Almost there' : 'Connecting'}
-      </h2>
-      <p className="max-w-xs text-sm leading-relaxed text-slate-400">
-        {connected
-          ? 'Getting your profile ready.'
-          : 'Approve the connection in your wallet.'}
+      </StepHeading>
+      <p className="max-w-xs text-sm leading-relaxed text-text-muted">
+        {connected ? 'Getting your profile ready.' : 'Approve the connection in your wallet.'}
       </p>
+
+      {profileError && (
+        <div className="mt-6 w-full text-left">
+          <FeedbackBanner
+            tone="error"
+            message="Couldn't load your profile — continuing as a new user."
+          />
+        </div>
+      )}
     </div>
   );
 }

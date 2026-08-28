@@ -16,13 +16,23 @@ const ApiTesterPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/ApiTesterPage'))
   : null;
 
+function PageFallback() {
+  return (
+    <div className="space-y-4" role="status" aria-label="Loading page">
+      <div className="skeleton-shimmer h-9 w-56 rounded-lg" />
+      <div className="skeleton-shimmer h-4 w-80 max-w-full rounded" />
+      <div className="skeleton-shimmer mt-8 h-48 rounded-2xl" />
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <AppProviders>
       <BrowserRouter>
         <MainLayout>
           <ErrorBoundary>
-            <Suspense fallback={<div className="animate-pulse text-gray-400 p-8">Loading...</div>}>
+            <Suspense fallback={<PageFallback />}>
               <Routes>
                 <Route path="/" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
@@ -31,8 +41,8 @@ export default function App() {
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/history" element={<Navigate to="/profile" replace />} />
-                <Route path="/preferences" element={<Navigate to="/profile" replace />} />
+                <Route path="/history" element={<Navigate to="/profile?tab=history" replace />} />
+                <Route path="/preferences" element={<Navigate to="/profile?tab=settings" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

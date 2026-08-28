@@ -1,83 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-@theme {
+@theme static {
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surface system — blue-tinted navy depth layers */
+  /* Type scale — 11 / 12 / 13 / 14 / 16 / 20 / 30. Nothing in between. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.45;
+  --text-md: 13px;
+  --text-md--line-height: 1.5;
+
+  /* Surfaces — blue-tinted navy depth layers */
   --color-surface-base: #0B1120;
   --color-surface-raised: #161B2E;
   --color-surface-overlay: #1C2237;
   --color-surface-inset: #0F1524;
   --color-surface-sidebar: #070D1A;
 
-  /* Borders — blue-tinted hairlines */
-  --color-border-subtle: rgba(56, 78, 128, 0.25);
-  --color-border-default: rgba(56, 78, 128, 0.40);
+  /* Borders — blue-tinted hairlines. Never alpha-modify these. */
+  --color-border-subtle: rgba(56, 78, 128, 0.35);
+  --color-border-default: rgba(56, 78, 128, 0.50);
+  --color-border-strong: rgba(56, 78, 128, 0.75);
 
-  /* Brand / accent — cyan-blue. */
-  --color-brand-primary: #C6B6D4;
-  --color-brand-secondary: #4F46E5;
-  --color-brand-cyan: #22D3EE;       /* primary accent — cyan */
-  --color-brand-teal: #14B8A6;
+  /* Text — four roles. Muted is the floor for readable text (≥4.5:1 on raised). */
+  --color-text-primary: #EDEEF2;
+  --color-text-secondary: #C5C8D2;
+  --color-text-muted: #8F95A8;
+  --color-text-faint: #6F768C;      /* decorative / disabled only */
+
+  /* Brand — the umbrella: cream canopy on navy. Cream is identity, cyan is action. */
+  --color-cream: #DCCFA8;
+  --color-cream-light: #EDE4CB;
+  --color-brand-cyan: #22D3EE;
 
   --color-accent: #22D3EE;
   --color-accent-light: #67E8F9;
   --color-accent-deep: #06B6D4;
   --color-accent-contrast: #06181A;  /* text/icons on a cyan fill */
-  --color-cream: #DCCFA8;            /* umbrella canopy accent */
 
   /* Status */
   --color-status-success: #22C55E;
+  --color-status-success-light: #4ADE80;
   --color-status-error: #EF4444;
+  --color-status-error-light: #F87171;
   --color-status-pending: #F59E0B;
+  --color-status-pending-light: #FBBF24;
+
+  /* Elevation */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 30px -22px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 24px 48px -24px rgba(0, 0, 0, 0.75);
+
+  --color-chart-1: #22D3EE;
+  --color-chart-2: #DCCFA8;
+  --color-chart-3: #818CF8;
+  --color-chart-4: #34D399;
+  --color-chart-5: #F472B6;
+  --color-chart-6: #FBBF24;
 }
 
 html, body {
-  background-color: #0B1120;
-  color: #C5C8D2;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "cv11", "ss01";
 }
 
-/* Tabular numerals on the mono utility (used for amounts, hashes, timestamps) */
 .font-mono {
   font-feature-settings: "tnum", "ss01";
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(56, 78, 128, 0.45); border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 button:not(:disabled),
-[role="button"]:not(:disabled) {
-  cursor: pointer;
-}
-
+[role="button"]:not(:disabled),
 a {
   cursor: pointer;
 }
 
-/* Layered panel surface — navy card: subtle top→bottom gradient,
-   blue-tinted hairline border, soft inset highlight + drop shadow. */
+/* One focus style for everything keyboard-reachable. Components must not
+   set outline-none without providing their own focus-visible ring. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Raised panel — navy card with a hairline border and soft lift. */
 @utility card-premium {
   position: relative;
   border-radius: 16px;
   background: linear-gradient(180deg, #161B2E, #121726);
-  border: 1px solid rgba(56, 78, 128, 0.25);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 30px -22px rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-card);
 }
 
-/* Eyebrow label — Geist Mono uppercase with tracking */
+/* Field / data label — small caps in the body face. Mono is reserved for values. */
 @utility label-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6B7895;
+  color: var(--color-text-muted);
 }
 
 @keyframes tdspin { to { transform: rotate(360deg); } }
@@ -86,7 +120,6 @@ a {
   100% { background-position: 360px 0; }
 }
 
-/* Skeleton shimmer block used by loading states */
 @utility skeleton-shimmer {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
   background-size: 360px 100%;
