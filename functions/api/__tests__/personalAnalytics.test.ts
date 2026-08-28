@@ -8,14 +8,22 @@ vi.mock('../../services/vmClient', async (importOriginal) => {
 });
 
 import { onRequestGet } from '../personalAnalytics';
+import { bech32 } from 'bech32';
 
 type Ctx = Parameters<typeof onRequestGet>[0];
 
-const STAKE = 'stake1' + 'a'.repeat(48);
+const STAKE = bech32.encode('stake_test', bech32.toWords(new Uint8Array(28)));
+const MAINNET_STAKE = bech32.encode('stake', bech32.toWords(new Uint8Array(28).fill(1)));
 
 interface FakeDbOptions {
   failFees?: boolean;
   rewards?: Array<{ month: string; token: string; amount: string | number }>;
+  feeRows?: Array<{
+    withdrawal_fee: string | null;
+    tokens_fee: string | null;
+    tx_fee: string | null;
+    overhead_fee: string | null;
+  }>;
   empty?: boolean;
 }
 
@@ -41,6 +49,16 @@ function fakeDb(options: FakeDbOptions = {}) {
     },
     async all() {
       if (options.empty) return { results: [] };
+      if (sql.includes('withdrawal_fee')) {
+        if (options.failFees) throw new Error('no such table: claim_requests');
+        return {
+          results: options.feeRows ?? [
+            { withdrawal_fee: '500000', tokens_fee: '200000', tx_fee: '180000', overhead_fee: '370000' },
+            { withdrawal_fee: '0', tokens_fee: '0', tx_fee: '0', overhead_fee: '0' },
+            { withdrawal_fee: null, tokens_fee: null, tx_fee: null, overhead_fee: null },
+          ],
+        };
+      }
       if (sql.includes('claims_by_month')) {
         return {
           results: [
@@ -105,6 +123,15 @@ describe('GET /api/personalAnalytics', () => {
   it('returns 400 for a value that is not a stake address', async () => {
     const response = await onRequestGet(ctx('staking_address=addr1notastake'));
     expect(response.status).toBe(400);
+    expect(vmGet).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid checksums and addresses from another network', async () => {
+    const invalid = `${STAKE.slice(0, -1)}x`;
+    expect((await onRequestGet(ctx(`staking_address=${invalid}`))).status).toBe(400);
+    expect(
+      (await onRequestGet(ctx(`staking_address=${MAINNET_STAKE}`, { VITE_NETWORK: 'preview' }))).status,
+    ).toBe(400);
     expect(vmGet).not.toHaveBeenCalled();
   });
 
@@ -194,7 +221,7 @@ describe('GET /api/personalAnalytics', () => {
     for (const call of reads.slice(0, 4)) {
       expect(call.sql).toContain('delivered_at IS NOT NULL');
     }
-    const feeSql = reads.find((call) => call.sql.includes('total_fees_lovelace'))!.sql;
+    const feeSql = reads.find((call) => call.sql.includes('withdrawal_fee'))!.sql;
     expect(feeSql).toContain('EXISTS');
     expect(feeSql).toContain('withdrawal_request = claim_requests.request_id');
     expect(feeSql).toContain('withdrawals.network = claim_requests.network');
@@ -204,7 +231,7 @@ describe('GET /api/personalAnalytics', () => {
   it('binds the mainnet network when the deployment is mainnet', async () => {
     const { db, calls } = fakeDb();
     await onRequestGet(
-      ctx(`staking_address=${STAKE}`, { DB: db, VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm' }),
+      ctx(`staking_address=${MAINNET_STAKE}`, { DB: db, VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm' }),
     );
 
     const reads = calls.filter((call) => !call.sql.includes('INSERT INTO'));
@@ -229,6 +256,24 @@ describe('GET /api/personalAnalytics', () => {
     expect(body.rewardsByMonth).toEqual([
       { month: '2026-06', token: 'policy.big', amount: '18446744073709551616' },
     ]);
+  });
+
+  it('sums fee components beyond the int64 range', async () => {
+    const { db } = fakeDb({
+      feeRows: [
+        {
+          withdrawal_fee: '9223372036854775807',
+          tokens_fee: '9223372036854775807',
+          tx_fee: '2',
+          overhead_fee: '0',
+        },
+      ],
+    });
+    const response = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await response.json()) as { summary: { totalFeesLovelace: string } };
+
+    expect(response.status).toBe(200);
+    expect(body.summary.totalFeesLovelace).toBe('18446744073709551616');
   });
 
   it('returns an empty model for an account with no delivered rewards', async () => {
