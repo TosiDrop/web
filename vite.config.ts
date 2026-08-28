@@ -21,6 +21,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      '@utxos/sdk': `${import.meta.dirname}/src/shims/utxos-sdk.ts`,
       "@": `${import.meta.dirname}/src`,
     },
   },

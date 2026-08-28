@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
 import { ProfileForm } from '@/features/profile/components/ProfileForm';
@@ -8,13 +9,14 @@ import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
+import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
-  { name: 'History', Icon: IconClock },
-  { name: 'Favorites', Icon: IconBookmark },
-  { name: 'Analytics', Icon: IconChartLine },
-  { name: 'Preferences', Icon: IconWallet },
+  { id: 'history', name: 'History', Icon: IconClock },
+  { id: 'favorites', name: 'Favorites', Icon: IconBookmark },
+  { id: 'analytics', name: 'Analytics', Icon: IconChartLine },
+  { id: 'preferences', name: 'Preferences', Icon: IconWallet },
 ];
 
 function StakeAddressDisplay({ value }: { value: string }) {
@@ -74,7 +76,14 @@ function AnalyticsTab() {
           Reward <span className="font-semibold">analytics</span>
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Where your rewards came from — by pool, epoch, and distribution rule.
+          Delivered claim trends, fee history, and current reward sources.
+        </p>
+      </div>
+      <PersonalAnalytics />
+      <div className="pt-2">
+        <p className="label-eyebrow">Current allocations</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Rewards waiting for your next claim, grouped by source.
         </p>
       </div>
       <RewardBreakdown />
@@ -175,6 +184,9 @@ function HeroStakeChip() {
 }
 
 export default function ProfilePage() {
+  const [searchParams] = useSearchParams();
+  const defaultTab = Math.max(0, TABS.findIndex((tab) => tab.id === searchParams.get('tab')));
+
   return (
     <div className="space-y-7">
       <header>
@@ -191,13 +203,13 @@ export default function ProfilePage() {
         </p>
       </header>
 
-      <TabGroup>
-        <TabList className="flex gap-1 border-b border-border-subtle">
+      <TabGroup defaultIndex={defaultTab}>
+        <TabList className="grid grid-cols-4 border-b border-border-subtle sm:flex sm:gap-1">
           {TABS.map(({ name, Icon }) => (
             <Tab
               key={name}
               className={({ selected }) =>
-                'group -mb-px flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm transition focus:outline-none ' +
+                'group -mb-px flex min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 py-2.5 text-xs transition focus:outline-none sm:gap-2 sm:px-3.5 sm:text-sm ' +
                 (selected
                   ? 'border-accent font-semibold text-white'
                   : 'border-transparent font-medium text-slate-500 hover:text-slate-200')
@@ -208,7 +220,10 @@ export default function ProfilePage() {
                   <Icon
                     size={14}
                     stroke={1.6}
-                    className={selected ? 'text-accent-light' : ''}
+                    className={
+                      'hidden shrink-0 sm:block ' +
+                      (selected ? 'text-accent-light' : '')
+                    }
                   />
                   {name}
                 </>

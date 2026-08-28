@@ -3,12 +3,8 @@ import { IconAlertCircle, IconChevronDown, IconChevronRight } from '@tabler/icon
 import { useWalletStore } from '@/store/wallet-state';
 import { useRewardBreakdown, type BreakdownGroup } from '@/features/profile/hooks/useRewardBreakdown';
 import type { BreakdownEntry } from '@/features/profile/utils/normalizeBreakdown';
-
-function formatAmount(amount: number): string {
-  if (amount >= 1000) return amount.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  if (amount >= 1) return amount.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  return amount.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
+import { formatTokenAmount as formatAmount } from '@/utils/format';
+import { StateMessage } from './StateMessage';
 
 function TokenAvatar({ logo, ticker }: { logo?: string; ticker: string }) {
   const [failed, setFailed] = useState(false);
@@ -83,15 +79,6 @@ function GroupRow({ group }: { group: BreakdownGroup }) {
         </ul>
       )}
     </li>
-  );
-}
-
-function StateMessage({ eyebrow, message }: { eyebrow: string; message: string }) {
-  return (
-    <div className="card-premium px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">{message}</p>
-    </div>
   );
 }
 
