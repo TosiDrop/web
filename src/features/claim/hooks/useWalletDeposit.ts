@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useWalletStore } from '@/store/wallet-state';
+import { useWallet } from '@meshsdk/react';
 import type { IInitiator } from '@meshsdk/core';
 import { createMeshTransactionBuilder } from '@/services/mesh-transaction-builder';
 
@@ -19,8 +19,7 @@ export interface UseWalletDepositResult {
 const TX_FEE_BUFFER_LOVELACE = 2_000_000;
 
 export function useWalletDeposit(): UseWalletDepositResult {
-  const wallet = useWalletStore((s) => s.wallet);
-  const connected = useWalletStore((s) => s.connected);
+  const { wallet, connected } = useWallet();
 
   const sendDeposit = useCallback(
     async ({ toAddress, lovelace }: SendDepositArgs): Promise<string> => {

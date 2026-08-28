@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
-import { useOnboardingStore, profileSetupSkipped } from '@/store/onboarding-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
 import { apiClient } from '@/api/client';
 
 interface UserResponse {
@@ -36,10 +36,11 @@ export function useFirstTimeCheck() {
     apiClient
       .get<UserResponse>(`/api/user?stakeAddress=${encodeURIComponent(stakeAddress)}`)
       .then((data) => {
-        if (!profileSetupSkipped() && (!data.exists || !data.user?.onboardingCompleted)) {
+        if (!data.exists || !data.user?.onboardingCompleted) {
           setIsFirstTime(!data.exists);
           openModal();
-          setStep('profile-setup'); // already connected — go straight to the form
+          // Skip the welcome + wallet-select screens since they're already in.
+          setStep('profile-setup');
         }
       })
       .catch((err) => {

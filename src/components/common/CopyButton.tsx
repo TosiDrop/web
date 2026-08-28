@@ -13,7 +13,7 @@ interface CopyButtonProps {
 export function CopyButton({
   value,
   className,
-  iconSize = 14,
+  iconSize = 12,
   feedbackMs = 1500,
   ariaLabel = 'Copy',
 }: CopyButtonProps) {
@@ -62,9 +62,8 @@ export function CopyButton({
       onClick={handleClick}
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle bg-surface-inset/60 text-text-muted transition hover:border-accent/40 hover:text-accent',
-        copied && 'border-status-success/40 text-status-success-light hover:text-status-success-light',
-        copyError && 'border-status-error/60 text-status-error-light hover:border-status-error hover:text-status-error-light',
+        'rounded-md border border-border-subtle bg-surface-inset/60 p-1.5 text-slate-400 transition hover:border-brand-cyan/40 hover:text-brand-cyan',
+        copyError && 'border-rose-400/60 text-rose-300 hover:border-rose-400 hover:text-rose-300',
         className,
       )}
     >

@@ -1,10 +1,5 @@
 import type { Env } from '../types/env';
-import {
-  deploymentNetwork,
-  jsonResponse,
-  errorResponse,
-  optionsResponse,
-} from '../services/vmClient';
+import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
 import { hasDb } from '../services/d1';
 import { toUnixSeconds } from '../services/withdrawalsSync';
 
@@ -64,10 +59,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // Scoped to the deployment's network like personalAnalytics; this is also
-  // what lets idx_withdrawals_network_stake_time serve both queries below.
-  const where: string[] = ['network = ?', 'stake_address = ?'];
-  const binds: unknown[] = [deploymentNetwork(env), stakingAddress];
+  const where: string[] = ['stake_address = ?'];
+  const binds: unknown[] = [stakingAddress];
   if (token) {
     where.push('token = ?');
     binds.push(token);

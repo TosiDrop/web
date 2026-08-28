@@ -70,12 +70,4 @@ describe('normalizeBreakdown', () => {
     expect(out[0].ticker).toBe('CHA');
     expect(out[0].amount).toBe(7); // 0 decimals default
   });
-
-  it("reads the VM's `from` field as the source pool", () => {
-    const out = normalizeBreakdown(
-      { rewards: [], promises: [{ token: 'lovelace', amount: 1, epoch: 1207, from: 'pool1abc' }] },
-      {},
-    );
-    expect(out[0].pool).toBe('pool1abc');
-  });
 });

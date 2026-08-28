@@ -13,7 +13,7 @@ interface FeedbackBannerProps {
 
 interface ToneStyle {
   icon: Icon;
-  color: string;
+  box: string;
   border: string;
   message: string;
 }
@@ -21,21 +21,21 @@ interface ToneStyle {
 const toneStyles: Record<NonNullable<FeedbackBannerProps['tone']>, ToneStyle> = {
   error: {
     icon: IconAlertTriangle,
-    color: 'text-status-error-light',
-    border: 'border-status-error/20',
-    message: 'text-status-error-light',
+    box: 'bg-[#EF4444]/[0.12] text-[#F87171]',
+    border: 'border-[#EF4444]/20',
+    message: 'text-[#D8AFAF]',
   },
   success: {
     icon: IconCircleCheck,
-    color: 'text-status-success-light',
-    border: 'border-status-success/20',
-    message: 'text-status-success-light',
+    box: 'bg-[#4ADE80]/[0.12] text-[#4ADE80]',
+    border: 'border-[#4ADE80]/20',
+    message: 'text-[#A9C8B4]',
   },
   info: {
     icon: IconInfoCircle,
-    color: 'text-accent-light',
+    box: 'bg-accent/[0.12] text-accent-light',
     border: 'border-accent/25',
-    message: 'text-accent-light',
+    message: 'text-[#9FA1C2]',
   },
 };
 
@@ -52,12 +52,14 @@ export function FeedbackBanner({ tone = 'info', title, message }: FeedbackBanner
   return (
     <div
       role={ariaRoles[tone]}
-      className={`card-premium flex items-start gap-3 ${style.border} px-4 py-3.5`}
+      className={`flex items-start gap-3 rounded-2xl border ${style.border} bg-[linear-gradient(180deg,#161B2E,#121726)] px-4 py-3.5`}
     >
-      <Icon size={18} stroke={1.8} className={`mt-0.5 flex-shrink-0 ${style.color}`} aria-hidden />
+      <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] ${style.box}`}>
+        <Icon size={17} stroke={1.8} />
+      </span>
       <div className="min-w-0 flex-1">
-        {title && <p className="text-sm font-semibold text-text-primary">{title}</p>}
-        <p className={`text-xs ${title ? 'mt-0.5 text-text-secondary' : style.message}`}>{message}</p>
+        {title && <p className="text-[14px] font-semibold text-[#EDEEF2]">{title}</p>}
+        <p className={`text-[12.5px] ${style.message} ${title ? 'mt-0.5' : ''}`}>{message}</p>
       </div>
     </div>
   );

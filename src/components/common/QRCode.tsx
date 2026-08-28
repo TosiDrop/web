@@ -6,7 +6,6 @@ interface QRCodeProps {
   amountLovelace?: number;
   size?: number;
   className?: string;
-  title?: string;
 }
 
 function buildPayload(address: string, amountLovelace?: number): string {
@@ -14,23 +13,16 @@ function buildPayload(address: string, amountLovelace?: number): string {
   return `web+cardano:${address}?amount=${Math.floor(amountLovelace)}`;
 }
 
-export function QRCode({
-  value,
-  amountLovelace,
-  size = 168,
-  className,
-  title = 'QR code for the deposit address',
-}: QRCodeProps) {
+export function QRCode({ value, amountLovelace, size = 168, className }: QRCodeProps) {
   const payload = buildPayload(value, amountLovelace);
   return (
-    <div className={cn('inline-flex rounded-xl bg-white p-3 shadow-card', className)}>
+    <div className={cn('inline-flex rounded-xl bg-white p-3 shadow-lg shadow-black/30', className)}>
       <QRCodeSVG
         value={payload}
         size={size}
         bgColor="#ffffff"
         fgColor="#000000"
         level="M"
-        title={title}
       />
     </div>
   );
