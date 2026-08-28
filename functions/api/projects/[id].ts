@@ -27,7 +27,7 @@ export const onRequestGet: PagesFunction<Env, 'id'> = async (ctx) => {
 
   try {
     const row = await env.DB.prepare(
-      `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND id = ?`,
+      `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND id = ? AND status = 'approved'`,
     )
       .bind(deploymentNetwork(env), id)
       .first<ProjectRow>();
