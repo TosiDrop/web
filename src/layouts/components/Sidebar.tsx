@@ -6,6 +6,7 @@ import {
   IconUsers,
   IconFileText,
   IconRocket,
+  IconChartLine,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -18,6 +19,7 @@ const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
   { name: 'Profile', href: '/profile', icon: IconUserCircle },
   { name: 'Projects', href: '/projects', icon: IconRocket },
+  { name: 'Analytics', href: '/analytics', icon: IconChartLine },
   { name: 'Team', href: '/team', icon: IconUsers },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },
 ];

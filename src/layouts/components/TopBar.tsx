@@ -12,6 +12,7 @@ const SECTION_LABELS: Record<string, string> = {
   '/profile': 'Profile',
   '/projects': 'Projects',
   '/team': 'Team',
+  '/analytics': 'Analytics',
   '/deposit': 'Deposit',
   '/api-tester': 'API',
 };

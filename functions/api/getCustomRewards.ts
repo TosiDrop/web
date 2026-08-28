@@ -3,10 +3,12 @@ import {
   vmConfig,
   vmGet,
   vmConfigurationErrorResponse,
+  deploymentNetwork,
   jsonResponse,
   errorResponse,
   optionsResponse,
 } from '../services/vmClient';
+import { recordClaimQuote } from '../services/claimAnalytics';
 
 export const onRequestOptions: PagesFunction<Env> = async ({ request }) =>
   optionsResponse(request.headers.get('Origin'));
@@ -19,7 +21,7 @@ interface CustomRewardsInput {
 }
 
 async function handleRequest(
-  { request, env }: { request: Request; env: Env },
+  { request, env, waitUntil }: { request: Request; env: Env; waitUntil: (p: Promise<unknown>) => void },
   { staking_address, session_id, selected, overhead_fee }: CustomRewardsInput,
 ) {
   const origin = request.headers.get('Origin');
@@ -36,7 +38,23 @@ async function handleRequest(
       session_id,
       selected,
       ...(overhead_fee != null ? { overhead_fee } : {}),
-    })) as { request_id: unknown; deposit: unknown; withdrawal_address: unknown };
+    })) as {
+      request_id: unknown;
+      deposit: unknown;
+      overhead_fee?: unknown;
+      withdrawal_address: unknown;
+    };
+
+    // This is the claim path ClaimPage actually uses; fee analytics must
+    // hang off it, not only off /api/claim/create.
+    recordClaimQuote(env, waitUntil, {
+      requestId: String(result.request_id),
+      stakeAddress: staking_address,
+      network: deploymentNetwork(env),
+      tokenCount: selected.split(',').filter(Boolean).length,
+      deposit: String(result.deposit),
+      overheadFee: (result.overhead_fee ?? overhead_fee) as string | number | null | undefined,
+    });
 
     return jsonResponse(
       {
@@ -68,7 +86,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   return handleRequest(
-    { request, env },
+    { request, env, waitUntil: context.waitUntil.bind(context) },
     {
       staking_address: typeof body?.staking_address === 'string' ? body.staking_address : null,
       session_id: typeof body?.session_id === 'string' ? body.session_id : null,
