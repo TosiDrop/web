@@ -1,20 +1,62 @@
-import { describe, it, expect } from 'vitest';
-import { pickDelegatedPool } from '../hooks/useDelegatedPool';
+import type { ReactNode } from 'react';
+import { createElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('pickDelegatedPool', () => {
-  it('returns null without pool-sourced rows', () => {
-    expect(pickDelegatedPool([])).toBeNull();
-    expect(pickDelegatedPool([{ pool: 'project_tosidrop', epoch: 10 }])).toBeNull();
+const getMock = vi.fn();
+vi.mock('@/api/client', () => ({
+  apiClient: { get: (...args: unknown[]) => getMock(...args) },
+}));
+
+import { useDelegatedPool } from '../hooks/useDelegatedPool';
+
+// One client per test: a client created inside the wrapper is rebuilt on every
+// render, which orphans an in-flight rejected query as an unhandled rejection.
+let client: QueryClient;
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(QueryClientProvider, { client }, children);
+}
+
+const STAKE = 'stake1' + 'u'.repeat(48);
+
+describe('useDelegatedPool', () => {
+  beforeEach(() => {
+    getMock.mockReset();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   });
 
-  it('picks the pool from the latest epoch, skipping project sources', () => {
-    expect(
-      pickDelegatedPool([
-        { pool: 'pool1old', epoch: 100 },
-        { pool: 'project_tosidrop', epoch: 200 },
-        { pool: 'pool1new', epoch: 150 },
-        { pool: null, epoch: 300 },
-      ]),
-    ).toBe('pool1new');
+  it('does nothing without a stake address', () => {
+    const { result } = renderHook(() => useDelegatedPool(null), { wrapper });
+    expect(getMock).not.toHaveBeenCalled();
+    expect(result.current.poolId).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('returns the pool from the delegation endpoint', async () => {
+    getMock.mockResolvedValue({ poolId: 'pool1abc', registered: true });
+    const { result } = renderHook(() => useDelegatedPool(STAKE), { wrapper });
+
+    await waitFor(() => expect(result.current.poolId).toBe('pool1abc'));
+    expect(getMock).toHaveBeenCalledWith(`/api/delegation?staking_address=${STAKE}`);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('reports a confirmed non-delegating account as null without error', async () => {
+    getMock.mockResolvedValue({ poolId: null, registered: false });
+    const { result } = renderHook(() => useDelegatedPool(STAKE), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.poolId).toBeNull();
+    expect(result.current.error).toBeNull();
+  });
+
+  it('propagates a failed lookup instead of pretending there is no pool', async () => {
+    getMock.mockRejectedValue(new Error('Failed to look up delegation'));
+    const { result } = renderHook(() => useDelegatedPool(STAKE), { wrapper });
+
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+    expect(result.current.error?.message).toBe('Failed to look up delegation');
+    expect(result.current.poolId).toBeNull();
   });
 });

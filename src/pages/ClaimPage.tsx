@@ -79,7 +79,7 @@ export default function ClaimPage() {
   }, [stakeAddress, connected, setLookupAddress]);
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
-  const { poolId, isLoading: poolLoading } = useDelegatedPool(lookupAddress);
+  const { poolId, isLoading: poolLoading, error: poolError } = useDelegatedPool(lookupAddress);
 
   const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
 
@@ -212,7 +212,7 @@ export default function ClaimPage() {
           </div>
 
           <div className="space-y-[18px]">
-            <PoolInfo poolId={poolId} isLoading={poolLoading} />
+            <PoolInfo poolId={poolId} isLoading={poolLoading} error={poolError} />
             <RewardsSummary tokenCount={selectedAssetIds.length} />
             <RewardsAllocation tokens={rewards ?? []} />
             <WalletComposition />

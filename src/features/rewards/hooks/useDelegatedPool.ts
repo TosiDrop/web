@@ -1,29 +1,30 @@
-import { useMemo } from 'react';
-import { useRewardBreakdown } from '@/features/profile/hooks/useRewardBreakdown';
-import type { BreakdownEntry } from '@/features/profile/utils/normalizeBreakdown';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/api/client';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 
-/**
- * The VM has no delegation endpoint, but every breakdown row names its source
- * (`from`): a pool id for delegation rewards, a project key otherwise. The
- * pool behind the latest-epoch row is the wallet's current delegation.
- */
-export function pickDelegatedPool(
-  entries: Pick<BreakdownEntry, 'pool' | 'epoch'>[],
-): string | null {
-  let best: { pool: string; epoch: number } | null = null;
-  for (const e of entries) {
-    if (!e.pool?.startsWith('pool')) continue;
-    const epoch = e.epoch ?? -1;
-    if (!best || epoch > best.epoch) best = { pool: e.pool, epoch };
-  }
-  return best?.pool ?? null;
+export interface Delegation {
+  poolId: string | null;
+  registered: boolean;
 }
 
+/**
+ * The wallet's current delegation from ledger state (/api/delegation → Koios).
+ * `poolId` is null only for a confirmed non-delegating account; a failed
+ * lookup surfaces as `error` so callers can say so instead of "no pool".
+ */
 export function useDelegatedPool(stakeAddress: string | null) {
-  const { data, isLoading } = useRewardBreakdown(stakeAddress);
-  const poolId = useMemo(
-    () => pickDelegatedPool(data?.flatMap((g) => g.entries) ?? []),
-    [data],
-  );
-  return { poolId, isLoading };
+  const query = useQuery<Delegation, Error>({
+    queryKey: ['delegation', DEPLOYMENT_NETWORK, stakeAddress],
+    enabled: !!stakeAddress,
+    staleTime: 5 * 60 * 1000,
+    queryFn: () =>
+      apiClient.get<Delegation>(
+        `/api/delegation?staking_address=${encodeURIComponent(stakeAddress!)}`,
+      ),
+  });
+  return {
+    poolId: query.data?.poolId ?? null,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 }
