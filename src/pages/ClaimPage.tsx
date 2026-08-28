@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
@@ -10,6 +10,9 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
+import { toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
+import { usePreferences } from '@/features/favorites/hooks/usePreferences';
+import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
 
 import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
 import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
@@ -74,8 +77,16 @@ export default function ClaimPage() {
     networkMatches &&
     lookupAddress?.toLowerCase() === stakeAddress?.toLowerCase();
   const hasRewards = !!rewards && rewards.length > 0;
-  const total = rewards?.length ?? 0;
-  const allSelected = total > 0 && rewards!.every((r) => selectedAssetIds.includes(r.assetId));
+  // Disliked tokens are hidden by AvailableDistributions; they must not be
+  // counted, selected by "Select all", or submitted.
+  const { favoriteIds, dislikedIds } = usePreferences();
+  const visibleAssetIds = useMemo(
+    () => partitionPreferences(rewards ?? [], favoriteIds, dislikedIds).visible.map((r) => r.assetId),
+    [rewards, favoriteIds, dislikedIds],
+  );
+  const selectedVisible = visibleSelection(selectedAssetIds, visibleAssetIds);
+  const total = visibleAssetIds.length;
+  const allSelected = total > 0 && selectedVisible.length === total;
 
   useEffect(() => {
     if (!rewards || !lookupAddress) return;
@@ -121,16 +132,15 @@ export default function ClaimPage() {
   });
 
   const handleClaim = () => {
-    if (!stakeAddress || selectedAssetIds.length === 0 || claimMutation.isPending) return;
-    claimMutation.mutate({ stakeAddress, selected: selectedAssetIds });
+    if (!stakeAddress || selectedVisible.length === 0 || claimMutation.isPending) return;
+    claimMutation.mutate({ stakeAddress, selected: selectedVisible });
   };
 
   const toggleAll = () => {
-    setSelected(allSelected ? [] : (rewards ?? []).map((r) => r.assetId));
+    setSelected(toggleAllSelection(allSelected, visibleAssetIds));
   };
 
-  const claimDisabled =
-    !canClaim || selectedAssetIds.length === 0 || claimMutation.isPending;
+  const claimDisabled = !canClaim || selectedVisible.length === 0 || claimMutation.isPending;
   const loading = isLoading || resolving;
 
   return (
@@ -173,7 +183,7 @@ export default function ClaimPage() {
 
       {lookupAddress && !loading && hasRewards && (
         <ClaimHero
-          selectedCount={selectedAssetIds.length}
+          selectedCount={selectedVisible.length}
           totalCount={total}
           allSelected={allSelected}
           onToggleAll={toggleAll}
@@ -197,7 +207,7 @@ export default function ClaimPage() {
           </div>
 
           <div className="space-y-5">
-            <RewardsSummary tokenCount={selectedAssetIds.length} />
+            <RewardsSummary tokenCount={selectedVisible.length} />
             {connected && (
               <>
                 <WalletComposition />

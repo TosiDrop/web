@@ -8,7 +8,28 @@ import { useOnboardingStore } from '@/store/onboarding-state';
 import { useWalletStore } from '@/store/wallet-state';
 import { Toaster } from '@/components/common/Toaster';
 
-const WalletRuntime = lazy(() => import('@/features/wallet/WalletRuntime'));
+import { preloadWalletRuntime } from '@/features/wallet/preload';
+
+const WalletRuntime = lazy(preloadWalletRuntime);
+
+/** Shown only while a user-initiated connect is waiting on the wallet chunk. */
+function WalletLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    >
+      <div className="flex items-center gap-3 rounded-2xl border border-border-default bg-surface-raised px-5 py-4 text-sm text-text-secondary shadow-pop">
+        <span
+          aria-hidden
+          className="inline-block h-4 w-4 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light"
+        />
+        Loading wallet…
+      </div>
+    </div>
+  );
+}
 
 export function MainLayout({ children }: { children: ReactNode }) {
   useFirstTimeCheck();
@@ -36,7 +57,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
       {(modalOpen || runtimeWanted) && (
-        <Suspense fallback={null}>
+        <Suspense fallback={modalOpen ? <WalletLoading /> : null}>
           <WalletRuntime />
         </Suspense>
       )}

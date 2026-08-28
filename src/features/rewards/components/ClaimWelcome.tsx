@@ -3,6 +3,7 @@ import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { UmbrellaMark } from '@/components/icons/UmbrellaMark';
 import { useOnboardingStore } from '@/store/onboarding-state';
+import { preloadWalletRuntime } from '@/features/wallet/preload';
 
 // The claim flow really is a sequence, so the numbers carry information.
 const STEPS = [
@@ -31,7 +32,11 @@ export function ClaimWelcome() {
         </p>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <GradientButton onClick={openModal}>
+          <GradientButton
+            onClick={openModal}
+            onPointerEnter={preloadWalletRuntime}
+            onFocus={preloadWalletRuntime}
+          >
             <IconWallet size={16} stroke={1.8} />
             Connect wallet
           </GradientButton>

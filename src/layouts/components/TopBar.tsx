@@ -4,6 +4,7 @@ import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconWallet } from '@t
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
+import { preloadWalletRuntime } from '@/features/wallet/preload';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { toast } from '@/store/toast-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
@@ -132,7 +133,13 @@ export function TopBar() {
         {connected && stakeAddress ? (
           <AccountMenu stakeAddress={stakeAddress} networkId={networkId} />
         ) : (
-          <GradientButton variant="secondary" className="h-10 rounded-full px-4" onClick={openModal}>
+          <GradientButton
+            variant="secondary"
+            className="h-10 rounded-full px-4"
+            onClick={openModal}
+            onPointerEnter={preloadWalletRuntime}
+            onFocus={preloadWalletRuntime}
+          >
             <IconWallet size={16} stroke={1.8} />
             Connect wallet
           </GradientButton>

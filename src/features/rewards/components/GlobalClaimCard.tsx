@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
-import { isAdaHandle, isStakeAddress } from '@/utils/ada-handle';
+import { isAdaHandle, stakeAddressError } from '@/utils/ada-handle';
 import { truncateHash } from '@/utils/format';
 
 interface GlobalClaimCardProps {
@@ -28,8 +28,9 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress }: GlobalCl
       return;
     }
     const address = value.toLowerCase();
-    if (!isStakeAddress(address)) {
-      setError('Enter a $handle or a valid stake address.');
+    const problem = stakeAddressError(address);
+    if (problem) {
+      setError(problem);
       return;
     }
     onLookup(address);
