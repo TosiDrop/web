@@ -16,8 +16,12 @@ export function useProjectSubmit() {
     const project = normalizeProjectInput(input);
     const problem = validateProjectInput(project);
     if (problem) throw new Error(problem);
-    const signed = await signProjectUpdate(wallet, stakeAddress, project);
-    return id ? update.mutateAsync({ id, ...signed }) : register.mutateAsync(signed);
+    if (id) {
+      const signed = await signProjectUpdate(wallet, stakeAddress, project, { action: 'update', projectId: id });
+      return update.mutateAsync({ id, ...signed });
+    }
+    const signed = await signProjectUpdate(wallet, stakeAddress, project, { action: 'create' });
+    return register.mutateAsync(signed);
   };
 
   return { submit, isPending: register.isPending || update.isPending };

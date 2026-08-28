@@ -17,8 +17,14 @@ CREATE TABLE IF NOT EXISTS projects (
                 CHECK (status IN ('pending', 'approved', 'rejected')),
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
-  approved_at   TEXT
+  approved_at   TEXT,
+  -- SHA-256 of the CIP-30 signature that last wrote the row; unique per
+  -- network so one signed create request yields at most one project.
+  signature_hash TEXT NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_signature
+  ON projects (network, signature_hash);
 
 CREATE INDEX IF NOT EXISTS idx_projects_owner
   ON projects (network, owner_address, created_at DESC);

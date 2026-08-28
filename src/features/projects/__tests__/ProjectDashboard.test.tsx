@@ -29,7 +29,7 @@ describe('ProjectDashboard', () => {
   afterEach(cleanup);
   beforeEach(() => {
     submitMock.mockReset();
-    projectsMock.mockReturnValue({ data: [PROJECT], isLoading: false, error: null });
+    projectsMock.mockReturnValue({ data: { projects: [PROJECT], degraded: false }, isLoading: false, error: null });
     useWalletStore.setState({ connected: true, stakeAddress: STAKE });
   });
 
@@ -39,8 +39,15 @@ describe('ProjectDashboard', () => {
     expect(screen.getByText(/Connect a wallet/)).toBeInTheDocument();
   });
 
+  it('does not present an unreachable store as an empty list', () => {
+    projectsMock.mockReturnValue({ data: { projects: [], degraded: true }, isLoading: false, error: null });
+    render(<MemoryRouter><ProjectDashboard /></MemoryRouter>);
+    expect(screen.getByText('Project list unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('No projects yet')).not.toBeInTheDocument();
+  });
+
   it('links to onboarding when the owner has no projects', () => {
-    projectsMock.mockReturnValue({ data: [], isLoading: false, error: null });
+    projectsMock.mockReturnValue({ data: { projects: [], degraded: false }, isLoading: false, error: null });
     renderIt();
     expect(screen.getByRole('link', { name: /Register a project/ })).toHaveAttribute('href', '/projects/new');
   });

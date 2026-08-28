@@ -12,13 +12,14 @@ export interface SignedProjectRequest {
   message: string;
 }
 
-interface ProjectsResponse {
+export interface ProjectsResponse {
   projects: Project[];
-  degraded?: boolean;
+  /** True when storage was unreachable: the list is unknown, not empty. */
+  degraded: boolean;
 }
 
 export function useOwnerProjects(owner: string | null) {
-  return useQuery<Project[], Error>({
+  return useQuery<ProjectsResponse, Error>({
     queryKey: ['projects', DEPLOYMENT_NETWORK, owner],
     enabled: !!owner,
     staleTime: 60_000,
@@ -27,7 +28,7 @@ export function useOwnerProjects(owner: string | null) {
       const res = await apiClient.get<ProjectsResponse>(
         `/api/projects?owner=${encodeURIComponent(owner)}`,
       );
-      return res.projects;
+      return { projects: res.projects, degraded: res.degraded === true };
     },
   });
 }

@@ -128,7 +128,8 @@ function ProjectCard({ project, ticker }: { project: Project; ticker: string }) 
 
 export function ProjectDashboard() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
-  const { data: projects, isLoading, error } = useOwnerProjects(stakeAddress);
+  const { data, isLoading, error } = useOwnerProjects(stakeAddress);
+  const projects = data?.projects;
   const { data: tokens } = useTokenMap();
 
   if (!stakeAddress) {
@@ -147,6 +148,14 @@ export function ProjectDashboard() {
         <IconAlertCircle size={18} className="mt-0.5 shrink-0" />
         {error.message}
       </div>
+    );
+  }
+  if (data?.degraded) {
+    return (
+      <StateMessage
+        eyebrow="Project list unavailable"
+        message="Project storage is not reachable right now, so your projects can't be shown. Nothing has been lost."
+      />
     );
   }
   if (!projects?.length) {

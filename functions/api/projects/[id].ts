@@ -6,7 +6,7 @@ import {
   optionsResponse,
 } from '../../services/vmClient';
 import { hasDb } from '../../services/d1';
-import { verifyProjectSignature } from '../../services/verifyProjectSignature';
+import { signatureHash, verifyProjectSignature } from '../../services/verifyProjectSignature';
 import { PROJECT_COLUMNS, rowToProject, type ProjectRow } from '../../services/projects';
 import { normalizeProjectInput, validateProjectInput } from '../../../src/shared/projects';
 
@@ -22,7 +22,8 @@ export const onRequestGet: PagesFunction<Env, 'id'> = async (ctx) => {
   const origin = request.headers.get('Origin');
   const id = projectId(ctx);
   if (!id) return errorResponse('project id is required', 400, origin);
-  if (!hasDb(env)) return errorResponse('Project not found', 404, origin);
+  // Unknown is not the same as missing.
+  if (!hasDb(env)) return errorResponse('Project storage is unavailable', 503, origin);
 
   try {
     const row = await env.DB.prepare(
@@ -66,18 +67,21 @@ export const onRequestPut: PagesFunction<Env, 'id'> = async (ctx) => {
   const problem = validateProjectInput(project);
   if (problem) return errorResponse(problem, 400, origin);
 
+  const network = deploymentNetwork(env);
   const verification = await verifyProjectSignature({
     stakeAddress: owner,
     project,
+    action: 'update',
+    projectId: id,
+    network,
     signature: body.signature,
     key: body.key,
     message: body.message,
   });
   if (!verification.ok) return errorResponse(verification.reason, verification.status, origin);
 
-  if (!hasDb(env)) return jsonResponse({ id, degraded: true }, 200, origin);
+  if (!hasDb(env)) return errorResponse('Project storage is unavailable', 503, origin);
 
-  const network = deploymentNetwork(env);
   try {
     const existing = await env.DB.prepare(
       'SELECT owner_address FROM projects WHERE network = ? AND id = ?',
@@ -88,9 +92,12 @@ export const onRequestPut: PagesFunction<Env, 'id'> = async (ctx) => {
     if (existing.owner_address !== owner) {
       return errorResponse('Only the project owner can update it', 403, origin);
     }
+    // Every reviewed field can change here, so the review starts over: an
+    // approved project cannot be edited into an unreviewed one and stay live.
     await env.DB.prepare(
       'UPDATE projects SET name = ?, description = ?, website = ?, logo_url = ?, token_id = ?, ' +
-        "pool_id = ?, distribution = ?, updated_at = datetime('now') WHERE network = ? AND id = ?",
+        "pool_id = ?, distribution = ?, signature_hash = ?, status = 'pending', approved_at = NULL, " +
+        "updated_at = datetime('now') WHERE network = ? AND id = ?",
     )
       .bind(
         project.name,
@@ -100,11 +107,12 @@ export const onRequestPut: PagesFunction<Env, 'id'> = async (ctx) => {
         project.tokenId,
         project.poolId || null,
         JSON.stringify(project.distribution),
+        await signatureHash(body.signature as string),
         network,
         id,
       )
       .run();
-    return jsonResponse({ id }, 200, origin);
+    return jsonResponse({ id, status: 'pending' }, 200, origin);
   } catch (err) {
     console.error('D1 PUT project error:', err);
     return errorResponse('Error updating project', 500, origin);

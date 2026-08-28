@@ -4,6 +4,7 @@ import {
   normalizeProjectInput,
   projectDigest,
   PROJECT_MESSAGE_RE,
+  parseProjectMessage,
   validateProjectInput,
 } from '../projects';
 
@@ -49,9 +50,45 @@ describe('projects shared', () => {
     expect(await projectDigest(b)).toBe(da);
     expect(await projectDigest({ ...a, name: 'Other' })).not.toBe(da);
 
-    const msg = buildProjectMessage('stake_test1abc', da, new Date('2026-08-20T00:00:00.000Z'));
-    const m = PROJECT_MESSAGE_RE.exec(msg);
-    expect(m?.[1]).toBe('stake_test1abc');
-    expect(m?.[3]).toBe(da);
+    const msg = buildProjectMessage({
+      action: 'update',
+      network: 'preview',
+      stakeAddress: 'stake_test1abc',
+      projectId: '9a4c1b1e-0c3c-4d8e-a3f1-3f6e7c1d2b5a',
+      digest: da,
+      now: new Date('2026-08-20T00:00:00.000Z'),
+    });
+    expect(msg).toBe(
+      'Tosi project update on preview for stake_test1abc at 2026-08-20T00:00:00.000Z\n' +
+        `project: 9a4c1b1e-0c3c-4d8e-a3f1-3f6e7c1d2b5a [${da}]`,
+    );
+    expect(parseProjectMessage(msg)).toEqual({
+      action: 'update',
+      network: 'preview',
+      stakeAddress: 'stake_test1abc',
+      signedAt: '2026-08-20T00:00:00.000Z',
+      projectId: '9a4c1b1e-0c3c-4d8e-a3f1-3f6e7c1d2b5a',
+      digest: da,
+    });
+    expect(PROJECT_MESSAGE_RE.test(msg)).toBe(true);
+    const create = buildProjectMessage({ action: 'create', network: 'mainnet', stakeAddress: 'stake1abc', projectId: null, digest: da });
+    expect(parseProjectMessage(create)?.projectId).toBeNull();
+  });
+
+  it('requires a positive amount and a bounded, non-negative minimum stake', () => {
+    const base = normalizeProjectInput(BASE);
+    const withDist = (d: Partial<typeof base.distribution>) => ({ ...base, distribution: { ...base.distribution, ...d } });
+    expect(validateProjectInput(withDist({ amountPerEpoch: '' }))).toMatch(/amountPerEpoch/);
+    expect(validateProjectInput(withDist({ amountPerEpoch: '0' }))).toMatch(/amountPerEpoch/);
+    expect(validateProjectInput(withDist({ amountPerEpoch: '-5' }))).toMatch(/amountPerEpoch/);
+    expect(validateProjectInput(withDist({ amountPerEpoch: 'ten' }))).toMatch(/amountPerEpoch/);
+    expect(validateProjectInput(withDist({ amountPerEpoch: '1e3' }))).toMatch(/amountPerEpoch/);
+    expect(validateProjectInput(withDist({ amountPerEpoch: '12.5' }))).toBeNull();
+    expect(validateProjectInput(withDist({ minStakeAda: '' }))).toBeNull();
+    expect(validateProjectInput(withDist({ minStakeAda: '-1' }))).toMatch(/minStakeAda/);
+    expect(validateProjectInput(withDist({ minStakeAda: 'abc' }))).toMatch(/minStakeAda/);
+    expect(validateProjectInput(withDist({ minStakeAda: '50000000000' }))).toMatch(/minStakeAda/);
+    expect(validateProjectInput(withDist({ minStakeAda: '500' }))).toBeNull();
+    expect(validateProjectInput(withDist({ expiryEpochs: 5000 }))).toMatch(/expiryEpochs/);
   });
 });

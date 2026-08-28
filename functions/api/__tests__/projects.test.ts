@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../types/env';
 
 const verifyMock = vi.fn();
-vi.mock('../../services/verifyProjectSignature', () => ({
+vi.mock('../../services/verifyProjectSignature', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/verifyProjectSignature')>()),
   verifyProjectSignature: (...args: unknown[]) => verifyMock(...args),
 }));
 
@@ -37,7 +38,12 @@ const ROW = {
   approved_at: null,
 };
 
-const PROJECT = { name: 'Tosi', tokenId: 'pol.6d544f5349', website: 'https://tosidrop.io' };
+const PROJECT = {
+  name: 'Tosi',
+  tokenId: 'pol.6d544f5349',
+  website: 'https://tosidrop.io',
+  distribution: { amountPerEpoch: '10', minStakeAda: '', expiryEpochs: 2 },
+};
 const SIGNED = { ownerAddress: STAKE, project: PROJECT, signature: 's', key: 'k', message: 'm' };
 
 function env(db?: D1Database): Env {
@@ -93,23 +99,53 @@ describe('/api/projects', () => {
   });
 
   it('POST inserts a normalized row and returns 201', async () => {
-    const db = fakeDb({ first: [{ n: 0 }] });
+    // first(): no row for this signature yet, then the per-owner count.
+    const db = fakeDb({ first: [null, { n: 0 }] });
     const res = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env(db)));
     expect(res.status).toBe(201);
     const body = await res.json() as { id: string };
     expect(body.id).toMatch(/[0-9a-f-]{36}/);
     const insert = db.__calls.find((c) => c.sql.startsWith('INSERT'))!;
     expect(insert.binds.slice(1, 5)).toEqual(['preview', STAKE, 'Tosi', null]);
-    expect(verifyMock.mock.calls[0][0]).toMatchObject({ stakeAddress: STAKE, project: { name: 'Tosi' } });
+    expect(insert.sql).toContain('signature_hash');
+    expect(insert.binds[10]).toMatch(/^[0-9a-f]{64}$/);
+    expect(verifyMock.mock.calls[0][0]).toMatchObject({
+      stakeAddress: STAKE,
+      project: { name: 'Tosi' },
+      action: 'create',
+      projectId: null,
+      network: 'preview',
+    });
+  });
+
+  it('POST returns the existing project for a replayed signature instead of a duplicate', async () => {
+    const db = fakeDb({ first: [{ id: 'p-existing' }] });
+    const res = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env(db)));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ id: 'p-existing' });
+    expect(db.__calls.some((c) => c.sql.startsWith('INSERT'))).toBe(false);
   });
 
   it('POST 409 over the per-owner limit', async () => {
-    const db = fakeDb({ first: [{ n: 20 }] });
+    const db = fakeDb({ first: [null, { n: 20 }] });
     const res = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env(db)));
     expect(res.status).toBe(409);
   });
 
-  it('GET /:id 404s when missing', async () => {
+  it('POST and PUT fail with 503 when storage is unavailable, never a fake id', async () => {
+    const post = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env()));
+    expect(post.status).toBe(503);
+    const put = await onRequestPut(
+      ctx(json('https://x/api/projects/p1', 'PUT', SIGNED), env(), { id: 'p1' }),
+    );
+    expect(put.status).toBe(503);
+  });
+
+  it('GET /:id 503s without storage and 404s when missing', async () => {
+    const unavailable = await getOne(
+      ctx(new Request('https://x/api/projects/p1', { headers: ORIGIN }), env(), { id: 'p1' }),
+    );
+    expect(unavailable.status).toBe(503);
     const res = await getOne(
       ctx(new Request('https://x/api/projects/p1', { headers: ORIGIN }), env(fakeDb()), { id: 'p1' }),
     );
@@ -130,5 +166,24 @@ describe('/api/projects', () => {
     expect(r2.status).toBe(200);
     const update = mine.__calls.find((c) => c.sql.startsWith('UPDATE'))!;
     expect(update.binds.slice(-2)).toEqual(['preview', 'p1']);
+    expect(verifyMock.mock.calls.at(-1)![0]).toMatchObject({
+      action: 'update',
+      projectId: 'p1',
+      network: 'preview',
+    });
   });
+
+  it.each(['approved', 'rejected'])(
+    'PUT by the owner sends a %s project back to review',
+    async (status) => {
+      const db = fakeDb({ first: [{ owner_address: STAKE, status }] });
+      const res = await onRequestPut(
+        ctx(json('https://x/api/projects/p1', 'PUT', SIGNED), env(db), { id: 'p1' }),
+      );
+      expect(await res.json()).toEqual({ id: 'p1', status: 'pending' });
+      const update = db.__calls.find((c) => c.sql.startsWith('UPDATE'))!;
+      expect(update.sql).toContain("status = 'pending'");
+      expect(update.sql).toContain('approved_at = NULL');
+    },
+  );
 });

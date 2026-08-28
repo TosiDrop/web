@@ -4,10 +4,12 @@
 export const PROJECT_STATUSES = ['pending', 'approved', 'rejected'] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
+export type ProjectAction = 'create' | 'update';
+
 export interface DistributionConfig {
   /** Token units (already decimal-adjusted) distributed per epoch. */
   amountPerEpoch: string;
-  /** Minimum delegated ADA to qualify. */
+  /** Minimum delegated ADA to qualify; empty means no minimum. */
   minStakeAda: string;
   /** Epochs a reward stays claimable before it expires. */
   expiryEpochs: number;
@@ -41,6 +43,9 @@ export const PROJECT_LIMITS = {
   tokenId: 120,
   poolId: 80,
   distributionJson: 2000,
+  /** Total ADA supply; no real minimum stake can exceed it. */
+  maxMinStakeAda: 45_000_000_000,
+  maxExpiryEpochs: 1000,
 } as const;
 
 export const EMPTY_DISTRIBUTION: DistributionConfig = {
@@ -77,6 +82,9 @@ export function normalizeProjectInput(raw: unknown): ProjectInput {
   };
 }
 
+/** Plain non-negative decimal: digits with an optional fraction, no sign, no exponent. */
+const DECIMAL_RE = /^\d{1,15}(\.\d{1,18})?$/;
+
 /** Returns a human-readable problem, or null when the input is acceptable. */
 export function validateProjectInput(input: ProjectInput): string | null {
   const L = PROJECT_LIMITS;
@@ -89,17 +97,69 @@ export function validateProjectInput(input: ProjectInput): string | null {
   if (!input.tokenId) return 'tokenId is required';
   if (input.tokenId.length > L.tokenId) return 'tokenId is too long';
   if (input.poolId && !/^pool1[a-z0-9]{20,}$/.test(input.poolId)) return 'poolId must be a bech32 pool id';
-  const { expiryEpochs } = input.distribution;
-  if (!Number.isInteger(expiryEpochs) || expiryEpochs < 0) {
-    return 'distribution.expiryEpochs must be a non-negative integer';
+
+  const { amountPerEpoch, minStakeAda, expiryEpochs } = input.distribution;
+  if (!DECIMAL_RE.test(amountPerEpoch) || Number(amountPerEpoch) <= 0) {
+    return 'distribution.amountPerEpoch must be a positive decimal amount';
+  }
+  if (minStakeAda !== '' && (!DECIMAL_RE.test(minStakeAda) || Number(minStakeAda) > L.maxMinStakeAda)) {
+    return `distribution.minStakeAda must be a decimal ADA amount up to ${L.maxMinStakeAda.toLocaleString('en-US')}`;
+  }
+  if (!Number.isInteger(expiryEpochs) || expiryEpochs < 0 || expiryEpochs > L.maxExpiryEpochs) {
+    return `distribution.expiryEpochs must be an integer from 0 to ${L.maxExpiryEpochs}`;
   }
   if (JSON.stringify(input.distribution).length > L.distributionJson) return 'distribution is too large';
   return null;
 }
 
-const MESSAGE_PREFIX = 'Tosi project update';
+/**
+ * Signing message. Everything the server authorises on is in the text the
+ * wallet shows and signs: the operation, the deployment network, the owner,
+ * the project being updated (or "new"), a timestamp for freshness, and the
+ * payload digest. A signature therefore cannot be replayed against another
+ * operation, project, or network.
+ */
+const MESSAGE_PREFIX = 'Tosi project';
 export const PROJECT_MESSAGE_RE =
-  /^Tosi project update for (stake(?:_test)?1[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nproject: \[([0-9a-f]{16})\]$/;
+  /^Tosi project (create|update) on (mainnet|preview) for (stake(?:_test)?1[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)\nproject: (new|[0-9a-f-]{36}) \[([0-9a-f]{16})\]$/;
+
+export interface ProjectMessageParts {
+  action: ProjectAction;
+  network: string;
+  stakeAddress: string;
+  /** The project being updated; null when creating. */
+  projectId: string | null;
+  digest: string;
+  now?: Date;
+}
+
+export function buildProjectMessage({
+  action,
+  network,
+  stakeAddress,
+  projectId,
+  digest,
+  now = new Date(),
+}: ProjectMessageParts): string {
+  return (
+    `${MESSAGE_PREFIX} ${action} on ${network} for ${stakeAddress} at ${now.toISOString()}\n` +
+    `project: ${projectId ?? 'new'} [${digest}]`
+  );
+}
+
+export function parseProjectMessage(message: string): (ProjectMessageParts & { signedAt: string }) | null {
+  const match = PROJECT_MESSAGE_RE.exec(message);
+  if (!match) return null;
+  const [, action, network, stakeAddress, signedAt, projectId, digest] = match;
+  return {
+    action: action as ProjectAction,
+    network,
+    stakeAddress,
+    signedAt,
+    projectId: projectId === 'new' ? null : projectId,
+    digest,
+  };
+}
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
@@ -124,8 +184,4 @@ export async function projectDigest(input: ProjectInput): Promise<string> {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 16);
-}
-
-export function buildProjectMessage(stakeAddress: string, digest: string, now = new Date()): string {
-  return `${MESSAGE_PREFIX} for ${stakeAddress} at ${now.toISOString()}\nproject: [${digest}]`;
 }
