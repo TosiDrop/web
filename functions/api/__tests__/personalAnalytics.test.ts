@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../../types/env';
+
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
+vi.mock('../../services/vmClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/vmClient')>();
+  return { ...actual, vmGet };
+});
+
 import { onRequestGet } from '../personalAnalytics';
 
 type Ctx = Parameters<typeof onRequestGet>[0];
@@ -8,10 +15,13 @@ const STAKE = 'stake1' + 'a'.repeat(48);
 
 interface FakeDbOptions {
   failFees?: boolean;
+  rewards?: Array<{ month: string; token: string; amount: string | number }>;
+  empty?: boolean;
 }
 
 function fakeDb(options: FakeDbOptions = {}) {
   const calls: Array<{ sql: string; binds: unknown[] }> = [];
+  const batch = vi.fn(async () => []);
   const prepare = (sql: string) => ({
     bind(...binds: unknown[]) {
       calls.push({ sql, binds });
@@ -19,24 +29,18 @@ function fakeDb(options: FakeDbOptions = {}) {
     },
     async first() {
       if (sql.includes('total_claims')) {
-        return {
-          total_claims: 4,
-          distinct_tokens: 2,
-          active_since: 1_750_000_000,
-        };
+        return options.empty
+          ? { total_claims: 0, distinct_tokens: 0, active_since: null }
+          : { total_claims: 4, distinct_tokens: 2, active_since: 1_750_000_000 };
       }
       if (sql.includes('total_fees_lovelace')) {
         if (options.failFees) throw new Error('no such table: claim_requests');
-        return {
-          total_fees_lovelace: 1_250_000,
-          tracked_claims: 3,
-          complete_claims: 2,
-          tracked_since: 1_760_000_000,
-        };
+        return { total_fees_lovelace: 1_250_000, tracked_claims: 3, complete_claims: 2 };
       }
       return null;
     },
     async all() {
+      if (options.empty) return { results: [] };
       if (sql.includes('claims_by_month')) {
         return {
           results: [
@@ -47,10 +51,11 @@ function fakeDb(options: FakeDbOptions = {}) {
       }
       if (sql.includes('rewards_by_month')) {
         return {
-          results: [
-            { month: '2026-05', token: 'lovelace', amount: 1_000_000 },
-            { month: '2026-06', token: 'lovelace', amount: 2_500_000 },
-            { month: '2026-06', token: 'policy.token', amount: 8 },
+          results: options.rewards ?? [
+            { month: '2026-05', token: 'lovelace', amount: '1000000' },
+            { month: '2026-06', token: 'lovelace', amount: '2000000' },
+            { month: '2026-06', token: 'lovelace', amount: 500000 },
+            { month: '2026-06', token: 'policy.token', amount: '8' },
           ],
         };
       }
@@ -67,8 +72,9 @@ function fakeDb(options: FakeDbOptions = {}) {
   });
 
   return {
-    db: { prepare } as unknown as D1Database,
+    db: { prepare, batch } as unknown as D1Database,
     calls,
+    batch,
   };
 }
 
@@ -81,10 +87,25 @@ function ctx(query: string, env: Partial<Env> = {}): Ctx {
   } as unknown as Ctx;
 }
 
+const DELIVERED = [
+  { id: 'r9', token: 'lovelace', amount: '1000000', epoch: 500, delivered_on: '1750000000' },
+];
+
 describe('GET /api/personalAnalytics', () => {
+  beforeEach(() => {
+    vmGet.mockReset();
+    vmGet.mockResolvedValue(DELIVERED);
+  });
+
   it('returns 400 without a staking address', async () => {
     const response = await onRequestGet(ctx(''));
     expect(response.status).toBe(400);
+  });
+
+  it('returns 400 for a value that is not a stake address', async () => {
+    const response = await onRequestGet(ctx('staking_address=addr1notastake'));
+    expect(response.status).toBe(400);
+    expect(vmGet).not.toHaveBeenCalled();
   });
 
   it('returns an explicit degraded empty response without D1', async () => {
@@ -93,26 +114,43 @@ describe('GET /api/personalAnalytics', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       degraded: true,
+      fresh: false,
       feesUnavailable: true,
-      feeCoverage: {
-        trackedClaims: 0,
-        completeClaims: 0,
-        trackedSince: null,
-        incomplete: true,
-      },
-      summary: {
-        totalClaims: 0,
-        distinctTokens: 0,
-        totalFeesLovelace: '0',
-        activeSince: null,
-      },
+      feeCoverage: { trackedClaims: 0, completeClaims: 0, incomplete: true },
+      summary: { totalClaims: 0, distinctTokens: 0, totalFeesLovelace: null, activeSince: null },
       claimsByMonth: [],
       rewardsByMonth: [],
       tokenMix: [],
     });
   });
 
-  it('returns bounded history aggregates and delivered-only fee totals', async () => {
+  it('refreshes the archive from the VM before aggregating', async () => {
+    const { db, batch, calls } = fakeDb();
+    const response = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await response.json()) as { fresh: boolean };
+
+    expect(body.fresh).toBe(true);
+    expect(vmGet).toHaveBeenCalledWith(expect.anything(), 'delivered_rewards', {
+      staking_address: STAKE,
+    });
+    expect(batch).toHaveBeenCalledOnce();
+    const upsert = calls.find((call) => call.sql.includes('INSERT INTO withdrawals'))!;
+    expect(upsert.binds.slice(0, 3)).toEqual(['preview', STAKE, 'r9']);
+  });
+
+  it('still serves the archive when the VM refresh fails', async () => {
+    vmGet.mockRejectedValue(new Error('VM down'));
+    const { db, batch } = fakeDb();
+    const response = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await response.json()) as { fresh: boolean; summary: { totalClaims: number } };
+
+    expect(response.status).toBe(200);
+    expect(body.fresh).toBe(false);
+    expect(body.summary.totalClaims).toBe(4);
+    expect(batch).not.toHaveBeenCalled();
+  });
+
+  it('returns delivered-only aggregates scoped to this user and network', async () => {
     const { db, calls } = fakeDb();
     const response = await onRequestGet(
       ctx(`staking_address=${encodeURIComponent(STAKE)}`, { DB: db }),
@@ -121,13 +159,9 @@ describe('GET /api/personalAnalytics', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       degraded: false,
+      fresh: true,
       feesUnavailable: false,
-      feeCoverage: {
-        trackedClaims: 3,
-        completeClaims: 2,
-        trackedSince: 1_760_000_000,
-        incomplete: true,
-      },
+      feeCoverage: { trackedClaims: 3, completeClaims: 2, incomplete: true },
       summary: {
         totalClaims: 4,
         distinctTokens: 2,
@@ -148,17 +182,73 @@ describe('GET /api/personalAnalytics', () => {
         { token: 'policy.token', rewards: 1 },
       ],
     });
-    expect(calls).toHaveLength(5);
-    expect(calls.every((call) => call.binds.includes(STAKE))).toBe(true);
-    expect(calls.every((call) => call.binds.includes('preview'))).toBe(true);
-    expect(calls.slice(0, 4).every((call) => call.sql.includes('network = ?'))).toBe(true);
-    const feeSql = calls.find((call) => call.sql.includes('total_fees_lovelace'))!.sql;
+
+    const reads = calls.filter((call) => !call.sql.includes('INSERT INTO'));
+    expect(reads).toHaveLength(5);
+    for (const call of reads) {
+      expect(call.sql).toContain('stake_address = ?');
+      expect(call.sql).toContain('network = ?');
+      expect(call.binds).toContain(STAKE);
+      expect(call.binds).toContain('preview');
+    }
+    for (const call of reads.slice(0, 4)) {
+      expect(call.sql).toContain('delivered_at IS NOT NULL');
+    }
+    const feeSql = reads.find((call) => call.sql.includes('total_fees_lovelace'))!.sql;
     expect(feeSql).toContain('EXISTS');
     expect(feeSql).toContain('withdrawal_request = claim_requests.request_id');
     expect(feeSql).toContain('withdrawals.network = claim_requests.network');
+    expect(feeSql).toContain('overhead_fee');
   });
 
-  it('keeps history analytics available when the fee table is unavailable', async () => {
+  it('binds the mainnet network when the deployment is mainnet', async () => {
+    const { db, calls } = fakeDb();
+    await onRequestGet(
+      ctx(`staking_address=${STAKE}`, { DB: db, VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm' }),
+    );
+
+    const reads = calls.filter((call) => !call.sql.includes('INSERT INTO'));
+    expect(reads.every((call) => call.binds.includes('mainnet'))).toBe(true);
+    expect(reads.some((call) => call.binds.includes('preview'))).toBe(false);
+  });
+
+  it('sums native-asset quantities beyond the int64 range', async () => {
+    const { db } = fakeDb({
+      rewards: [
+        { month: '2026-06', token: 'policy.big', amount: '9223372036854775807' },
+        { month: '2026-06', token: 'policy.big', amount: '9223372036854775807' },
+        { month: '2026-06', token: 'policy.big', amount: 2 },
+      ],
+    });
+    const response = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await response.json()) as {
+      rewardsByMonth: Array<{ token: string; amount: string }>;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.rewardsByMonth).toEqual([
+      { month: '2026-06', token: 'policy.big', amount: '18446744073709551616' },
+    ]);
+  });
+
+  it('returns an empty model for an account with no delivered rewards', async () => {
+    const { db } = fakeDb({ empty: true });
+    const response = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await response.json()) as {
+      summary: { totalClaims: number; activeSince: number | null };
+      claimsByMonth: unknown[];
+      rewardsByMonth: unknown[];
+      tokenMix: unknown[];
+    };
+
+    expect(body.summary.totalClaims).toBe(0);
+    expect(body.summary.activeSince).toBeNull();
+    expect(body.claimsByMonth).toEqual([]);
+    expect(body.rewardsByMonth).toEqual([]);
+    expect(body.tokenMix).toEqual([]);
+  });
+
+  it('reports fees as unknown, not zero, when the fee table is unavailable', async () => {
     const { db } = fakeDb({ failFees: true });
     const response = await onRequestGet(
       ctx(`staking_address=${encodeURIComponent(STAKE)}`, { DB: db }),
@@ -167,7 +257,7 @@ describe('GET /api/personalAnalytics', () => {
       degraded: boolean;
       feesUnavailable: boolean;
       feeCoverage: { incomplete: boolean };
-      summary: { totalClaims: number; totalFeesLovelace: string };
+      summary: { totalClaims: number; totalFeesLovelace: string | null };
     };
 
     expect(response.status).toBe(200);
@@ -175,6 +265,6 @@ describe('GET /api/personalAnalytics', () => {
     expect(body.feesUnavailable).toBe(true);
     expect(body.feeCoverage.incomplete).toBe(true);
     expect(body.summary.totalClaims).toBe(4);
-    expect(body.summary.totalFeesLovelace).toBe('0');
+    expect(body.summary.totalFeesLovelace).toBeNull();
   });
 });

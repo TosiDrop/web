@@ -9,8 +9,7 @@ import {
   optionsResponse,
   sessionIdFor,
 } from '../../services/vmClient';
-import { hasDb } from '../../services/d1';
-import { persistClaimQuote } from '../../services/claimAnalytics';
+import { recordClaimQuote } from '../../services/claimAnalytics';
 
 interface CreateRequestBody {
   stakeAddress?: string;
@@ -68,29 +67,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       is_whitelisted: unknown;
     };
 
-    if (hasDb(env)) {
-      try {
-        const fees = (await vmGet(env, 'estimate_fees', {
-          token_count: body.assetIds.length,
-        })) as {
-          withdrawal_fee?: string | number;
-          tokens_fee?: string | number;
-          fee?: string | number;
-        };
-        await persistClaimQuote(env.DB, {
-          requestId: String(response.request_id),
-          stakeAddress,
-          network,
-          tokenCount: body.assetIds.length,
-          deposit: String(response.deposit),
-          withdrawalFee: fees.withdrawal_fee,
-          tokensFee: fees.tokens_fee,
-          txFee: fees.fee,
-        });
-      } catch (error) {
-        console.error('claim/create analytics persistence error:', error);
-      }
-    }
+    recordClaimQuote(env, context.waitUntil.bind(context), {
+      requestId: String(response.request_id),
+      stakeAddress,
+      network,
+      tokenCount: body.assetIds.length,
+      deposit: String(response.deposit),
+      overheadFee: response.overhead_fee as string | number | null | undefined,
+    });
 
     return jsonResponse(
       {

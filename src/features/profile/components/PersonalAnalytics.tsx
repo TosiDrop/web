@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -16,6 +16,8 @@ import {
 import { IconAlertCircle, IconChartDots3 } from '@tabler/icons-react';
 import { useWalletStore } from '@/store/wallet-state';
 import { usePersonalAnalytics } from '@/features/profile/hooks/usePersonalAnalytics';
+import { formatTokenAmount as formatReward } from '@/utils/format';
+import { StateMessage } from './StateMessage';
 
 const TOKEN_COLORS = ['#22D3EE', '#A78BFA', '#34D399', '#FBBF24', '#F472B6'];
 
@@ -28,31 +30,13 @@ const TOOLTIP_STYLE = {
   fontSize: 11,
 };
 
-function formatReward(value: number): string {
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: value >= 1 ? 4 : 6,
-  });
-}
-
-function StateMessage({
-  eyebrow,
-  message,
-}: {
-  eyebrow: string;
-  message: string;
-}) {
-  return (
-    <div className="card-premium px-6 py-14 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">{message}</p>
-    </div>
-  );
-}
+const DATE_FORMAT = { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' } as const;
 
 function LoadingState() {
   return (
     <div
       className="space-y-4"
+      role="status"
       aria-label="Loading personal analytics"
       aria-busy="true"
     >
@@ -95,33 +79,19 @@ function Metric({
 export function PersonalAnalytics() {
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
   const { data, isLoading, error } = usePersonalAnalytics(stakeAddress);
-  const [selectedToken, setSelectedToken] = useState('');
+  const [chosenToken, setChosenToken] = useState('');
+  // Derived rather than synced through an effect, so the first render with
+  // data already shows a series instead of an empty chart.
+  const selectedToken =
+    data && chosenToken && data.seriesByToken[chosenToken] ? chosenToken : (data?.defaultToken ?? '');
 
-  useEffect(() => {
-    if (data?.defaultToken) {
-      setSelectedToken((current) =>
-        current && data.seriesByToken[current] ? current : data.defaultToken!,
-      );
-    }
-  }, [data]);
-
-  const selectedSeries = selectedToken
-    ? data?.seriesByToken[selectedToken]
-    : undefined;
-  const activeSince = data?.summary.activeSince?.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+  const selectedSeries = selectedToken ? data?.seriesByToken[selectedToken] : undefined;
+  const activeSince = data?.summary.activeSince?.toLocaleDateString('en-US', DATE_FORMAT);
   const totalRewards = useMemo(
     () => data?.tokenMix.reduce((sum, item) => sum + item.rewards, 0) ?? 0,
     [data],
   );
-  const feeTrackedSince = data?.feeCoverage.trackedSince?.toLocaleDateString(
-    undefined,
-    { month: 'short', year: 'numeric', timeZone: 'UTC' },
-  );
+  const feesKnown = !!data && !data.feesUnavailable && data.summary.totalFeesAda !== null;
 
   if (!stakeAddress) {
     return (
@@ -136,7 +106,10 @@ export function PersonalAnalytics() {
 
   if (error) {
     return (
-      <div className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
+      <div
+        role="alert"
+        className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200"
+      >
         <IconAlertCircle
           size={18}
           stroke={1.6}
@@ -176,13 +149,13 @@ export function PersonalAnalytics() {
         />
         <Metric
           label="Tracked fees"
-          value={`${formatReward(data.summary.totalFeesAda)} ADA`}
+          value={feesKnown ? `${formatReward(data.summary.totalFeesAda!)} ADA` : '—'}
           detail={
-            data.feesUnavailable
-              ? 'Unavailable'
-              : `${data.feeCoverage.completeClaims} complete claim${
+            feesKnown
+              ? `${data.feeCoverage.completeClaims} complete claim${
                   data.feeCoverage.completeClaims === 1 ? '' : 's'
-                }${feeTrackedSince ? ` since ${feeTrackedSince}` : ''}`
+                }`
+              : 'Unavailable'
           }
         />
         <Metric label="Active since" value={activeSince ?? '—'} />
@@ -203,7 +176,7 @@ export function PersonalAnalytics() {
             Reward token
             <select
               value={selectedToken}
-              onChange={(event) => setSelectedToken(event.target.value)}
+              onChange={(event) => setChosenToken(event.target.value)}
               className="rounded-lg border border-border-default bg-surface-inset px-3 py-2 font-mono text-xs normal-case tracking-normal text-slate-200 outline-none transition focus:border-accent"
             >
               {Object.values(data.seriesByToken).map((series) => (
@@ -316,7 +289,7 @@ export function PersonalAnalytics() {
               Tokens claimed
             </h3>
           </header>
-          <div className="grid min-h-56 grid-cols-[minmax(130px,0.8fr)_1fr] items-center gap-2 px-4 py-4">
+          <div className="grid min-h-56 grid-cols-1 items-center gap-4 px-4 py-4 sm:grid-cols-[minmax(130px,0.8fr)_1fr] sm:gap-2">
             <div className="relative h-40" aria-label="Tokens claimed chart">
               <ul className="sr-only" aria-label="Tokens claimed data">
                 {data.tokenMix.map((item) => (
@@ -373,13 +346,18 @@ export function PersonalAnalytics() {
         </section>
       </div>
 
-      {(data.feesUnavailable || data.feeCoverage.incomplete) && (
+      {(!feesKnown || data.feeCoverage.incomplete || !data.fresh) && (
         <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset/50 px-4 py-3 text-xs text-slate-500">
           <IconChartDots3 size={15} stroke={1.6} className="mt-0.5 shrink-0 text-accent" />
-          {data.feesUnavailable
-            ? 'Fee history is temporarily unavailable. '
-            : `The fee total covers ${data.feeCoverage.completeClaims} of ${data.summary.totalClaims} delivered claims. `}
-          Earlier rewards remain included in every other chart.
+          <span>
+            {!data.fresh && 'The latest deliveries could not be fetched; this is the archived history. '}
+            {!feesKnown
+              ? 'Fee history is temporarily unavailable. '
+              : data.feeCoverage.incomplete
+                ? `The fee total covers ${data.feeCoverage.completeClaims} of ${data.summary.totalClaims} delivered claims. `
+                : ''}
+            Earlier rewards remain included in every other chart.
+          </span>
         </div>
       )}
     </div>

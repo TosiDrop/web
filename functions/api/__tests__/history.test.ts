@@ -99,13 +99,17 @@ describe('GET /api/history', () => {
       { DB: db },
     ));
     const dataCall = db.__calls.find((c) => !c.sql.includes('COUNT'))!;
+    expect(dataCall.sql).toContain('network = ?');
     expect(dataCall.sql).toContain('token = ?');
     expect(dataCall.sql).toContain('delivered_at >= ?');
     expect(dataCall.sql).toContain('delivered_at <= ?');
     expect(dataCall.sql).toContain('ASC');
-    // binds: stake, token, from, to, limit+1, offset
+    // binds: network, stake, token, from, to, limit+1, offset
     expect(dataCall.binds).toEqual([
-      STAKE, 'lovelace', 1700000000, Math.floor(Date.parse('2026-06-01') / 1000), 11, 20,
+      'preview', STAKE, 'lovelace', 1700000000, Math.floor(Date.parse('2026-06-01') / 1000), 11, 20,
     ]);
+    const countCall = db.__calls.find((c) => c.sql.includes('COUNT'))!;
+    expect(countCall.sql).toContain('network = ?');
+    expect(countCall.binds.slice(0, 2)).toEqual(['preview', STAKE]);
   });
 });

@@ -18,7 +18,12 @@ export function usePersonalAnalytics(stakeAddress: string | null) {
         apiClient.get<RawPersonalAnalyticsResponse>(
           `/api/personalAnalytics?staking_address=${encodeURIComponent(stakeAddress)}`,
         ),
-        apiClient.get<TokenMap>('/api/getTokens'),
+        // Tickers and decimals only decorate the numbers; a metadata outage
+        // must not blank the charts.
+        apiClient.get<TokenMap>('/api/getTokens').catch((error: unknown) => {
+          console.error('personal analytics token metadata unavailable:', error);
+          return {} as TokenMap;
+        }),
       ]);
       return normalizePersonalAnalytics(analytics, tokens);
     },
