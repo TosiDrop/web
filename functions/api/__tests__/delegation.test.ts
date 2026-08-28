@@ -12,10 +12,13 @@ vi.mock('../../services/vmClient', async (importOriginal) => {
 });
 
 import { onRequestGet } from '../delegation';
+import { MAINNET_STAKE, PREVIEW_STAKE } from '../../../src/shared/__tests__/stakeAddresses';
 
 type Ctx = Parameters<typeof onRequestGet>[0];
 
-const STAKE = 'stake1' + 'u'.repeat(48);
+// The deployment under test is preview unless VITE_NETWORK says otherwise.
+const STAKE = PREVIEW_STAKE;
+const MAINNET = { VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm.example' };
 const fetchMock = vi.fn();
 
 function ctx(query: string, env: Partial<Env> = {}): Ctx {
@@ -37,9 +40,21 @@ describe('GET /api/delegation', () => {
     vi.unstubAllGlobals();
   });
 
-  it('400 for a missing or non-stake address', async () => {
+  it('400 for a missing, malformed, or badly checksummed address, before Koios is called', async () => {
     expect((await onRequestGet(ctx(''))).status).toBe(400);
     expect((await onRequestGet(ctx('staking_address=addr1x'))).status).toBe(400);
+    expect((await onRequestGet(ctx('staking_address=stake_test1' + 'q'.repeat(53)))).status).toBe(400);
+    expect((await onRequestGet(ctx(`staking_address=${STAKE.slice(0, -1)}q`))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('400 for the other network\'s address, naming the mismatch', async () => {
+    const onPreview = await onRequestGet(ctx(`staking_address=${MAINNET_STAKE}`));
+    expect(onPreview.status).toBe(400);
+    expect(((await onPreview.json()) as { error: string }).error).toContain('Mainnet stake address');
+
+    const onMainnet = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`, MAINNET));
+    expect(onMainnet.status).toBe(400);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -60,7 +75,7 @@ describe('GET /api/delegation', () => {
   it('uses the mainnet Koios instance for a mainnet deployment', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify([])));
 
-    await onRequestGet(ctx(`staking_address=${STAKE}`, { VITE_NETWORK: 'mainnet' }));
+    await onRequestGet(ctx(`staking_address=${MAINNET_STAKE}`, MAINNET));
 
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.koios.rest/api/v1/account_info');
   });

@@ -59,4 +59,17 @@ describe('useDelegatedPool', () => {
     expect(result.current.error?.message).toBe('Failed to look up delegation');
     expect(result.current.poolId).toBeNull();
   });
+
+  it('refetch retries a failed lookup and clears the error on success', async () => {
+    getMock.mockRejectedValueOnce(new Error('Koios blip'));
+    const { result } = renderHook(() => useDelegatedPool(STAKE), { wrapper });
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+
+    getMock.mockResolvedValueOnce({ poolId: 'pool1new', registered: true });
+    await result.current.refetch();
+
+    await waitFor(() => expect(result.current.poolId).toBe('pool1new'));
+    expect(result.current.error).toBeNull();
+    expect(getMock).toHaveBeenCalledTimes(2);
+  });
 });

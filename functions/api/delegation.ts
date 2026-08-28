@@ -5,6 +5,7 @@ import {
   errorResponse,
   optionsResponse,
 } from '../services/vmClient';
+import { stakeAddressError } from '../../src/shared/stakeAddress';
 
 // Current delegation is ledger state, so it comes from Koios (like handle
 // resolution does), not from the VM's reward history: reward rows lag or
@@ -26,13 +27,15 @@ interface KoiosAccountInfo {
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
-  const stakingAddress = new URL(request.url).searchParams.get('staking_address')?.trim();
+  const stakingAddress = new URL(request.url).searchParams.get('staking_address')?.trim() ?? '';
+  const network = deploymentNetwork(env);
 
-  if (!stakingAddress || !stakingAddress.startsWith('stake')) {
-    return errorResponse('staking_address must be a bech32 stake address', 400, origin);
-  }
+  // Checksum and HRP are verified here so a malformed or wrong-network value
+  // is a 400, not an "empty account" from Koios that reads as "not delegated".
+  const problem = stakeAddressError(stakingAddress, network);
+  if (problem) return errorResponse(problem, 400, origin);
 
-  const koiosBase = KOIOS_BASES[deploymentNetwork(env)];
+  const koiosBase = KOIOS_BASES[network];
 
   try {
     return await withCache(request, env, CACHE_TTL, async () => {
