@@ -30,7 +30,7 @@
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.3",
     "recharts": "^3.8.1",
-    "styled-components": "^6.1.19",
+    "styled-components": "^6.5.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.8",
     "tailwindcss-animate": "^1.0.7",
