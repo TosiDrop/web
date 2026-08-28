@@ -6,12 +6,8 @@ import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useRewardBreakdown, type BreakdownGroup } from '@/features/profile/hooks/useRewardBreakdown';
 import type { BreakdownEntry } from '@/features/profile/utils/normalizeBreakdown';
-
-function formatAmount(amount: number): string {
-  if (amount >= 1000) return amount.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  if (amount >= 1) return amount.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  return amount.toLocaleString(undefined, { maximumFractionDigits: 6 });
-}
+import { formatTokenAmount as formatAmount } from '@/utils/format';
+import { StateMessage } from './StateMessage';
 
 function TokenAvatar({ logo, ticker }: { logo?: string; ticker: string }) {
   const [failed, setFailed] = useState(false);
@@ -87,15 +83,6 @@ function GroupRow({ group }: { group: BreakdownGroup }) {
         </ul>
       )}
     </li>
-  );
-}
-
-function StateMessage({ title, message }: { title: string; message: string }) {
-  return (
-    <Card variant="inset" className="px-6 py-16 text-center">
-      <p className="text-sm font-semibold text-text-primary">{title}</p>
-      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
-    </Card>
   );
 }
 

@@ -21,6 +21,8 @@ import { AvailableDistributions } from '@/features/rewards/components/AvailableD
 import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
 import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
+import { PoolInfo } from '@/features/rewards/components/PoolInfo';
+import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 
 function LoadingTokens() {
   return (
@@ -68,6 +70,12 @@ export default function ClaimPage() {
   }, [stakeAddress, connected, setLookupAddress]);
 
   const { data: rewards, isLoading, error, refetch } = useRewards(lookupAddress);
+  const {
+    poolId,
+    isLoading: poolLoading,
+    error: poolError,
+    refetch: refetchDelegation,
+  } = useDelegatedPool(lookupAddress);
 
   const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
 
@@ -111,12 +119,16 @@ export default function ClaimPage() {
       }
 
       if (resolved === lookupAddress) {
+        // Re-checking the same address is the user's retry: refresh the
+        // delegation alongside the rewards so a Koios blip or a redelegation
+        // does not stay cached.
         refetch();
+        refetchDelegation();
       } else {
         setLookupAddress(resolved);
       }
     },
-    [lookupAddress, refetch, setLookupAddress],
+    [lookupAddress, refetch, refetchDelegation, setLookupAddress],
   );
 
   const claimMutation = useMutation({
@@ -207,6 +219,7 @@ export default function ClaimPage() {
           </div>
 
           <div className="space-y-5">
+            <PoolInfo poolId={poolId} isLoading={poolLoading} error={poolError} />
             <RewardsSummary tokenCount={selectedVisible.length} />
             {connected && (
               <>

@@ -10,6 +10,7 @@ import { useWalletStore } from '@/store/wallet-state';
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
+import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
@@ -37,7 +38,14 @@ function AnalyticsTab() {
       <div>
         <h2 className="text-xl font-semibold text-text-primary">Reward analytics</h2>
         <p className="mt-1 text-sm text-text-muted">
-          Where your rewards came from, by pool, epoch, and distribution rule.
+          Delivered claim trends, fee history, and current reward sources.
+        </p>
+      </div>
+      <PersonalAnalytics />
+      <div className="pt-2">
+        <h3 className="text-sm font-semibold text-text-primary">Current allocations</h3>
+        <p className="mt-1 text-xs text-text-muted">
+          Rewards waiting for your next claim, grouped by source.
         </p>
       </div>
       <RewardBreakdown />
@@ -132,7 +140,7 @@ export default function ProfilePage() {
   useEffect(() => {
     tabListRef.current
       ?.querySelector('[aria-selected="true"]')
-      ?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+      ?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
   }, [tabIndex]);
 
   return (
