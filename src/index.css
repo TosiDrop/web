@@ -5,22 +5,28 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surface system — blue-tinted depth layers */
+  /* Surface system — blue-tinted navy depth layers */
   --color-surface-base: #0B1120;
   --color-surface-raised: #161B2E;
   --color-surface-overlay: #1C2237;
   --color-surface-inset: #0F1524;
   --color-surface-sidebar: #070D1A;
 
-  /* Borders — blue-tinted */
+  /* Borders — blue-tinted hairlines */
   --color-border-subtle: rgba(56, 78, 128, 0.25);
-  --color-border-default: rgba(56, 78, 128, 0.35);
+  --color-border-default: rgba(56, 78, 128, 0.40);
 
-  /* Brand */
+  /* Brand / accent — cyan-blue. */
   --color-brand-primary: #C6B6D4;
   --color-brand-secondary: #4F46E5;
-  --color-brand-cyan: #22D3EE;
+  --color-brand-cyan: #22D3EE;       /* primary accent — cyan */
   --color-brand-teal: #14B8A6;
+
+  --color-accent: #22D3EE;
+  --color-accent-light: #67E8F9;
+  --color-accent-deep: #06B6D4;
+  --color-accent-contrast: #06181A;  /* text/icons on a cyan fill */
+  --color-cream: #DCCFA8;            /* umbrella canopy accent */
 
   /* Status */
   --color-status-success: #22C55E;
@@ -30,7 +36,7 @@
 
 html, body {
   background-color: #0B1120;
-  color: #e7ecf3;
+  color: #C5C8D2;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "cv11", "ss01";
@@ -41,6 +47,10 @@ html, body {
   font-feature-settings: "tnum", "ss01";
 }
 
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(56, 78, 128, 0.45); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+
 button:not(:disabled),
 [role="button"]:not(:disabled) {
   cursor: pointer;
@@ -50,12 +60,14 @@ a {
   cursor: pointer;
 }
 
-/* Flat panel surface — V1 refined direction (no radial glow / top highlight) */
+/* Layered panel surface — navy card: subtle top→bottom gradient,
+   blue-tinted hairline border, soft inset highlight + drop shadow. */
 @utility card-premium {
   position: relative;
-  border-radius: 0.75rem;
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #161B2E, #121726);
+  border: 1px solid rgba(56, 78, 128, 0.25);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 30px -22px rgba(0, 0, 0, 0.7);
 }
 
 /* Eyebrow label — Geist Mono uppercase with tracking */
@@ -63,7 +75,20 @@ a {
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgb(138 147 163 / 1);
+  color: #6B7895;
+}
+
+@keyframes tdspin { to { transform: rotate(360deg); } }
+@keyframes tdshimmer {
+  0% { background-position: -360px 0; }
+  100% { background-position: 360px 0; }
+}
+
+/* Skeleton shimmer block used by loading states */
+@utility skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  background-size: 360px 100%;
+  animation: tdshimmer 1.4s infinite linear;
 }

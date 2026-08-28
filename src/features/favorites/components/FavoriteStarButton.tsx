@@ -1,4 +1,4 @@
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
+import { IconBookmark, IconBookmarkFilled } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
 interface FavoriteStarButtonProps {
@@ -12,20 +12,20 @@ export function FavoriteStarButton({ active, onToggle, className }: FavoriteStar
     <button
       type="button"
       aria-pressed={active}
-      aria-label={active ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={active ? 'Remove from saved' : 'Save token'}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
       }}
       className={cn(
-        'flex h-6 w-6 items-center justify-center rounded-md border transition',
+        'flex h-7 w-7 items-center justify-center rounded-lg transition',
         active
-          ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
-          : 'border-border-default bg-surface-inset text-slate-500 hover:text-amber-300',
+          ? 'text-[#E7B86E] hover:bg-[#E7B86E]/[0.1]'
+          : 'text-[#5F6680] hover:bg-white/[0.06] hover:text-[#E7B86E]',
         className,
       )}
     >
-      {active ? <IconStarFilled size={13} /> : <IconStar size={13} stroke={1.8} />}
+      {active ? <IconBookmarkFilled size={15} /> : <IconBookmark size={15} stroke={1.7} />}
     </button>
   );
 }

@@ -1,8 +1,9 @@
 {
+  // Keep this file local-only: Pages deployment variables and bindings are
+  // managed per environment by the infrastructure repository.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vm-web-profiles",
   "compatibility_date": "2025-02-04",
-  "pages_build_output_dir": "dist",
   "observability": {
     "enabled": true
   },
@@ -24,7 +25,9 @@
       "database_id": "689c7608-8a46-415e-9f46-99849222031c"
     }
   ],
-  "vars": {
-    "VITE_VM_API_KEY": "{{VITE_VM_API_KEY}}"
-  }
+  // R2-backed token image cache (bucket exists; see infrastructure#84).
+  // /api/tokenImage feature-detects the binding and degrades to a redirect.
+  "r2_buckets": [
+    { "binding": "TOKEN_IMAGES", "bucket_name": "tosidrop-token-images" }
+  ]
 }

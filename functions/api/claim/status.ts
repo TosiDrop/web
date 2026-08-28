@@ -1,7 +1,8 @@
 import type { Env } from '../../types/env';
 import {
-  vmApiGet,
-  requireApiKey,
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
   jsonResponse,
   errorResponse,
   optionsResponse,
@@ -59,11 +60,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('requestId must be a non-negative integer', 400, origin);
   }
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    const raw = await vmApiGet(env, 'check_status_custom_request', {
+    const raw = await vmGet(env, 'check_status_custom_request', {
       staking_address: stakeAddress,
       request_id: Number(requestIdParam),
       session_id: sessionIdFor(stakeAddress),

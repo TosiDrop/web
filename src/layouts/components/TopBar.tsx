@@ -1,4 +1,5 @@
 import { useWallet } from '@meshsdk/react';
+import { useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { IconMenu2, IconChevronDown, IconLogout, IconCopy } from '@tabler/icons-react';
 import { ConnectWallet } from '@/components/common/ConnectWallet';
@@ -6,20 +7,27 @@ import { useWalletStore } from '@/store/wallet-state';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
+const SECTION_LABELS: Record<string, string> = {
+  '/': 'Claim',
+  '/profile': 'Profile',
+  '/team': 'Team',
+  '/deposit': 'Deposit',
+  '/api-tester': 'API',
+};
+
+function useSectionLabel() {
+  const { pathname } = useLocation();
+  if (pathname === '/') return SECTION_LABELS['/'];
+  const match = Object.keys(SECTION_LABELS).find(
+    (key) => key !== '/' && pathname.startsWith(key),
+  );
+  return match ? SECTION_LABELS[match] : 'Overview';
+}
+
 function NetworkChip({ networkId }: { networkId: number | null }) {
-  const isMainnet = networkId === 1;
-  const label = getNetworkLabel(networkId);
   return (
-    <span className="hidden items-center gap-1.5 rounded-md border border-border-subtle bg-surface-raised/60 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-400 sm:inline-flex">
-      <span
-        className={
-          'h-1 w-1 rounded-full ' +
-          (isMainnet
-            ? 'bg-brand-cyan shadow-[0_0_5px_rgba(34,211,238,0.85)]'
-            : 'bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.7)]')
-        }
-      />
-      {label}
+    <span className="hidden items-center rounded-[7px] border border-border-default px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-[#8A8E9A] sm:inline-flex">
+      {getNetworkLabel(networkId)}
     </span>
   );
 }
@@ -33,18 +41,14 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
 
   return (
     <Menu>
-      <MenuButton className="group flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-raised/60 px-3 py-1.5 transition hover:border-brand-cyan/30 hover:bg-surface-raised data-[open]:border-brand-cyan/40 data-[open]:bg-surface-raised">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
-          <span className="relative h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.85)]" />
-        </span>
-        <span className="font-mono text-xs text-slate-300 group-hover:text-white">
+      <MenuButton className="group flex h-9 items-center gap-2 rounded-lg border border-border-default px-3 transition hover:bg-white/[0.04] data-[open]:bg-white/[0.04]">
+        <span className="font-mono text-[12px] text-[#C5C8D2] group-hover:text-white">
           {truncateHash(stakeAddress)}
         </span>
         <IconChevronDown
-          size={12}
-          stroke={1.6}
-          className="text-slate-500 transition group-data-[open]:rotate-180 group-data-[open]:text-brand-cyan"
+          size={13}
+          stroke={1.8}
+          className="text-[#6B6F7B] transition group-data-[open]:rotate-180 group-data-[open]:text-accent-light"
         />
       </MenuButton>
       <MenuItems
@@ -85,18 +89,24 @@ function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
 export function TopBar() {
   const { connected, stakeAddress, networkId } = useWalletStore();
   const { open: openMobileMenu } = useMobileMenu();
+  const section = useSectionLabel();
 
   return (
-    <header className="sticky top-0 z-30 bg-surface-base/70 backdrop-blur-md">
-      <div className="flex h-14 items-center justify-between px-4 lg:px-6">
-        <button
-          onClick={openMobileMenu}
-          className="rounded-md p-1.5 text-slate-400 transition hover:bg-surface-raised/50 hover:text-white lg:hidden"
-          aria-label="Open menu"
-        >
-          <IconMenu2 size={20} stroke={1.5} />
-        </button>
-        <div className="hidden lg:block" />
+    <header className="sticky top-0 z-30 border-b border-[rgba(56,78,128,0.22)] bg-surface-base/70 backdrop-blur-md">
+      <div className="flex h-[66px] items-center justify-between px-5 lg:px-9">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openMobileMenu}
+            className="rounded-md p-1.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-white lg:hidden"
+            aria-label="Open menu"
+          >
+            <IconMenu2 size={20} stroke={1.5} />
+          </button>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6F7B]">
+            Account <span className="text-[#3F424C]">/</span>{' '}
+            <span className="text-[#8A8E9A]">{section}</span>
+          </p>
+        </div>
 
         <div className="flex items-center gap-2.5">
           {connected && <NetworkChip networkId={networkId} />}

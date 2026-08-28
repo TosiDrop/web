@@ -34,9 +34,9 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
 
   if (tokens.length === 0) {
     return (
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium text-white">Claimable tokens</h2>
-        <p className="py-6 text-center text-sm text-slate-500">
+      <div className="space-y-4">
+        <h2 className="text-[16px] font-semibold text-[#EDEEF2]">Claimable tokens</h2>
+        <p className="py-6 text-center text-sm text-[#6B6F7B]">
           No rewards found for this address.
         </p>
       </div>
@@ -87,16 +87,16 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
   );
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-medium text-white">
-          Claimable tokens
-          <span className="ml-1.5 text-slate-500">{visible.length}</span>
-        </h2>
+    <div className="space-y-4">
+      <div className="flex items-baseline gap-2.5">
+        <h2 className="text-[16px] font-semibold text-[#EDEEF2]">Claimable tokens</h2>
+        <span className="rounded-md bg-white/[0.05] px-2 py-[3px] font-mono text-[11px] text-[#8A8E9A]">
+          {visible.length}
+        </span>
         <button
           type="button"
           onClick={toggleAll}
-          className="text-xs text-brand-cyan transition hover:text-cyan-300"
+          className="ml-auto text-[12.5px] text-accent-light transition hover:brightness-110"
         >
           {allSelected ? 'Clear' : 'Select all'}
         </button>
@@ -104,7 +104,7 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
 
       <FavoritesSaveBar />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
         {visible.map(renderCard)}
       </div>
 

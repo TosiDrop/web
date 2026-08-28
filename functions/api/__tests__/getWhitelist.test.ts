@@ -1,0 +1,82 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Env } from '../../types/env';
+
+const { vmGet } = vi.hoisted(() => ({ vmGet: vi.fn() }));
+vi.mock('../../services/vmClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/vmClient')>();
+  return { ...actual, vmGet };
+});
+
+import { onRequestGet } from '../getWhitelist';
+
+type Ctx = Parameters<typeof onRequestGet>[0];
+
+function fakeKv(initial: Record<string, unknown> = {}) {
+  const store = new Map(Object.entries(initial));
+  return {
+    get: vi.fn(async (key: string) => store.get(key) ?? null),
+    put: vi.fn(async (key: string, value: string) => {
+      store.set(key, JSON.parse(value));
+    }),
+  } as unknown as KVNamespace & { get: ReturnType<typeof vi.fn>; put: ReturnType<typeof vi.fn> };
+}
+
+function ctx(env: Partial<Env>, url = 'https://x/api/getWhitelist'): Ctx {
+  return {
+    request: new Request(url, {
+      headers: { Origin: 'http://localhost:5173' },
+    }),
+    env: { VITE_VM_API_KEY: 'k', ...env } as Env,
+    waitUntil: vi.fn(),
+  } as unknown as Ctx;
+}
+
+const WHITELIST = { tosi: ['pool1abc', 'pool1def'] };
+
+describe('GET /api/getWhitelist', () => {
+  // Block body on purpose: beforeEach treats a returned function as a
+  // teardown hook, and mockReset() returns the mock itself.
+  beforeEach(() => {
+    vmGet.mockReset();
+    vmGet.mockResolvedValue(WHITELIST);
+  });
+
+  it('returns 500 when the deployment API key is not configured', async () => {
+    const res = await onRequestGet(ctx({ VITE_VM_API_KEY: '', VM_WEB_PROFILES: fakeKv() }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Server configuration error' });
+  });
+
+  it('serves from KV without calling the VM API on a cache hit', async () => {
+    const kv = fakeKv({ '__internal:whitelist_cache:preview': WHITELIST });
+    const res = await onRequestGet(ctx({ VM_WEB_PROFILES: kv }));
+    expect(await res.json()).toEqual(WHITELIST);
+    expect(vmGet).not.toHaveBeenCalled();
+  });
+
+  it('fetches, stores with a daily TTL, and serves on a cache miss', async () => {
+    const kv = fakeKv();
+    const res = await onRequestGet(ctx({ VM_WEB_PROFILES: kv }));
+    expect(await res.json()).toEqual(WHITELIST);
+    expect(vmGet).toHaveBeenCalledTimes(1);
+    expect(kv.put).toHaveBeenCalledWith(
+      '__internal:whitelist_cache:preview',
+      JSON.stringify(WHITELIST),
+      { expirationTtl: 86400 },
+    );
+  });
+
+  it('maps VM API failures to a 500', async () => {
+    vmGet.mockRejectedValue(new Error('vm down'));
+    const res = await onRequestGet(ctx({ VM_WEB_PROFILES: fakeKv() }));
+    expect(res.status).toBe(500);
+  });
+
+  it('ignores a caller-supplied network query parameter', async () => {
+    const res = await onRequestGet(
+      ctx({ VM_WEB_PROFILES: fakeKv() }, 'https://x/api/getWhitelist?network=mainnet'),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(WHITELIST);
+  });
+});

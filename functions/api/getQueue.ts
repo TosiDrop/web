@@ -1,5 +1,12 @@
 import type { Env } from '../types/env';
-import { initVmSdk, requireApiKey, withCache, errorResponse, optionsResponse } from '../services/vmClient';
+import {
+  vmConfig,
+  vmGet,
+  vmConfigurationErrorResponse,
+  withCache,
+  errorResponse,
+  optionsResponse,
+} from '../services/vmClient';
 
 const CACHE_TTL = 60;
 
@@ -7,13 +14,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get('Origin');
 
-  const keyError = requireApiKey(env, origin);
-  if (keyError) return keyError;
+  if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
   try {
-    return await withCache(request, CACHE_TTL, async () => {
-      const sdk = await initVmSdk(env);
-      return sdk.getPendingTxCount();
+    return await withCache(request, env, CACHE_TTL, async () => {
+      return vmGet(env, 'get_pending_tx_count');
     }, context.waitUntil.bind(context));
   } catch (error) {
     console.error('getQueue error:', error);

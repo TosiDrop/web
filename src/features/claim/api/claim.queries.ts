@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { ClaimCreateRequest, ClaimStatus, DepositInfo } from '@/types/claim';
 
 export function useClaimCreate() {
@@ -22,7 +23,7 @@ export function useClaimStatus({
   refetchIntervalMs,
 }: UseClaimStatusArgs) {
   return useQuery<ClaimStatus, Error>({
-    queryKey: ['claim-status', requestId, stakeAddress],
+    queryKey: ['claim-status', requestId, stakeAddress, DEPLOYMENT_NETWORK],
     queryFn: async () => {
       if (!requestId || !stakeAddress) throw new Error('requestId and stakeAddress required');
       const params = new URLSearchParams({

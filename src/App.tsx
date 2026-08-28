@@ -8,6 +8,7 @@ import ClaimPage from '@/pages/ClaimPage';
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const DepositPage = lazy(() => import('@/pages/DepositPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const TeamPage = lazy(() => import('@/pages/TeamPage'));
 const ApiTesterPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/ApiTesterPage'))
   : null;
@@ -23,6 +24,7 @@ export default function App() {
                 <Route path="/" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/team" element={<TeamPage />} />
                 <Route path="/history" element={<Navigate to="/profile" replace />} />
                 <Route path="/preferences" element={<Navigate to="/profile" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}

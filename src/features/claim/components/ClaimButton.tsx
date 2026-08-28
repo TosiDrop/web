@@ -35,7 +35,7 @@ export function ClaimButton({ state, onClaim, disabled }: ClaimButtonProps) {
     <button
       onClick={onClaim}
       disabled={disabled || isWorking || isAwaitingDeposit}
-      className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-8 py-3 text-base font-semibold text-surface-base shadow-lg shadow-brand-cyan/25 transition hover:bg-cyan-300 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+      className="inline-flex items-center gap-2 rounded-xl bg-brand-cyan px-8 py-3 text-base font-semibold text-white shadow-lg shadow-brand-cyan/25 transition hover:brightness-110 hover:shadow-brand-cyan/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
     >
       {isWorking && <Spinner />}
       {STEP_LABELS[state.step]}

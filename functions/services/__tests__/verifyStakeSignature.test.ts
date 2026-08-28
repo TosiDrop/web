@@ -41,6 +41,18 @@ describe('verifyStakeSignature', () => {
     expect(verifyMock).toHaveBeenCalledWith('s', 'k', message, STAKE);
   });
 
+  it('accepts a testnet (stake_test1...) stake address', async () => {
+    const now = new Date('2026-06-16T06:23:28.948Z');
+    const testnetStake = 'stake_test1' + 'u'.repeat(40);
+    const ids = ['a1', 'a2'];
+    const message = await buildMessage(testnetStake, ids, [], now.toISOString());
+    const res = await verifyStakeSignature({
+      stakeAddress: testnetStake, favorites: ids, dislikes: [], signature: 's', key: 'k', message, now,
+    });
+    expect(res.ok).toBe(true);
+    expect(verifyMock).toHaveBeenCalledWith('s', 'k', message, testnetStake);
+  });
+
   it('accepts a message binding both favorites and dislikes', async () => {
     const now = new Date('2026-06-03T12:00:00.000Z');
     const favs = ['a1'];

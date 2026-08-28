@@ -85,7 +85,7 @@ export function ProfileForm({ currentName }: ProfileFormProps) {
         <button
           type="submit"
           disabled={saveProfile.isPending || !connected || !hasChanged || !name.trim()}
-          className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-surface-base transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saveProfile.isPending ? 'Saving...' : 'Save'}
         </button>

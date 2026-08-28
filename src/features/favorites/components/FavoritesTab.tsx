@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
+import { tokenImageSrc } from '@/shared/tokenImage';
+import { useImageFallback } from '@/hooks/useImageFallback';
 import { FavoriteStarButton } from './FavoriteStarButton';
 import { DislikeButton } from './DislikeButton';
 import { FavoritesSaveBar } from './FavoritesSaveBar';
@@ -12,18 +13,18 @@ function TokenRow({
   token: TokenRef;
   control: React.ReactNode;
 }) {
-  const [imgFailed, setImgFailed] = useState(false);
+  const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   return (
     <li className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
-        {imgFailed || !token.logo ? (
+        {img.failed || !img.src ? (
           (token.ticker || token.assetId).slice(0, 2)
         ) : (
           <img
-            src={token.logo}
+            src={img.src}
             alt={token.ticker}
             className="h-8 w-8 rounded-full"
-            onError={() => setImgFailed(true)}
+            onError={img.onError}
           />
         )}
       </div>
@@ -54,7 +55,7 @@ export function FavoritesTab() {
           Favorite <span className="font-semibold">tokens</span>
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Starred tokens rise to the top of your claimable list.
+          Saved tokens rise to the top of your claimable list.
         </p>
       </div>
 
@@ -76,7 +77,7 @@ export function FavoritesTab() {
                 <div className="card-premium px-6 py-16 text-center">
                   <p className="label-eyebrow">No favorites yet</p>
                   <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-                    Tap the star on a token in your claimable list to add it here.
+                    Tap the bookmark on a token in your claimable list to add it here.
                   </p>
                 </div>
               ) : (
