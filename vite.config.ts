@@ -21,13 +21,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@utxos/sdk': `${import.meta.dirname}/src/shims/utxos-sdk.ts`,
       "@": `${import.meta.dirname}/src`,
     },
-  },
-  optimizeDeps: {
-    // Pre-bundle the lazy wallet stack so first connect doesn't trigger a dev reload.
-    include: ['@meshsdk/react', '@meshsdk/core', 'bech32', 'qrcode.react'],
   },
   build: {
     commonjsOptions: {

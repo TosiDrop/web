@@ -113,7 +113,7 @@ export async function withCache(
 function corsHeaders(requestOrigin?: string | null): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': getCorsOrigin(requestOrigin),
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Vary': 'Origin',
   };

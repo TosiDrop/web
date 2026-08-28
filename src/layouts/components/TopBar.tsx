@@ -1,109 +1,84 @@
+import { useWallet } from '@meshsdk/react';
 import { useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconWallet } from '@tabler/icons-react';
-import { GradientButton } from '@/components/common/GradientButton';
+import { IconMenu2, IconChevronDown, IconLogout, IconCopy } from '@tabler/icons-react';
+import { ConnectWallet } from '@/components/common/ConnectWallet';
 import { useWalletStore } from '@/store/wallet-state';
-import { useOnboardingStore } from '@/store/onboarding-state';
-import { preloadWalletRuntime } from '@/features/wallet/preload';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
-import { toast } from '@/store/toast-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
-const PAGE_TITLES: Record<string, string> = {
+const SECTION_LABELS: Record<string, string> = {
   '/': 'Claim',
   '/profile': 'Profile',
-  '/projects': 'Projects',
   '/team': 'Team',
-  '/analytics': 'Analytics',
   '/deposit': 'Deposit',
+  '/api-tester': 'API',
 };
 
-function usePageTitle() {
+function useSectionLabel() {
   const { pathname } = useLocation();
-  if (pathname === '/') return PAGE_TITLES['/'];
-  const match = Object.keys(PAGE_TITLES).find((k) => k !== '/' && pathname.startsWith(k));
-  return match ? PAGE_TITLES[match] : '';
+  if (pathname === '/') return SECTION_LABELS['/'];
+  const match = Object.keys(SECTION_LABELS).find(
+    (key) => key !== '/' && pathname.startsWith(key),
+  );
+  return match ? SECTION_LABELS[match] : 'Overview';
 }
 
-/** Deterministic two-tone identicon so the same address always looks the same. */
-function Identicon({ seed }: { seed: string }) {
-  let h = 0;
-  for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  const a = `var(--color-chart-${(h % 6) + 1})`;
-  const b = `var(--color-chart-${((h >> 3) % 6) + 1})`;
+function NetworkChip({ networkId }: { networkId: number | null }) {
   return (
-    <span
-      aria-hidden
-      className="h-5 w-5 shrink-0 rounded-full ring-1 ring-white/10"
-      style={{ background: `linear-gradient(135deg, ${a} 50%, ${b} 50%)` }}
-    />
+    <span className="hidden items-center rounded-[7px] border border-border-default px-2.5 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-[#8A8E9A] sm:inline-flex">
+      {getNetworkLabel(networkId)}
+    </span>
   );
 }
 
-function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networkId: number | null }) {
-  const disconnect = useWalletStore((s) => s.disconnect);
-  const walletName = useWalletStore((s) => s.walletName);
+function WalletMenu({ stakeAddress }: { stakeAddress: string }) {
+  const { disconnect } = useWallet();
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(stakeAddress);
-      toast.success('Stake address copied');
-    } catch {
-      toast.error('Could not copy — select the address and copy it manually.');
-    }
+  const handleCopy = () => {
+    navigator.clipboard.writeText(stakeAddress);
   };
 
   return (
     <Menu>
-      <MenuButton
-        aria-label="Wallet menu"
-        className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-white/[0.03] pl-2 pr-3 transition hover:bg-white/[0.06] data-[open]:bg-white/[0.06]"
-      >
-        <Identicon seed={stakeAddress} />
-        <span className="font-mono text-xs text-text-secondary group-hover:text-text-primary">
-          {truncateHash(stakeAddress, 6, 4)}
+      <MenuButton className="group flex h-9 items-center gap-2 rounded-lg border border-border-default px-3 transition hover:bg-white/[0.04] data-[open]:bg-white/[0.04]">
+        <span className="font-mono text-[12px] text-[#C5C8D2] group-hover:text-white">
+          {truncateHash(stakeAddress)}
         </span>
         <IconChevronDown
           size={13}
           stroke={1.8}
-          className="text-text-muted transition group-data-[open]:rotate-180"
+          className="text-[#6B6F7B] transition group-data-[open]:rotate-180 group-data-[open]:text-accent-light"
         />
       </MenuButton>
       <MenuItems
         anchor={{ to: 'bottom end', gap: 8 }}
         transition
-        className="z-50 w-[280px] max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-border-subtle bg-surface-overlay/95 p-1 shadow-pop backdrop-blur-md transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="z-50 w-[260px] rounded-xl border border-border-subtle bg-surface-overlay/95 p-1 shadow-2xl shadow-black/60 backdrop-blur-md focus:outline-none origin-top transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0"
       >
         <div className="px-3 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-text-primary">{walletName ?? 'Wallet'}</p>
-            <span className="rounded-md border border-border-default px-1.5 py-0.5 text-2xs text-text-muted">
-              {getNetworkLabel(networkId)}
-            </span>
-          </div>
-          <p className="mt-1.5 break-all font-mono text-2xs leading-relaxed text-text-muted">
+          <p className="label-eyebrow">Stake address</p>
+          <p className="mt-1 break-all font-mono text-[11px] leading-relaxed text-slate-300">
             {stakeAddress}
           </p>
         </div>
         <div className="my-1 h-px bg-border-subtle" />
         <MenuItem>
           <button
-            type="button"
-            onClick={copy}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
+            onClick={handleCopy}
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-xs text-slate-300 transition data-[focus]:bg-surface-inset data-[focus]:text-white"
           >
             <IconCopy size={14} stroke={1.6} />
-            Copy stake address
+            Copy address
           </button>
         </MenuItem>
         <MenuItem>
           <button
-            type="button"
             onClick={disconnect}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error/10"
+            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-xs text-rose-300 transition data-[focus]:bg-rose-500/10 data-[focus]:text-rose-200"
           >
             <IconLogout size={14} stroke={1.6} />
-            Disconnect
+            Disconnect wallet
           </button>
         </MenuItem>
       </MenuItems>
@@ -113,39 +88,34 @@ function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networ
 
 export function TopBar() {
   const { connected, stakeAddress, networkId } = useWalletStore();
-  const openModal = useOnboardingStore((s) => s.openModal);
   const { open: openMobileMenu } = useMobileMenu();
-  const title = usePageTitle();
+  const section = useSectionLabel();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface-base/70 backdrop-blur-md">
-      <div className="flex h-16 items-center justify-between px-4 lg:px-9">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 border-b border-[rgba(56,78,128,0.22)] bg-surface-base/70 backdrop-blur-md">
+      <div className="flex h-[66px] items-center justify-between px-5 lg:px-9">
+        <div className="flex items-center gap-3">
           <button
-            type="button"
             onClick={openMobileMenu}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-white/[0.04] hover:text-text-primary lg:hidden"
+            className="rounded-md p-1.5 text-slate-400 transition hover:bg-white/[0.04] hover:text-white lg:hidden"
             aria-label="Open menu"
           >
             <IconMenu2 size={20} stroke={1.5} />
           </button>
-          <p className="text-sm font-medium text-text-muted">{title}</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#6B6F7B]">
+            Account <span className="text-[#3F424C]">/</span>{' '}
+            <span className="text-[#8A8E9A]">{section}</span>
+          </p>
         </div>
 
-        {connected && stakeAddress ? (
-          <AccountMenu stakeAddress={stakeAddress} networkId={networkId} />
-        ) : (
-          <GradientButton
-            variant="secondary"
-            className="h-10 rounded-full px-4"
-            onClick={openModal}
-            onPointerEnter={preloadWalletRuntime}
-            onFocus={preloadWalletRuntime}
-          >
-            <IconWallet size={16} stroke={1.8} />
-            Connect wallet
-          </GradientButton>
-        )}
+        <div className="flex items-center gap-2.5">
+          {connected && <NetworkChip networkId={networkId} />}
+          {connected && stakeAddress ? (
+            <WalletMenu stakeAddress={stakeAddress} />
+          ) : (
+            <ConnectWallet />
+          )}
+        </div>
       </div>
     </header>
   );

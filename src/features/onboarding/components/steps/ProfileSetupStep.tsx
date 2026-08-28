@@ -1,21 +1,18 @@
 import { useState, useRef } from 'react';
-import { IconCamera, IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
-import { useOnboardingStore, PROFILE_SKIPPED_KEY } from '@/store/onboarding-state';
-import { useWalletStore } from '@/store/wallet-state';
-import { apiClient } from '@/api/client';
-import { signProfileUpdate } from '@/features/profile/utils/signProfileUpdate';
-import { GradientButton } from '@/components/common/GradientButton';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { StepHeading } from './StepHeading';
+import {
+  IconCamera,
+  IconArrowRight,
+  IconArrowLeft,
+  IconX,
+  IconAlertCircle,
+} from '@tabler/icons-react';
+import { useOnboardingStore } from '@/store/onboarding-state';
 
 const MAX_NAME = 50;
 const MAX_BIO = 280;
 const MAX_AVATAR_BYTES = 500_000; // 500KB pre-resize cap
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const AVATAR_TARGET_SIZE = 256; // square crop
-
-const FIELD_CLASS =
-  'w-full rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
 async function resizeAvatar(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file);
@@ -40,15 +37,11 @@ export function ProfileSetupStep() {
     profileBio,
     profileAvatar,
     isFirstTime,
-    saveError,
     setProfileName,
     setProfileBio,
     setProfileAvatar,
-    setSaveError,
-    closeModal,
+    setStep,
   } = useOnboardingStore();
-  const { wallet, stakeAddress, walletName } = useWalletStore();
-  const [saving, setSaving] = useState(false);
 
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -93,36 +86,8 @@ export function ProfileSetupStep() {
     setAvatarError(null);
   }
 
-  async function handleFinish() {
-    if (!wallet || !stakeAddress) {
-      setSaveError('Wallet disconnected — reconnect and try again.');
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const auth = await signProfileUpdate(wallet, stakeAddress);
-      await apiClient.post('/api/user', {
-        stakeAddress,
-        displayName: profileName.trim() || null,
-        bio: profileBio.trim() || null,
-        avatarUrl: profileAvatar,
-        walletProvider: walletName,
-        onboardingCompleted: true,
-        ...auth,
-      });
-      closeModal();
-    } catch (err) {
-      console.error('Failed to save user profile:', err);
-      setSaveError(err instanceof Error ? err.message : 'Could not save your profile. Try again.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleSkip() {
-    localStorage.setItem(PROFILE_SKIPPED_KEY, '1');
-    closeModal();
+  function handleContinue() {
+    setStep('onboarding-tour');
   }
 
   const nameTrimmed = profileName.trim();
@@ -130,59 +95,63 @@ export function ProfileSetupStep() {
 
   return (
     <div className="flex flex-col">
-      <StepHeading className="mb-1 text-xl font-semibold text-text-primary">
+      {isFirstTime ? (
+        <button
+          onClick={() => setStep('select-wallet')}
+          className="mb-6 flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-slate-300"
+        >
+          <IconArrowLeft size={14} />
+          Back
+        </button>
+      ) : (
+        <div className="mb-6 h-4" aria-hidden />
+      )}
+
+      <h2 className="mb-6 text-xl font-semibold text-white">
         {isFirstTime ? 'Set up your profile' : 'Finish your profile'}
-      </StepHeading>
-      <p className="mb-6 text-sm text-text-muted">
-        Optional. You can change this any time in Settings.
-      </p>
+      </h2>
 
       {/* Avatar */}
       <div className="mb-6 flex flex-col items-center gap-2">
         <div className="relative">
           <button
-            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
             aria-label="Upload profile picture"
-            className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border-default bg-surface-inset transition hover:border-accent/50 disabled:opacity-60"
+            className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border-default bg-surface-inset transition hover:border-brand-cyan/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-60"
           >
             {profileAvatar ? (
-              <img src={profileAvatar} alt="" className="h-full w-full object-cover" />
+              <img
+                src={profileAvatar}
+                alt="Avatar"
+                className="h-full w-full object-cover"
+              />
             ) : (
               <IconCamera
                 size={24}
-                className="text-text-muted transition group-hover:text-accent"
-                aria-hidden
+                className="text-slate-500 transition group-hover:text-brand-cyan"
               />
             )}
             {profileAvatar && (
-              <span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
-                <IconCamera size={20} className="text-text-primary" aria-hidden />
-              </span>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100">
+                <IconCamera size={20} className="text-white" />
+              </div>
             )}
           </button>
 
           {profileAvatar && !uploadingAvatar && (
             <button
-              type="button"
               onClick={removeAvatar}
               aria-label="Remove avatar"
-              className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full"
+              className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-border-default bg-surface-overlay text-slate-300 shadow-sm transition hover:bg-status-error hover:text-white"
             >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border-default bg-surface-overlay text-text-secondary transition hover:bg-status-error hover:text-text-primary">
-                <IconX size={12} aria-hidden />
-              </span>
+              <IconX size={12} />
             </button>
           )}
 
           {uploadingAvatar && (
-            <div
-              className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50"
-              role="status"
-              aria-label="Processing image"
-            >
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-accent" />
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-brand-cyan" />
             </div>
           )}
         </div>
@@ -196,24 +165,24 @@ export function ProfileSetupStep() {
         />
 
         {avatarError ? (
-          <div role="alert" className="flex items-center gap-1.5 text-2xs text-status-error-light">
-            <IconAlertCircle size={12} aria-hidden />
+          <div className="flex items-center gap-1.5 text-[11px] text-status-error">
+            <IconAlertCircle size={12} />
             {avatarError}
           </div>
         ) : (
-          <span className="text-2xs text-text-muted">JPG, PNG, or WebP · max 10MB</span>
+          <span className="text-[11px] text-slate-600">JPG, PNG, or WebP · max 10MB</span>
         )}
       </div>
 
       {/* Name field */}
       <div className="mb-4">
         <div className="mb-1.5 flex items-center justify-between">
-          <label htmlFor="onboard-name" className="text-xs font-medium text-text-secondary">
+          <label htmlFor="onboard-name" className="text-xs font-medium text-slate-400">
             Display name *
           </label>
           <span
-            className={`text-2xs tabular-nums ${
-              profileName.length > MAX_NAME ? 'text-status-error-light' : 'text-text-muted'
+            className={`text-[10px] tabular-nums ${
+              profileName.length > MAX_NAME ? 'text-status-error' : 'text-slate-600'
             }`}
           >
             {profileName.length}/{MAX_NAME}
@@ -226,19 +195,20 @@ export function ProfileSetupStep() {
           maxLength={MAX_NAME + 10}
           onChange={(e) => setProfileName(e.target.value)}
           placeholder="Your name"
-          className={FIELD_CLASS}
+          className="w-full rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none focus:ring-2 focus:ring-brand-cyan/15"
+          autoFocus
         />
       </div>
 
       {/* Bio field */}
       <div className="mb-6">
         <div className="mb-1.5 flex items-center justify-between">
-          <label htmlFor="onboard-bio" className="text-xs font-medium text-text-secondary">
-            Bio <span className="text-text-muted">(optional)</span>
+          <label htmlFor="onboard-bio" className="text-xs font-medium text-slate-400">
+            Bio <span className="text-slate-600">(optional)</span>
           </label>
           <span
-            className={`text-2xs tabular-nums ${
-              profileBio.length > MAX_BIO ? 'text-status-error-light' : 'text-text-muted'
+            className={`text-[10px] tabular-nums ${
+              profileBio.length > MAX_BIO ? 'text-status-error' : 'text-slate-600'
             }`}
           >
             {profileBio.length}/{MAX_BIO}
@@ -251,24 +221,26 @@ export function ProfileSetupStep() {
           onChange={(e) => setProfileBio(e.target.value)}
           placeholder="Tell us a bit about yourself"
           rows={3}
-          className={`${FIELD_CLASS} resize-none`}
+          className="w-full resize-none rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none focus:ring-2 focus:ring-brand-cyan/15"
         />
       </div>
 
-      {saveError && (
-        <div className="mb-4">
-          <FeedbackBanner tone="error" message={saveError} />
-        </div>
-      )}
-
+      {/* Actions */}
       <div className="flex items-center gap-3">
-        <GradientButton className="flex-1" onClick={handleFinish} disabled={!canContinue || saving}>
-          <IconCheck size={16} aria-hidden />
-          {saving ? 'Saving…' : 'Save and finish'}
-        </GradientButton>
-        <GradientButton variant="ghost" onClick={handleSkip} disabled={saving}>
-          Skip for now
-        </GradientButton>
+        <button
+          onClick={handleContinue}
+          disabled={!canContinue}
+          className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#06B6D4] px-6 py-3 text-sm font-semibold text-accent-contrast shadow-lg shadow-brand-cyan/10 transition-all hover:shadow-xl hover:shadow-brand-cyan/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan/40 disabled:opacity-40 disabled:hover:shadow-none"
+        >
+          Continue
+          <IconArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+        </button>
+        <button
+          onClick={handleContinue}
+          className="rounded-xl px-4 py-3 text-sm text-slate-500 transition hover:text-slate-300"
+        >
+          Skip
+        </button>
       </div>
     </div>
   );

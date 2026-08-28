@@ -61,7 +61,7 @@ export function normalizeBreakdown(
         logo: info?.logo,
         amount: amountNum / Math.pow(10, decimals),
         epoch: epochRaw !== undefined && !Number.isNaN(epochNum) ? epochNum : null,
-        pool: firstString(row, ['pool', 'pool_id', 'pool_ticker', 'from']),
+        pool: firstString(row, ['pool', 'pool_id', 'pool_ticker']),
         rule: firstString(row, ['rule', 'source', 'distribution', 'reason']),
         kind,
       });

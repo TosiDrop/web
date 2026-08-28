@@ -3,13 +3,11 @@ import {
   vmConfig,
   vmGet,
   vmConfigurationErrorResponse,
-  deploymentNetwork,
   jsonResponse,
   errorResponse,
   optionsResponse,
   sessionIdFor,
 } from '../../services/vmClient';
-import { recordClaimQuote } from '../../services/claimAnalytics';
 
 interface CreateRequestBody {
   stakeAddress?: string;
@@ -51,7 +49,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   if (!vmConfig(env)) return vmConfigurationErrorResponse(origin);
 
-  const network = deploymentNetwork(env);
   try {
     const response = (await vmGet(env, 'custom_request', {
       staking_address: stakeAddress,
@@ -66,15 +63,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       withdrawal_address: unknown;
       is_whitelisted: unknown;
     };
-
-    recordClaimQuote(env, context.waitUntil.bind(context), {
-      requestId: String(response.request_id),
-      stakeAddress,
-      network,
-      tokenCount: body.assetIds.length,
-      deposit: String(response.deposit),
-      overheadFee: (response.overhead_fee ?? body.overheadFee) as string | number | null | undefined,
-    });
 
     return jsonResponse(
       {
