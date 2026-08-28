@@ -10,26 +10,24 @@ export function NetworkMismatchBanner() {
   if (!walletNetwork || walletNetwork === DEPLOYMENT_NETWORK) return null;
 
   return (
-    <div
-      role="alert"
-      className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-border-subtle bg-[linear-gradient(180deg,#161B2E,#121726)] px-[18px] py-[15px] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
-    >
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[11px] bg-[#F5B042]/[0.12]">
-        <IconAlertTriangle size={19} stroke={1.8} className="text-[#F0B04B]" />
+    <div role="alert" className="card-premium mb-6 flex flex-wrap items-center gap-4 px-5 py-4">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-status-pending/[0.12]">
+        <IconAlertTriangle size={19} stroke={1.8} className="text-status-pending-light" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-semibold text-[#EDEEF2]">Wallet network mismatch</p>
-        <p className="mt-0.5 text-[12.5px] text-[#8A8E9A]">
-          Switch your wallet to the network configured for this TosiDrop deployment.
+        <p className="text-sm font-semibold text-text-primary">Wrong network</p>
+        <p className="mt-0.5 text-md text-text-muted">
+          Your wallet is on {networkLabel(walletNetwork)}. Switch it to{' '}
+          {networkLabel(DEPLOYMENT_NETWORK)} to claim here.
         </p>
       </div>
-      <div className="ml-auto flex items-center gap-2.5 font-mono text-[11px]">
-        <span className="rounded-lg border border-[#F5B042]/20 bg-[#F5B042]/[0.08] px-2.5 py-1.5 text-[#E7B86E]">
-          wallet · {networkLabel(walletNetwork).toLowerCase()}
+      <div className="flex items-center gap-2.5 font-mono text-2xs sm:ml-auto">
+        <span className="rounded-lg border border-status-pending/20 bg-status-pending/[0.08] px-2.5 py-1.5 text-status-pending-light">
+          {networkLabel(walletNetwork)}
         </span>
-        <IconArrowRight size={14} stroke={1.7} className="text-[#5A5E6A]" />
-        <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[#A5F3FC]">
-          deployment · {networkLabel(DEPLOYMENT_NETWORK).toLowerCase()}
+        <IconArrowRight size={14} stroke={1.7} className="text-text-faint" />
+        <span className="rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-accent-light">
+          {networkLabel(DEPLOYMENT_NETWORK)}
         </span>
       </div>
     </div>
