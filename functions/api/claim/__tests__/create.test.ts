@@ -11,6 +11,10 @@ import { onRequestPost } from '../create';
 
 type CFContext = Parameters<typeof onRequestPost>[0];
 
+/** Work handed to waitUntil; tests await it before asserting on D1 calls. */
+let deferred: Promise<unknown>[] = [];
+const flushDeferred = () => Promise.all(deferred);
+
 function makeContext(body: unknown, env?: Partial<Env>): CFContext {
   const request = new Request('https://example.com/api/claim/create', {
     method: 'POST',
@@ -21,16 +25,37 @@ function makeContext(body: unknown, env?: Partial<Env>): CFContext {
     request,
     env: { VITE_VM_API_KEY: 'test-key', ...env } as Env,
     params: {},
-    waitUntil: () => {},
+    waitUntil: (promise: Promise<unknown>) => {
+      deferred.push(promise);
+    },
     next: async () => new Response(),
     data: {},
     passThroughOnException: () => {},
   } as unknown as CFContext;
 }
 
+function fakeDb(options: { fail?: boolean } = {}) {
+  const bind = vi.fn();
+  const run = options.fail
+    ? vi.fn().mockRejectedValue(new Error('D1 unavailable'))
+    : vi.fn().mockResolvedValue({ success: true });
+  const prepare = vi.fn(() => ({
+    bind: (...values: unknown[]) => {
+      bind(...values);
+      return { run };
+    },
+  }));
+  return {
+    db: { prepare } as unknown as D1Database,
+    bind,
+    run,
+  };
+}
+
 describe('POST /api/claim/create', () => {
   beforeEach(() => {
     vmGet.mockReset();
+    deferred = [];
   });
 
   it('maps SDK response to camelCase and uses session_id = stake[:40]', async () => {
@@ -113,6 +138,169 @@ describe('POST /api/claim/create', () => {
       makeContext({ stakeAddress: 'stake_test1x', assetIds: ['a'] }),
     );
     expect(res.status).toBe(502);
+  });
+
+  it('persists the accepted request with a fresh fee quote', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 99,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({
+        withdrawal_fee: '500000',
+        tokens_fee: 300_000,
+        fee: 180_000,
+        deposit: 5_000_000,
+      });
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1', 'a2', 'a3'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    // Persistence is handed to waitUntil; the response never awaits it.
+    expect(deferred).toHaveLength(1);
+    await flushDeferred();
+    expect(vmGet.mock.calls.map((call) => call[1])).toEqual([
+      'custom_request',
+      'estimate_fees',
+    ]);
+    expect(vmGet.mock.calls[1][2]).toEqual({ token_count: 3 });
+    expect(bind).toHaveBeenCalledWith(
+      '99',
+      'stake_test1analytics',
+      'preview',
+      3,
+      '5000000',
+      '500000',
+      '300000',
+      '180000',
+      '200000',
+    );
+  });
+
+  it('records the network of the deployment, not a default', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 7,
+        deposit: 1,
+        overhead_fee: 0,
+        withdrawal_address: 'addr1',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({ withdrawal_fee: 1, tokens_fee: 1, fee: 1 });
+
+    await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake1mainnet', assetIds: ['a1'] },
+        { DB: db, VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm.example' },
+      ),
+    );
+    await flushDeferred();
+
+    expect(bind.mock.calls[0][2]).toBe('mainnet');
+  });
+
+  it('preserves the submitted overhead fee when the VM omits it', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 8,
+        deposit: 1,
+        withdrawal_address: 'addr1',
+        is_whitelisted: false,
+      })
+      .mockResolvedValueOnce({ withdrawal_fee: 1, tokens_fee: 2, fee: 3 });
+
+    await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1fallback', assetIds: ['a1'], overheadFee: 200_000 },
+        { DB: db },
+      ),
+    );
+    await flushDeferred();
+
+    expect(bind).toHaveBeenCalledWith(
+      '8',
+      'stake_test1fallback',
+      'preview',
+      1,
+      '1',
+      '1',
+      '2',
+      '3',
+      '200000',
+    );
+  });
+
+  it('still records the claim, with unknown fees, when fee lookup fails', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 100,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockRejectedValueOnce(new Error('fee service unavailable'));
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    await flushDeferred();
+    expect(bind).toHaveBeenCalledWith(
+      '100',
+      'stake_test1analytics',
+      'preview',
+      1,
+      '5000000',
+      null,
+      null,
+      null,
+      '200000',
+    );
+  });
+
+  it('returns the accepted claim when quote persistence fails', async () => {
+    const { db } = fakeDb({ fail: true });
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 101,
+        deposit: 5_000_000,
+        overhead_fee: 200_000,
+        withdrawal_address: 'addr1abc',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({
+        withdrawal_fee: '500000',
+        tokens_fee: 100_000,
+        fee: 180_000,
+      });
+
+    const res = await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake_test1analytics', assetIds: ['a1'] },
+        { DB: db },
+      ),
+    );
+
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { requestId: string }).requestId).toBe('101');
+    await expect(flushDeferred()).resolves.toBeDefined();
   });
 
   it('returns 400 for invalid JSON', async () => {
