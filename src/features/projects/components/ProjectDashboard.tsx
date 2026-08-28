@@ -10,7 +10,6 @@ import { useOwnerProjects, useTokenMap } from '@/features/projects/api/projects.
 import { useProjectSubmit } from '@/features/projects/hooks/useProjectSubmit';
 import { describeDistribution } from '@/features/projects/utils/describeDistribution';
 import { DistributionFields, ProjectDetailsFields } from './ProjectFields';
-import { StateMessage } from '@/features/profile/components/StateMessage';
 
 const STATUS_STYLE: Record<ProjectStatus, string> = {
   pending: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
@@ -28,6 +27,16 @@ function StatusBadge({ status }: { status: ProjectStatus }) {
     >
       {status}
     </span>
+  );
+}
+
+function StateMessage({ eyebrow, message, children }: { eyebrow: string; message: string; children?: React.ReactNode }) {
+  return (
+    <div className="card-premium px-6 py-14 text-center">
+      <p className="label-eyebrow">{eyebrow}</p>
+      <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">{message}</p>
+      {children}
+    </div>
   );
 }
 
@@ -124,7 +133,7 @@ export function ProjectDashboard() {
   const { data: tokens } = useTokenMap();
 
   if (!stakeAddress) {
-    return <StateMessage title="Not connected" message="Connect a wallet to manage your projects." />;
+    return <StateMessage eyebrow="Not connected" message="Connect a wallet to manage your projects." />;
   }
   if (isLoading) {
     return (
@@ -144,14 +153,14 @@ export function ProjectDashboard() {
   if (data?.degraded) {
     return (
       <StateMessage
-        title="Project list unavailable"
+        eyebrow="Project list unavailable"
         message="Project storage is not reachable right now, so your projects can't be shown. Nothing has been lost."
       />
     );
   }
   if (!projects?.length) {
     return (
-      <StateMessage title="No projects yet" message="Register a token to start distributing rewards through TosiDrop.">
+      <StateMessage eyebrow="No projects yet" message="Register a token to start distributing rewards through TosiDrop.">
         <Link
           to="/projects/new"
           className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light hover:text-white"

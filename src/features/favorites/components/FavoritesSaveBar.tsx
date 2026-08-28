@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { toast } from '@/store/toast-state';
@@ -16,11 +15,13 @@ export function FavoritesSaveBar() {
   if (!isDirty) return null;
 
   return (
-    <Card className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-white/[0.02] px-4 py-3.5">
       <div>
-        <p className="text-sm text-text-secondary">You have unsaved changes.</p>
+        <p className="text-sm text-[#D7D9E0]">You have unsaved preference changes.</p>
         {!connected && (
-          <p className="mt-0.5 text-xs text-text-muted">Connect your wallet to save them.</p>
+          <p className="mt-0.5 text-xs text-[#6B7895]">
+            Connect your wallet to save preferences.
+          </p>
         )}
       </div>
       <div className="flex items-center gap-2.5">
@@ -31,6 +32,6 @@ export function FavoritesSaveBar() {
           {saving ? 'Saving…' : 'Save changes'}
         </GradientButton>
       </div>
-    </Card>
+    </div>
   );
 }

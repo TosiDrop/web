@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
 import { apiClient } from '@/api/client';
-import { GradientButton } from '@/components/common/GradientButton';
 
 interface ApiResult {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -137,8 +136,8 @@ export default function ApiTesterPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-text-primary">API Tester</h1>
-        <p className="text-sm text-text-muted">
+        <h1 className="text-2xl font-bold text-white">API Tester</h1>
+        <p className="text-sm text-gray-400">
           Wallet: {connected ? stakeAddress : 'Not connected'}
         </p>
       </header>
@@ -149,44 +148,43 @@ export default function ApiTesterPage() {
           return (
             <div
               key={api.name}
-              className="card-premium p-4"
+              className="rounded-xl border border-white/10 bg-white/5 p-4"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-text-primary">{api.name}</p>
-                  <p className="truncate text-xs text-text-muted">{api.endpoint}</p>
+                  <p className="font-medium text-white">{api.name}</p>
+                  <p className="truncate text-xs text-gray-500">{api.endpoint}</p>
                   {api.name === 'Resolve Handle' && (
                     <input
                       type="text"
-                      aria-label="ADA handle"
                       placeholder="$handle (e.g. $adahandle)"
                       value={handleInput}
                       onChange={(e) => setHandleInput(e.target.value)}
-                      className="mt-2 w-full rounded-lg border border-border-default bg-surface-inset px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent"
+                      className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
                     />
                   )}
                 </div>
-                <GradientButton
-                  size="sm"
+                <button
                   onClick={api.action}
                   disabled={disabled || api.result.status === 'loading'}
+                  className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-400"
                 >
                   {api.result.status === 'loading' ? 'Fetching...' : 'Fetch'}
-                </GradientButton>
+                </button>
               </div>
 
               {api.result.status !== 'idle' && (
                 <div className="mt-3">
                   {api.result.status === 'loading' && (
-                    <p className="animate-pulse text-sm text-text-muted">Loading...</p>
+                    <p className="animate-pulse text-sm text-gray-400">Loading...</p>
                   )}
                   {api.result.status === 'error' && (
-                    <pre className="overflow-auto rounded-lg bg-status-error/10 p-3 text-xs text-status-error-light">
+                    <pre className="overflow-auto rounded-lg bg-red-950/50 p-3 text-xs text-red-300">
                       {api.result.error}
                     </pre>
                   )}
                   {api.result.status === 'success' && (
-                    <pre className="max-h-64 overflow-auto rounded-lg bg-surface-inset p-3 text-xs text-status-success-light">
+                    <pre className="max-h-64 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-green-300">
                       {JSON.stringify(api.result.data, null, 2)}
                     </pre>
                   )}

@@ -1,23 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useWallet, useNetwork } from '@meshsdk/react';
-import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
+import { useWalletStore } from '@/store/wallet-state';
 import { rewardAddressToBech32 } from '@/utils/cardano-address';
 
-/** Mirrors the Mesh wallet into the app store. Must run inside MeshProvider. */
 export function useWalletSync() {
-  const { wallet, connected, name, disconnect, setPersist } = useWallet();
+  const { wallet, connected, name } = useWallet();
   const network = useNetwork();
-  const { setWalletState, resetWallet, registerDisconnect } = useWalletStore();
+  const { setWalletState, resetWallet } = useWalletStore();
   const prevConnected = useRef(false);
-
-  useEffect(() => {
-    registerDisconnect(disconnect);
-  }, [disconnect, registerDisconnect]);
-
-  // Remember the session so a reload reconnects without the modal.
-  useEffect(() => {
-    setPersist(true);
-  }, [setPersist]);
 
   useEffect(() => {
     if (!connected || !wallet) {
@@ -46,7 +36,6 @@ export function useWalletSync() {
             stakeAddress,
             changeAddress,
             networkId: network ?? null,
-            wallet: wallet as WalletInstance,
           });
         }
       } catch (error) {
