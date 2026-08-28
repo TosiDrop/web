@@ -9,6 +9,7 @@ import {
   vmGet,
 } from '../services/vmClient';
 import { buildWithdrawalUpserts } from '../services/withdrawalsSync';
+import { bech32 } from 'bech32';
 
 // Authentication: none, deliberately. Every figure here is derived from the
 // withdrawals archive, which history.ts and getDeliveredRewards.ts already
@@ -40,9 +41,10 @@ interface TokenMixRow {
 }
 
 interface FeesRow {
-  total_fees_lovelace: number | string | null;
-  tracked_claims: number | string | null;
-  complete_claims: number | string | null;
+  withdrawal_fee: string | null;
+  tokens_fee: string | null;
+  tx_fee: string | null;
+  overhead_fee: string | null;
 }
 
 const EMPTY_ANALYTICS = {
@@ -96,8 +98,15 @@ async function refreshArchive(
   stakingAddress: string,
 ): Promise<boolean> {
   if (!vmConfig(env)) return false;
+  const cacheKey = `personal-analytics:delivered:${network}:${stakingAddress}`;
   try {
-    const data = await vmGet(env, 'delivered_rewards', { staking_address: stakingAddress });
+    const cached = env.VM_WEB_PROFILES
+      ? await env.VM_WEB_PROFILES.get<unknown>(cacheKey, { type: 'json' })
+      : null;
+    const data = cached ?? (await vmGet(env, 'delivered_rewards', { staking_address: stakingAddress }));
+    if (cached === null && env.VM_WEB_PROFILES) {
+      await env.VM_WEB_PROFILES.put(cacheKey, JSON.stringify(data), { expirationTtl: 300 });
+    }
     const stmts = buildWithdrawalUpserts(env.DB, network, stakingAddress, data);
     if (stmts.length > 0) await env.DB.batch(stmts);
     return true;
@@ -107,11 +116,20 @@ async function refreshArchive(
   }
 }
 
+function isStakeAddressForNetwork(address: string, network: string): boolean {
+  try {
+    const decoded = bech32.decode(address, 90);
+    return decoded.prefix === (network === 'mainnet' ? 'stake' : 'stake_test');
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get('Origin');
   const stakingAddress = new URL(request.url).searchParams.get('staking_address')?.trim();
 
-  if (!stakingAddress || !stakingAddress.startsWith('stake')) {
+  if (!stakingAddress || !isStakeAddressForNetwork(stakingAddress, deploymentNetwork(env))) {
     return errorResponse('staking_address must be a bech32 stake address', 400, origin);
   }
 
@@ -167,17 +185,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     let trackedClaims = 0;
     let completeClaims = 0;
     try {
-      const complete =
-        'withdrawal_fee IS NOT NULL AND tokens_fee IS NOT NULL AND tx_fee IS NOT NULL';
       const fees = await env.DB.prepare(
-        'SELECT CAST(COALESCE(SUM(CASE WHEN ' +
-          complete +
-          ' THEN CAST(withdrawal_fee AS INTEGER) + CAST(tokens_fee AS INTEGER) + CAST(tx_fee AS INTEGER) ' +
-          '+ CAST(COALESCE(overhead_fee, 0) AS INTEGER) ELSE 0 END), 0) AS TEXT) AS total_fees_lovelace, ' +
-          'COUNT(*) AS tracked_claims, ' +
-          'SUM(CASE WHEN ' +
-          complete +
-          ' THEN 1 ELSE 0 END) AS complete_claims ' +
+        'SELECT withdrawal_fee, tokens_fee, tx_fee, overhead_fee ' +
           'FROM claim_requests ' +
           'WHERE stake_address = ? AND network = ? AND EXISTS (' +
           'SELECT 1 FROM withdrawals ' +
@@ -187,10 +196,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           ')',
       )
         .bind(stakingAddress, network)
-        .first<FeesRow>();
-      totalFeesLovelace = String(fees?.total_fees_lovelace ?? '0');
-      trackedClaims = finiteNumber(fees?.tracked_claims);
-      completeClaims = finiteNumber(fees?.complete_claims);
+        .all<FeesRow>();
+      const rows = fees.results ?? [];
+      trackedClaims = rows.length;
+      completeClaims = rows.filter(
+        (row) => row.withdrawal_fee !== null && row.tokens_fee !== null && row.tx_fee !== null,
+      ).length;
+      totalFeesLovelace = rows
+        .filter((row) => row.withdrawal_fee !== null && row.tokens_fee !== null && row.tx_fee !== null)
+        .reduce(
+          (total, row) =>
+            addAmount(
+              addAmount(addAmount(addAmount(total, row.withdrawal_fee), row.tokens_fee), row.tx_fee),
+              row.overhead_fee ?? '0',
+            ),
+          0n,
+        )
+        .toString();
     } catch (error) {
       feesUnavailable = true;
       console.error('personalAnalytics fee aggregate error:', error);
