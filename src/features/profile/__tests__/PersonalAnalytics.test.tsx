@@ -31,11 +31,11 @@ import { PersonalAnalytics } from '../components/PersonalAnalytics';
 
 const DATA = {
   degraded: false,
+  fresh: true,
   feesUnavailable: false,
   feeCoverage: {
     trackedClaims: 3,
     completeClaims: 2,
-    trackedSince: new Date('2026-06-01T00:00:00Z'),
     incomplete: true,
   },
   summary: {
@@ -99,7 +99,7 @@ describe('PersonalAnalytics', () => {
 
     render(<PersonalAnalytics />);
 
-    expect(screen.getByLabelText('Loading personal analytics')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading personal analytics' })).toBeInTheDocument();
   });
 
   it('shows an actionable error state', () => {
@@ -111,7 +111,7 @@ describe('PersonalAnalytics', () => {
 
     render(<PersonalAnalytics />);
 
-    expect(screen.getByText("Couldn't load personal analytics")).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load personal analytics");
     expect(screen.getByText('analytics unavailable')).toBeInTheDocument();
   });
 
@@ -155,5 +155,37 @@ describe('PersonalAnalytics', () => {
     expect(selector).toHaveValue('lovelace');
     fireEvent.change(selector, { target: { value: 'token1' } });
     expect(selector).toHaveValue('token1');
+    // The chart's text alternative must follow the selection, not just the <select>.
+    const list = screen.getByLabelText('Reward accumulation data');
+    expect(within(list).getByText('Jun 2026: 8 TOSI cumulative')).toBeInTheDocument();
+    expect(within(list).queryByText('May 2026: 1 ADA cumulative')).not.toBeInTheDocument();
+  });
+
+  it('never renders a zero fee total when fees are unknown', () => {
+    hookMock.mockReturnValue({
+      data: {
+        ...DATA,
+        feesUnavailable: true,
+        summary: { ...DATA.summary, totalFeesAda: null },
+      },
+      isLoading: false,
+      error: null,
+    });
+
+    render(<PersonalAnalytics />);
+
+    const summary = screen.getByLabelText('Claim summary');
+    expect(within(summary).getByText('—')).toBeInTheDocument();
+    expect(within(summary).queryByText(/0 ADA/)).not.toBeInTheDocument();
+    expect(within(summary).getByText('Unavailable')).toBeInTheDocument();
+    expect(screen.getByText(/Fee history is temporarily unavailable/)).toBeInTheDocument();
+  });
+
+  it('says so when the archive could not be refreshed', () => {
+    hookMock.mockReturnValue({ data: { ...DATA, fresh: false }, isLoading: false, error: null });
+
+    render(<PersonalAnalytics />);
+
+    expect(screen.getByText(/latest deliveries could not be fetched/)).toBeInTheDocument();
   });
 });

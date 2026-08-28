@@ -32,6 +32,7 @@ describe('persistClaimQuote', () => {
       withdrawalFee: '500000',
       tokensFee: 300_000,
       txFee: 180_000,
+      overheadFee: 1_000_000,
     });
 
     expect(prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO claim_requests'));
@@ -47,6 +48,7 @@ describe('persistClaimQuote', () => {
       '500000',
       '300000',
       '180000',
+      '1000000',
     );
     expect(run).toHaveBeenCalledOnce();
   });
@@ -68,6 +70,7 @@ describe('persistClaimQuote', () => {
       'mainnet',
       1,
       '2500000',
+      null,
       null,
       null,
       null,

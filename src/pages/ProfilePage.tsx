@@ -13,10 +13,10 @@ import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalyti
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const TABS = [
-  { name: 'History', Icon: IconClock },
-  { name: 'Favorites', Icon: IconBookmark },
-  { name: 'Analytics', Icon: IconChartLine },
-  { name: 'Preferences', Icon: IconWallet },
+  { id: 'history', name: 'History', Icon: IconClock },
+  { id: 'favorites', name: 'Favorites', Icon: IconBookmark },
+  { id: 'analytics', name: 'Analytics', Icon: IconChartLine },
+  { id: 'preferences', name: 'Preferences', Icon: IconWallet },
 ];
 
 function StakeAddressDisplay({ value }: { value: string }) {
@@ -185,7 +185,7 @@ function HeroStakeChip() {
 
 export default function ProfilePage() {
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') === 'analytics' ? 2 : 0;
+  const defaultTab = Math.max(0, TABS.findIndex((tab) => tab.id === searchParams.get('tab')));
 
   return (
     <div className="space-y-7">

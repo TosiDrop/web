@@ -11,6 +11,10 @@ import { onRequestPost } from '../create';
 
 type CFContext = Parameters<typeof onRequestPost>[0];
 
+/** Work handed to waitUntil; tests await it before asserting on D1 calls. */
+let deferred: Promise<unknown>[] = [];
+const flushDeferred = () => Promise.all(deferred);
+
 function makeContext(body: unknown, env?: Partial<Env>): CFContext {
   const request = new Request('https://example.com/api/claim/create', {
     method: 'POST',
@@ -21,7 +25,9 @@ function makeContext(body: unknown, env?: Partial<Env>): CFContext {
     request,
     env: { VITE_VM_API_KEY: 'test-key', ...env } as Env,
     params: {},
-    waitUntil: () => {},
+    waitUntil: (promise: Promise<unknown>) => {
+      deferred.push(promise);
+    },
     next: async () => new Response(),
     data: {},
     passThroughOnException: () => {},
@@ -49,6 +55,7 @@ function fakeDb(options: { fail?: boolean } = {}) {
 describe('POST /api/claim/create', () => {
   beforeEach(() => {
     vmGet.mockReset();
+    deferred = [];
   });
 
   it('maps SDK response to camelCase and uses session_id = stake[:40]', async () => {
@@ -158,6 +165,9 @@ describe('POST /api/claim/create', () => {
     );
 
     expect(res.status).toBe(200);
+    // Persistence is handed to waitUntil; the response never awaits it.
+    expect(deferred).toHaveLength(1);
+    await flushDeferred();
     expect(vmGet.mock.calls.map((call) => call[1])).toEqual([
       'custom_request',
       'estimate_fees',
@@ -172,10 +182,34 @@ describe('POST /api/claim/create', () => {
       '500000',
       '300000',
       '180000',
+      '200000',
     );
   });
 
-  it('returns the accepted claim when fee lookup fails', async () => {
+  it('records the network of the deployment, not a default', async () => {
+    const { db, bind } = fakeDb();
+    vmGet
+      .mockResolvedValueOnce({
+        request_id: 7,
+        deposit: 1,
+        overhead_fee: 0,
+        withdrawal_address: 'addr1',
+        is_whitelisted: true,
+      })
+      .mockResolvedValueOnce({ withdrawal_fee: 1, tokens_fee: 1, fee: 1 });
+
+    await onRequestPost(
+      makeContext(
+        { stakeAddress: 'stake1mainnet', assetIds: ['a1'] },
+        { DB: db, VITE_NETWORK: 'mainnet', VM_BASE_URL: 'https://vm.example' },
+      ),
+    );
+    await flushDeferred();
+
+    expect(bind.mock.calls[0][2]).toBe('mainnet');
+  });
+
+  it('still records the claim, with unknown fees, when fee lookup fails', async () => {
     const { db, bind } = fakeDb();
     vmGet
       .mockResolvedValueOnce({
@@ -195,7 +229,18 @@ describe('POST /api/claim/create', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(bind).not.toHaveBeenCalled();
+    await flushDeferred();
+    expect(bind).toHaveBeenCalledWith(
+      '100',
+      'stake_test1analytics',
+      'preview',
+      1,
+      '5000000',
+      null,
+      null,
+      null,
+      '200000',
+    );
   });
 
   it('returns the accepted claim when quote persistence fails', async () => {
@@ -223,6 +268,7 @@ describe('POST /api/claim/create', () => {
 
     expect(res.status).toBe(200);
     expect(((await res.json()) as { requestId: string }).requestId).toBe('101');
+    await expect(flushDeferred()).resolves.toBeDefined();
   });
 
   it('returns 400 for invalid JSON', async () => {

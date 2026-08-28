@@ -6,17 +6,19 @@ import {
 
 export interface RawPersonalAnalyticsResponse {
   degraded: boolean;
+  /** False when the VM could not be reached before aggregating; the archive may lag. */
+  fresh: boolean;
   feesUnavailable: boolean;
   feeCoverage: {
     trackedClaims: number;
     completeClaims: number;
-    trackedSince: number | null;
     incomplete: boolean;
   };
   summary: {
     totalClaims: number;
     distinctTokens: number;
-    totalFeesLovelace: string;
+    /** Null when the fee aggregate failed; never a stand-in zero. */
+    totalFeesLovelace: string | null;
     activeSince: number | null;
   };
   claimsByMonth: Array<{ month: string; claims: number }>;
@@ -53,17 +55,17 @@ export interface TokenMixItem {
 
 export interface PersonalAnalyticsData {
   degraded: boolean;
+  fresh: boolean;
   feesUnavailable: boolean;
   feeCoverage: {
     trackedClaims: number;
     completeClaims: number;
-    trackedSince: Date | null;
     incomplete: boolean;
   };
   summary: {
     totalClaims: number;
     distinctTokens: number;
-    totalFeesAda: number;
+    totalFeesAda: number | null;
     activeSince: Date | null;
   };
   claimsByMonth: MonthlyClaimPoint[];
@@ -82,26 +84,43 @@ function monthLabel(month: string): string {
   });
 }
 
+/** Every YYYY-MM from `from` to `to` inclusive, so charts never skip a month. */
+export function monthRange(from: string, to: string): string[] {
+  const [fromYear, fromMonth] = from.split('-').map(Number);
+  const [toYear, toMonth] = to.split('-').map(Number);
+  if (![fromYear, fromMonth, toYear, toMonth].every(Number.isFinite)) return [from];
+  const months: string[] = [];
+  for (let index = fromYear * 12 + (fromMonth - 1); index <= toYear * 12 + (toMonth - 1); index += 1) {
+    months.push(`${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`);
+  }
+  return months;
+}
+
 export function normalizePersonalAnalytics(
   raw: RawPersonalAnalyticsResponse,
   tokens: TokenMap,
 ): PersonalAnalyticsData {
-  const claimsByMonth = [...raw.claimsByMonth]
-    .sort((a, b) => a.month.localeCompare(b.month))
-    .map((point) => ({
-      ...point,
-      label: monthLabel(point.month),
-    }));
+  const allMonths = [...raw.claimsByMonth, ...raw.rewardsByMonth]
+    .map((row) => row.month)
+    .sort();
+  const lastMonth = allMonths[allMonths.length - 1];
 
-  const monthlyByToken = new Map<
-    string,
-    Array<{ month: string; amount: number }>
-  >();
+  const claimsByMonthMap = new Map(raw.claimsByMonth.map((row) => [row.month, row.claims]));
+  const firstClaimMonth = [...claimsByMonthMap.keys()].sort()[0];
+  const claimsByMonth = firstClaimMonth
+    ? monthRange(firstClaimMonth, lastMonth).map((month) => ({
+        month,
+        label: monthLabel(month),
+        claims: claimsByMonthMap.get(month) ?? 0,
+      }))
+    : [];
+
+  const monthlyByToken = new Map<string, Map<string, number>>();
   for (const row of raw.rewardsByMonth) {
     const decimals = decimalsFor(row.token, tokens[row.token]);
     const amount = Number(row.amount) / Math.pow(10, decimals);
-    const rows = monthlyByToken.get(row.token) ?? [];
-    rows.push({ month: row.month, amount: Number.isFinite(amount) ? amount : 0 });
+    const rows = monthlyByToken.get(row.token) ?? new Map<string, number>();
+    rows.set(row.month, (rows.get(row.month) ?? 0) + (Number.isFinite(amount) ? amount : 0));
     monthlyByToken.set(row.token, rows);
   }
 
@@ -109,21 +128,16 @@ export function normalizePersonalAnalytics(
   for (const [token, rows] of monthlyByToken) {
     let cumulative = 0;
     const info = tokens[token];
+    const firstMonth = [...rows.keys()].sort()[0];
     seriesByToken[token] = {
       token,
       ticker: tickerFor(token, info),
       logo: info?.logo,
-      points: rows
-        .sort((a, b) => a.month.localeCompare(b.month))
-        .map((row) => {
-          cumulative += row.amount;
-          return {
-            month: row.month,
-            label: monthLabel(row.month),
-            amount: row.amount,
-            cumulative,
-          };
-        }),
+      points: monthRange(firstMonth, lastMonth).map((month) => {
+        const amount = rows.get(month) ?? 0;
+        cumulative += amount;
+        return { month, label: monthLabel(month), amount, cumulative };
+      }),
     };
   }
 
@@ -138,22 +152,18 @@ export function normalizePersonalAnalytics(
 
   return {
     degraded: raw.degraded,
+    fresh: raw.fresh,
     feesUnavailable: raw.feesUnavailable,
-    feeCoverage: {
-      ...raw.feeCoverage,
-      trackedSince:
-        raw.feeCoverage.trackedSince === null
-          ? null
-          : new Date(raw.feeCoverage.trackedSince * 1000),
-    },
+    feeCoverage: { ...raw.feeCoverage },
     summary: {
       totalClaims: raw.summary.totalClaims,
       distinctTokens: raw.summary.distinctTokens,
-      totalFeesAda: Number(raw.summary.totalFeesLovelace) / 1_000_000,
-      activeSince:
-        raw.summary.activeSince === null
+      totalFeesAda:
+        raw.summary.totalFeesLovelace === null
           ? null
-          : new Date(raw.summary.activeSince * 1000),
+          : Number(raw.summary.totalFeesLovelace) / 1_000_000,
+      activeSince:
+        raw.summary.activeSince === null ? null : new Date(raw.summary.activeSince * 1000),
     },
     claimsByMonth,
     seriesByToken,

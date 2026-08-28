@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  monthRange,
   normalizePersonalAnalytics,
   type RawPersonalAnalyticsResponse,
 } from '../utils/personalAnalytics';
 
 const RAW: RawPersonalAnalyticsResponse = {
   degraded: false,
+  fresh: true,
   feesUnavailable: false,
   feeCoverage: {
     trackedClaims: 2,
     completeClaims: 2,
-    trackedSince: 1_760_000_000,
     incomplete: true,
   },
   summary: {
@@ -80,6 +81,53 @@ describe('normalizePersonalAnalytics', () => {
     expect(data.summary.totalFeesAda).toBeCloseTo(1.25);
     expect(data.seriesByToken.lovelace.ticker).toBe('ADA');
     expect(data.seriesByToken['policy.746f7369'].ticker).toBe('TOSI');
+  });
+
+  it('fills months with no rows so bars and cumulative slopes stay honest', () => {
+    const data = normalizePersonalAnalytics(
+      {
+        ...RAW,
+        claimsByMonth: [
+          { month: '2026-01', claims: 1 },
+          { month: '2026-04', claims: 2 },
+        ],
+        rewardsByMonth: [
+          { month: '2026-01', token: 'lovelace', amount: '1000000' },
+          { month: '2026-04', token: 'lovelace', amount: '1000000' },
+          { month: '2026-03', token: 'policy.746f7369', amount: '8' },
+        ],
+      },
+      TOKENS,
+    );
+
+    expect(data.claimsByMonth.map((point) => [point.month, point.claims])).toEqual([
+      ['2026-01', 1],
+      ['2026-02', 0],
+      ['2026-03', 0],
+      ['2026-04', 2],
+    ]);
+    expect(data.seriesByToken.lovelace.points.map((point) => point.cumulative)).toEqual([
+      1, 1, 1, 2,
+    ]);
+    // A token's series starts at its own first month but runs to the last month overall.
+    expect(data.seriesByToken['policy.746f7369'].points.map((point) => point.month)).toEqual([
+      '2026-03',
+      '2026-04',
+    ]);
+  });
+
+  it('keeps unknown fees as null instead of a zero total', () => {
+    const data = normalizePersonalAnalytics(
+      { ...RAW, feesUnavailable: true, summary: { ...RAW.summary, totalFeesLovelace: null } },
+      TOKENS,
+    );
+
+    expect(data.summary.totalFeesAda).toBeNull();
+  });
+
+  it('enumerates months inclusively across a year boundary', () => {
+    expect(monthRange('2025-11', '2026-02')).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
+    expect(monthRange('2026-05', '2026-05')).toEqual(['2026-05']);
   });
 
   it('returns a stable empty model for accounts without history', () => {

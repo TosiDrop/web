@@ -21,17 +21,17 @@ const STAKE = 'stake_test1' + 'x'.repeat(40);
 
 const RAW = {
   degraded: false,
+  fresh: true,
   feesUnavailable: true,
   feeCoverage: {
     trackedClaims: 0,
     completeClaims: 0,
-    trackedSince: null,
     incomplete: true,
   },
   summary: {
     totalClaims: 2,
     distinctTokens: 1,
-    totalFeesLovelace: '0',
+    totalFeesLovelace: null,
     activeSince: 1_750_000_000,
   },
   claimsByMonth: [{ month: '2026-06', claims: 2 }],
@@ -69,5 +69,23 @@ describe('usePersonalAnalytics', () => {
     expect(result.current.data!.summary.totalClaims).toBe(2);
     expect(result.current.data!.seriesByToken.lovelace.points[0].cumulative).toBe(3);
     expect(result.current.data!.feesUnavailable).toBe(true);
+    expect(result.current.data!.summary.totalFeesAda).toBeNull();
+  });
+
+  it('still returns the analytics when token metadata fails to load', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    getMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/personalAnalytics')) return Promise.resolve(RAW);
+      return Promise.reject(new Error('getTokens down'));
+    });
+
+    const { result } = renderHook(() => usePersonalAnalytics(STAKE), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.data!.summary.totalClaims).toBe(2);
+    // Without metadata the raw token id stands in for the ticker and decimals default.
+    expect(result.current.data!.seriesByToken.lovelace.ticker).toBeTruthy();
+    errorSpy.mockRestore();
   });
 });
