@@ -73,7 +73,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       network,
       tokenCount: body.assetIds.length,
       deposit: String(response.deposit),
-      overheadFee: response.overhead_fee as string | number | null | undefined,
+      overheadFee: (response.overhead_fee ?? body.overheadFee) as string | number | null | undefined,
     });
 
     return jsonResponse(

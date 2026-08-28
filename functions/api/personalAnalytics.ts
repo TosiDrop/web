@@ -200,10 +200,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       const rows = fees.results ?? [];
       trackedClaims = rows.length;
       completeClaims = rows.filter(
-        (row) => row.withdrawal_fee !== null && row.tokens_fee !== null && row.tx_fee !== null,
+        (row) =>
+          row.withdrawal_fee !== null &&
+          row.tokens_fee !== null &&
+          row.tx_fee !== null &&
+          row.overhead_fee !== null,
       ).length;
       totalFeesLovelace = rows
-        .filter((row) => row.withdrawal_fee !== null && row.tokens_fee !== null && row.tx_fee !== null)
+        .filter(
+          (row) =>
+            row.withdrawal_fee !== null &&
+            row.tokens_fee !== null &&
+            row.tx_fee !== null &&
+            row.overhead_fee !== null,
+        )
         .reduce(
           (total, row) =>
             addAmount(
