@@ -31,7 +31,7 @@ export const onRequestGet: PagesFunction<Env, 'id'> = async (ctx) => {
     )
       .bind(deploymentNetwork(env), id)
       .first<ProjectRow>();
-    if (!row) return errorResponse('Project not found', 404, origin);
+    if (!row || row.status !== 'approved') return errorResponse('Project not found', 404, origin);
     return jsonResponse(rowToProject(row), 200, origin);
   } catch (err) {
     console.error('D1 GET project error:', err);
