@@ -14,13 +14,13 @@ vi.mock('@/features/favorites/utils/signPreferencesUpdate', () => ({
   signPreferencesUpdateMessage: (...a: unknown[]) => signMock(...a),
 }));
 
-const walletState = { stakeAddress: 'stake1' + 'u'.repeat(40), connected: true };
+const walletState = {
+  stakeAddress: 'stake1' + 'u'.repeat(40),
+  connected: true,
+  wallet: { signData: vi.fn() },
+};
 vi.mock('@/store/wallet-state', () => ({
   useWalletStore: (sel: (s: typeof walletState) => unknown) => sel(walletState),
-}));
-
-vi.mock('@meshsdk/react', () => ({
-  useWallet: () => ({ wallet: { signData: vi.fn() }, connected: true }),
 }));
 
 import { usePreferences } from '../hooks/usePreferences';

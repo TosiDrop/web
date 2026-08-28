@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  IconAlertCircle,
-  IconArrowsSort,
-  IconChevronLeft,
-  IconChevronRight,
-} from '@tabler/icons-react';
+import { IconArrowsSort, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Card } from '@/components/common/Card';
+import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDeliveredRewards, type DeliveredReward } from '@/features/history/api/history.queries';
 import { tokenImageSrc } from '@/shared/tokenImage';
@@ -55,7 +53,7 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
     );
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-[10px] font-medium uppercase tracking-tight text-slate-300">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-2xs font-medium uppercase tracking-tight text-text-secondary">
       {ticker.slice(0, 3)}
     </div>
   );
@@ -63,27 +61,25 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
 
 function HistoryRow({ row }: { row: DeliveredReward }) {
   return (
-    <li className="group flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
+    <li className="flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
       <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-white">{row.ticker}</p>
-        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500">
-          {row.epoch !== null && <span>Epoch {row.epoch}</span>}
-          {row.epoch !== null && row.deliveredOn && (
-            <span className="text-slate-700">·</span>
-          )}
+        <p className="truncate text-sm font-medium text-text-primary">{row.ticker}</p>
+        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
+          {row.epoch !== null && <span className="tabular-nums">Epoch {row.epoch}</span>}
+          {row.epoch !== null && row.deliveredOn && <span className="text-text-faint">·</span>}
           {row.deliveredOn && (
-            <span title={row.deliveredOn.toLocaleString()}>
+            <span className="tabular-nums" title={row.deliveredOn.toLocaleString()}>
               {formatRelative(row.deliveredOn)} {formatTime(row.deliveredOn)}
             </span>
           )}
         </p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-sm text-emerald-300/95">
+        <p className="font-mono text-sm tabular-nums text-status-success-light">
           +{formatAmount(row.amount)}
         </p>
-        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+        <p className="mt-0.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
           {row.ticker}
         </p>
       </div>
@@ -91,44 +87,44 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
   );
 }
 
-function StateMessage({ eyebrow, message }: { eyebrow: string; message: string }) {
+function StateMessage({ title, message }: { title: string; message: string }) {
   return (
-    <div className="card-premium px-6 py-16 text-center">
-      <p className="label-eyebrow">{eyebrow}</p>
-      <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">{message}</p>
-    </div>
+    <Card variant="inset" className="px-6 py-16 text-center">
+      <p className="text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
+    </Card>
   );
 }
 
 function SkeletonList() {
   return (
-    <div className="card-premium overflow-hidden">
-      <div className="flex items-center justify-between border-b border-border-subtle/60 px-5 py-3">
-        <div className="h-3 w-20 animate-pulse rounded bg-surface-inset" />
-        <div className="h-3 w-24 animate-pulse rounded bg-surface-inset" />
+    <Card role="status" aria-label="Loading claim history" className="overflow-hidden">
+      <div className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
+        <div className="skeleton-shimmer h-3 w-20 rounded" />
+        <div className="skeleton-shimmer h-3 w-24 rounded" />
       </div>
-      <ul className="divide-y divide-border-subtle/50">
+      <ul className="divide-y divide-border-subtle">
         {[0, 1, 2, 3, 4].map((i) => (
           <li key={i} className="flex items-center gap-4 px-5 py-3.5">
-            <div className="h-9 w-9 animate-pulse rounded-full bg-surface-inset" />
+            <div className="skeleton-shimmer h-9 w-9 rounded-full" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-24 animate-pulse rounded bg-surface-inset" />
-              <div className="h-2.5 w-32 animate-pulse rounded bg-surface-inset/60" />
+              <div className="skeleton-shimmer h-3 w-24 rounded" />
+              <div className="skeleton-shimmer h-2.5 w-32 rounded" />
             </div>
-            <div className="space-y-2 text-right">
-              <div className="ml-auto h-3 w-16 animate-pulse rounded bg-surface-inset" />
-              <div className="ml-auto h-2.5 w-10 animate-pulse rounded bg-surface-inset/60" />
+            <div className="space-y-2">
+              <div className="skeleton-shimmer ml-auto h-3 w-16 rounded" />
+              <div className="skeleton-shimmer ml-auto h-2.5 w-10 rounded" />
             </div>
           </li>
         ))}
       </ul>
-    </div>
+    </Card>
   );
 }
 
 export function HistoryList() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
-  const { data, isLoading, error } = useDeliveredRewards(stakeAddress);
+  const { data, isLoading, error, refetch } = useDeliveredRewards(stakeAddress);
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState(1);
   const [order, setOrder] = useState<HistoryOrder>('desc');
@@ -151,10 +147,7 @@ export function HistoryList() {
 
   if (!stakeAddress) {
     return (
-      <StateMessage
-        eyebrow="Not connected"
-        message="Connect a wallet to view your delivered rewards."
-      />
+      <StateMessage title="Not connected" message="Connect a wallet to view your claim history." />
     );
   }
 
@@ -165,23 +158,17 @@ export function HistoryList() {
 
   if (error && !serverMode) {
     return (
-      <div className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
-        <IconAlertCircle size={18} stroke={1.6} className="mt-0.5 shrink-0 text-rose-400" />
-        <div>
-          <p className="font-medium text-white">Couldn't load history</p>
-          <p className="mt-0.5 text-xs text-slate-400">{error.message}</p>
-        </div>
+      <div className="space-y-3">
+        <FeedbackBanner tone="error" title="Couldn't load claim history" message={error.message} />
+        <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
+          Try again
+        </GradientButton>
       </div>
     );
   }
 
   if (!serverMode && (!data || data.length === 0)) {
-    return (
-      <StateMessage
-        eyebrow="No history yet"
-        message="Once your first reward is delivered, it'll appear here."
-      />
-    );
+    return <StateMessage title="No claims yet" message="Tokens you claim will appear here." />;
   }
 
   const totalPages = serverMode
@@ -196,72 +183,68 @@ export function HistoryList() {
   const count = serverMode ? history.data!.total : data!.length;
 
   return (
-    <section className="card-premium overflow-hidden">
-      <header className="flex items-center justify-between border-b border-border-subtle/60 px-5 py-3">
+    <Card as="section" className="overflow-hidden">
+      <header className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
         <div className="flex items-center gap-2">
           <p className="label-eyebrow">Delivered</p>
-          <span className="rounded-full border border-border-subtle bg-surface-inset/70 px-2 py-0.5 font-mono text-[10px] text-slate-300">
+          <span className="rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-2xs tabular-nums text-text-secondary">
             {count}
           </span>
         </div>
         {serverMode ? (
-          <button
-            type="button"
+          <GradientButton
+            variant="ghost"
+            size="sm"
             onClick={() => {
               setOrder((o) => (o === 'desc' ? 'asc' : 'desc'));
               setPage(1);
             }}
-            className="flex items-center gap-1 text-[11px] text-slate-500 transition hover:text-slate-300"
           >
-            <IconArrowsSort size={12} stroke={1.6} />
+            <IconArrowsSort size={14} stroke={1.6} aria-hidden />
             {order === 'desc' ? 'Newest first' : 'Oldest first'}
-          </button>
+          </GradientButton>
         ) : (
-          <p className="text-[11px] text-slate-500">Most recent first</p>
+          <p className="text-2xs text-text-muted">Most recent first</p>
         )}
       </header>
 
-      <ul className="divide-y divide-border-subtle/50">
+      <ul className="divide-y divide-border-subtle">
         {rows.map((row) => (
           <HistoryRow key={row.key} row={row} />
         ))}
       </ul>
 
       {serverMode && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border-subtle/60 px-5 py-3">
-          <button
-            type="button"
+        <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2">
+          <GradientButton
+            variant="ghost"
+            size="sm"
             disabled={page <= 1 || history.isFetching}
             onClick={() => setPage((p) => p - 1)}
-            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <IconChevronLeft size={12} stroke={2} /> Prev
-          </button>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
+            <IconChevronLeft size={14} stroke={2} aria-hidden /> Previous
+          </GradientButton>
+          <p className="font-mono text-2xs uppercase tracking-wider tabular-nums text-text-muted">
             Page {page} / {totalPages}
           </p>
-          <button
-            type="button"
+          <GradientButton
+            variant="ghost"
+            size="sm"
             disabled={!history.data!.hasMore || history.isFetching}
             onClick={() => setPage((p) => p + 1)}
-            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Next <IconChevronRight size={12} stroke={2} />
-          </button>
+            Next <IconChevronRight size={14} stroke={2} aria-hidden />
+          </GradientButton>
         </div>
       )}
 
       {clientHasMore && (
-        <div className="border-t border-border-subtle/60 px-5 py-3 text-center">
-          <button
-            type="button"
-            onClick={() => setShowAll(true)}
-            className="font-mono text-[10px] uppercase tracking-wider text-brand-cyan transition hover:text-indigo-200"
-          >
+        <div className="border-t border-border-subtle px-4 py-2 text-center">
+          <GradientButton variant="ghost" size="sm" onClick={() => setShowAll(true)}>
             Show {data!.length - rows.length} more
-          </button>
+          </GradientButton>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
