@@ -161,6 +161,62 @@ export function parseProjectMessage(message: string): (ProjectMessageParts & { s
   };
 }
 
+/**
+ * Signed read. An owner's list includes pending and rejected registrations,
+ * which are private to that wallet, so the dashboard proves control of the
+ * stake key before it can see them. No digest: the message authorises "list
+ * my projects on this network", nothing more.
+ */
+export const PROJECT_LIST_MESSAGE_RE =
+  /^Tosi project list on (mainnet|preview) for (stake(?:_test)?1[a-z0-9]+) at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)$/;
+
+export function buildProjectListMessage(network: string, stakeAddress: string, now = new Date()): string {
+  return `${MESSAGE_PREFIX} list on ${network} for ${stakeAddress} at ${now.toISOString()}`;
+}
+
+export function parseProjectListMessage(
+  message: string,
+): { network: string; stakeAddress: string; signedAt: string } | null {
+  const match = PROJECT_LIST_MESSAGE_RE.exec(message);
+  if (!match) return null;
+  const [, network, stakeAddress, signedAt] = match;
+  return { network, stakeAddress, signedAt };
+}
+
+/** Header value carrying a signed request: `Stake <base64 JSON {signature,key,message}>`. */
+export interface StakeAuth {
+  signature: string;
+  key: string;
+  message: string;
+}
+
+export function encodeStakeAuth(auth: StakeAuth): string {
+  const json = JSON.stringify(auth);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return `Stake ${btoa(binary)}`;
+}
+
+export function decodeStakeAuth(header: string | null): StakeAuth | null {
+  if (!header?.startsWith('Stake ')) return null;
+  try {
+    const binary = atob(header.slice(6));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const parsed = JSON.parse(new TextDecoder().decode(bytes)) as Partial<StakeAuth>;
+    if (
+      typeof parsed.signature !== 'string' ||
+      typeof parsed.key !== 'string' ||
+      typeof parsed.message !== 'string'
+    ) {
+      return null;
+    }
+    return { signature: parsed.signature, key: parsed.key, message: parsed.message };
+  } catch {
+    return null;
+  }
+}
+
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') {

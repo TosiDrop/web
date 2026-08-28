@@ -6,27 +6,60 @@ import {
   optionsResponse,
 } from '../services/vmClient';
 import { hasDb } from '../services/d1';
-import { signatureHash, verifyProjectSignature } from '../services/verifyProjectSignature';
+import {
+  signatureHash,
+  verifyProjectListSignature,
+  verifyProjectSignature,
+} from '../services/verifyProjectSignature';
 import { PROJECT_COLUMNS, rowToProject, type ProjectRow } from '../services/projects';
-import { normalizeProjectInput, validateProjectInput } from '../../src/shared/projects';
+import {
+  decodeStakeAuth,
+  normalizeProjectInput,
+  validateProjectInput,
+} from '../../src/shared/projects';
 
 const MAX_PROJECTS_PER_OWNER = 20;
 
+/**
+ * GET /api/projects?owner=…
+ * Without a signature the response is the public view: approved projects
+ * only. With a valid `Authorization: Stake …` header for that owner it is the
+ * owner's full list, including pending and rejected registrations, which are
+ * private to the wallet that made them.
+ */
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get('Origin');
   const owner = new URL(request.url).searchParams.get('owner');
   if (!owner) return errorResponse('owner is required', 400, origin);
+  const network = deploymentNetwork(env);
+
+  const auth = decodeStakeAuth(request.headers.get('Authorization'));
+  if (request.headers.get('Authorization') && !auth) {
+    return errorResponse('Malformed Authorization header', 401, origin);
+  }
+  let scope: 'owner' | 'public' = 'public';
+  if (auth) {
+    const verification = await verifyProjectListSignature({ stakeAddress: owner, network, auth });
+    if (!verification.ok) return errorResponse(verification.reason, verification.status, origin);
+    scope = 'owner';
+  }
+
   // Reads degrade to an explicit "unknown" the client must not render as empty.
-  if (!hasDb(env)) return jsonResponse({ projects: [], degraded: true }, 200, origin);
+  if (!hasDb(env)) return jsonResponse({ projects: [], degraded: true, scope }, 200, origin);
 
   try {
     const { results } = await env.DB.prepare(
       `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND owner_address = ? ` +
+        (scope === 'public' ? "AND status = 'approved' " : '') +
         'ORDER BY created_at DESC',
     )
-      .bind(deploymentNetwork(env), owner)
+      .bind(network, owner)
       .all<ProjectRow>();
-    return jsonResponse({ projects: (results ?? []).map(rowToProject), degraded: false }, 200, origin);
+    return jsonResponse(
+      { projects: (results ?? []).map(rowToProject), degraded: false, scope },
+      200,
+      origin,
+    );
   } catch (err) {
     console.error('D1 GET projects error:', err);
     return errorResponse('Error fetching projects', 500, origin);
@@ -85,19 +118,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       .first<{ id: string }>();
     if (existing) return jsonResponse({ id: existing.id }, 200, origin);
 
-    const count = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM projects WHERE network = ? AND owner_address = ?',
-    )
-      .bind(network, owner)
-      .first<{ n: number }>();
-    if ((count?.n ?? 0) >= MAX_PROJECTS_PER_OWNER) {
-      return errorResponse(`Limit of ${MAX_PROJECTS_PER_OWNER} projects per wallet`, 409, origin);
-    }
-
+    // The cap is enforced inside the INSERT itself so two concurrent creates
+    // cannot both pass a separate COUNT check: the row is only written when
+    // the owner's count is still below the limit at write time.
     const id = crypto.randomUUID();
-    await env.DB.prepare(
+    const result = await env.DB.prepare(
       'INSERT INTO projects (id, network, owner_address, name, description, website, logo_url, ' +
-        'token_id, pool_id, distribution, signature_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'token_id, pool_id, distribution, signature_hash) ' +
+        'SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ' +
+        'WHERE (SELECT COUNT(*) FROM projects WHERE network = ? AND owner_address = ?) < ?',
     )
       .bind(
         id,
@@ -111,8 +140,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         project.poolId || null,
         JSON.stringify(project.distribution),
         sigHash,
+        network,
+        owner,
+        MAX_PROJECTS_PER_OWNER,
       )
       .run();
+    if ((result.meta?.changes ?? 0) === 0) {
+      return errorResponse(`Limit of ${MAX_PROJECTS_PER_OWNER} projects per wallet`, 409, origin);
+    }
     return jsonResponse({ id }, 201, origin);
   } catch (err) {
     console.error('D1 POST projects error:', err);

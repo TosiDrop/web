@@ -11,7 +11,7 @@ interface MinimalWallet {
   signData(address: string, payload: string): Promise<{ signature: string; key: string }>;
 }
 
-function toHex(value: string): string {
+export function toHex(value: string): string {
   return Array.from(new TextEncoder().encode(value))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');

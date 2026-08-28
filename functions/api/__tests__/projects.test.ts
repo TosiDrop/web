@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Env } from '../../types/env';
 
 const verifyMock = vi.fn();
+const verifyListMock = vi.fn();
 vi.mock('../../services/verifyProjectSignature', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/verifyProjectSignature')>()),
   verifyProjectSignature: (...args: unknown[]) => verifyMock(...args),
+  verifyProjectListSignature: (...args: unknown[]) => verifyListMock(...args),
 }));
 
 import { onRequestGet, onRequestPost } from '../projects';
@@ -15,7 +17,7 @@ const ORIGIN = { Origin: 'http://localhost:5173' };
 
 interface Call { sql: string; binds: unknown[] }
 
-function fakeDb(opts: { first?: unknown[]; all?: unknown[] } = {}) {
+function fakeDb(opts: { first?: unknown[]; all?: unknown[]; changes?: number } = {}) {
   const calls: Call[] = [];
   const firsts = [...(opts.first ?? [])];
   const prepare = (sql: string) => ({
@@ -25,7 +27,7 @@ function fakeDb(opts: { first?: unknown[]; all?: unknown[] } = {}) {
     },
     all: async () => ({ results: opts.all ?? [] }),
     first: async () => firsts.shift() ?? null,
-    run: async () => ({}),
+    run: async () => ({ meta: { changes: opts.changes ?? 1 } }),
   });
   return { prepare, __calls: calls } as unknown as D1Database & { __calls: Call[] };
 }
@@ -59,7 +61,11 @@ describe('/api/projects', () => {
   beforeEach(() => {
     verifyMock.mockReset();
     verifyMock.mockResolvedValue({ ok: true });
+    verifyListMock.mockReset();
+    verifyListMock.mockResolvedValue({ ok: true });
   });
+
+  const SIGNED_LIST = { Authorization: 'Stake ' + btoa(JSON.stringify({ signature: 's', key: 'k', message: 'm' })) };
 
   it('GET 400 without owner, degrades without DB', async () => {
     const r1 = await onRequestGet(ctx(new Request('https://x/api/projects', { headers: ORIGIN }), env()));
@@ -67,21 +73,52 @@ describe('/api/projects', () => {
     const r2 = await onRequestGet(
       ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: ORIGIN }), env()),
     );
-    expect(await r2.json()).toEqual({ projects: [], degraded: true });
+    expect(await r2.json()).toEqual({ projects: [], degraded: true, scope: 'public' });
   });
 
-  it('GET lists camelCase projects scoped to the deployment network', async () => {
-    const db = fakeDb({ all: [ROW] });
+  it('GET without a signature only exposes approved projects', async () => {
+    const db = fakeDb({ all: [] });
     const res = await onRequestGet(
       ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: ORIGIN }), env(db)),
     );
-    const body = await res.json() as { projects: Array<Record<string, unknown>> };
+    expect(((await res.json()) as { scope: string }).scope).toBe('public');
+    expect(db.__calls[0].sql).toContain("status = 'approved'");
+    expect(verifyListMock).not.toHaveBeenCalled();
+  });
+
+  it('GET with a valid owner signature lists every status, scoped to the network', async () => {
+    const db = fakeDb({ all: [ROW] });
+    const res = await onRequestGet(
+      ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: { ...ORIGIN, ...SIGNED_LIST } }), env(db)),
+    );
+    const body = await res.json() as { projects: Array<Record<string, unknown>>; scope: string };
+    expect(body.scope).toBe('owner');
     expect(body.projects[0]).toMatchObject({
       id: 'p1', ownerAddress: STAKE, name: 'Tosi', description: '', poolId: '',
       distribution: { amountPerEpoch: '10', minStakeAda: '', expiryEpochs: 2 },
       status: 'pending',
     });
+    expect(db.__calls[0].sql).not.toContain("status = 'approved'");
     expect(db.__calls[0].binds).toEqual(['preview', STAKE]);
+    expect(verifyListMock.mock.calls[0][0]).toMatchObject({
+      stakeAddress: STAKE,
+      network: 'preview',
+      auth: { signature: 's', key: 'k', message: 'm' },
+    });
+  });
+
+  it('GET 401 for an invalid or malformed signature instead of falling back to public', async () => {
+    verifyListMock.mockResolvedValue({ ok: false, status: 401, reason: 'nope' });
+    const db = fakeDb({ all: [ROW] });
+    const bad = await onRequestGet(
+      ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: { ...ORIGIN, ...SIGNED_LIST } }), env(db)),
+    );
+    expect(bad.status).toBe(401);
+    const malformed = await onRequestGet(
+      ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: { ...ORIGIN, Authorization: 'Stake !!!' } }), env(db)),
+    );
+    expect(malformed.status).toBe(401);
+    expect(db.__calls).toHaveLength(0);
   });
 
   it('POST rejects invalid payloads before verifying', async () => {
@@ -99,8 +136,8 @@ describe('/api/projects', () => {
   });
 
   it('POST inserts a normalized row and returns 201', async () => {
-    // first(): no row for this signature yet, then the per-owner count.
-    const db = fakeDb({ first: [null, { n: 0 }] });
+    // first(): no row for this signature yet.
+    const db = fakeDb({ first: [null] });
     const res = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env(db)));
     expect(res.status).toBe(201);
     const body = await res.json() as { id: string };
@@ -109,6 +146,10 @@ describe('/api/projects', () => {
     expect(insert.binds.slice(1, 5)).toEqual(['preview', STAKE, 'Tosi', null]);
     expect(insert.sql).toContain('signature_hash');
     expect(insert.binds[10]).toMatch(/^[0-9a-f]{64}$/);
+    // The cap is part of the INSERT, not a separate COUNT that can race.
+    expect(insert.sql).toContain('WHERE (SELECT COUNT(*) FROM projects WHERE network = ? AND owner_address = ?) < ?');
+    expect(insert.binds.slice(-3)).toEqual(['preview', STAKE, 20]);
+    expect(db.__calls.some((c) => c.sql.startsWith('SELECT COUNT'))).toBe(false);
     expect(verifyMock.mock.calls[0][0]).toMatchObject({
       stakeAddress: STAKE,
       project: { name: 'Tosi' },
@@ -126,8 +167,8 @@ describe('/api/projects', () => {
     expect(db.__calls.some((c) => c.sql.startsWith('INSERT'))).toBe(false);
   });
 
-  it('POST 409 over the per-owner limit', async () => {
-    const db = fakeDb({ first: [null, { n: 20 }] });
+  it('POST 409 when the guarded INSERT writes nothing (owner at the cap, including a concurrent creator)', async () => {
+    const db = fakeDb({ first: [null], changes: 0 });
     const res = await onRequestPost(ctx(json('https://x/api/projects', 'POST', SIGNED), env(db)));
     expect(res.status).toBe(409);
   });

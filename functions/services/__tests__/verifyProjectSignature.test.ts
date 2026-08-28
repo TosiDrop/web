@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { verifyProjectSignature, signatureHash } from '../verifyProjectSignature';
-import { buildProjectMessage, normalizeProjectInput, projectDigest } from '../../../src/shared/projects';
+import { verifyProjectListSignature, verifyProjectSignature, signatureHash } from '../verifyProjectSignature';
+import {
+  buildProjectListMessage,
+  buildProjectMessage,
+  normalizeProjectInput,
+  projectDigest,
+} from '../../../src/shared/projects';
 
 const STAKE = 'stake_test1' + 'u'.repeat(40);
 const NOW = new Date('2026-08-20T00:00:00.000Z');
@@ -66,6 +71,23 @@ describe('verifyProjectSignature binding', () => {
       message: await message(),
     });
     expect(tampered).toMatchObject({ ok: false, reason: expect.stringContaining('does not match signed message') });
+  });
+
+  it('binds a list signature to the owner and network and rejects stale ones', async () => {
+    const auth = (message: string) => ({ signature: 'sig', key: 'key', message });
+    const ok = buildProjectListMessage('preview', STAKE, NOW);
+    // Everything before the crypto step passes; the fake signature itself fails last.
+    expect(await verifyProjectListSignature({ stakeAddress: STAKE, network: 'preview', auth: auth(ok), now: NOW }))
+      .toMatchObject({ ok: false, reason: expect.stringMatching(/Signature (verification failed|does not match)/) });
+    expect(await verifyProjectListSignature({ stakeAddress: STAKE, network: 'mainnet', auth: auth(ok), now: NOW }))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('different network') });
+    expect(await verifyProjectListSignature({ stakeAddress: 'stake_test1other', network: 'preview', auth: auth(ok), now: NOW }))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('does not match request') });
+    const stale = buildProjectListMessage('preview', STAKE, new Date('2026-08-19T00:00:00.000Z'));
+    expect(await verifyProjectListSignature({ stakeAddress: STAKE, network: 'preview', auth: auth(stale), now: NOW }))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('stale') });
+    expect(await verifyProjectListSignature({ stakeAddress: STAKE, network: 'preview', auth: auth('garbage'), now: NOW }))
+      .toMatchObject({ ok: false, reason: 'Malformed signing message' });
   });
 
   it('hashes a signature deterministically', async () => {

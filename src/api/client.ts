@@ -11,8 +11,8 @@ async function throwApiError(res: Response): Promise<never> {
   throw new ApiError(message, res.status);
 }
 
-async function apiGet<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+async function apiGet<T>(url: string, init?: { headers?: Record<string, string> }): Promise<T> {
+  const res = await fetch(url, init);
   if (!res.ok) await throwApiError(res);
   return res.json() as Promise<T>;
 }

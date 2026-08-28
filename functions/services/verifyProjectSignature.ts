@@ -1,9 +1,11 @@
 import verifySignature from '@cardano-foundation/cardano-verify-datasignature';
 import {
+  parseProjectListMessage,
   parseProjectMessage,
   projectDigest,
   type ProjectAction,
   type ProjectInput,
+  type StakeAuth,
 } from '../../src/shared/projects';
 
 const FRESHNESS_WINDOW_MS = 5 * 60 * 1000;
@@ -65,6 +67,38 @@ export async function verifyProjectSignature({
     verified = verifySignature(signature, key, message, stakeAddress);
   } catch (err) {
     console.error('verifyProjectSignature crypto error:', err);
+    return { ok: false, status: 401, reason: 'Signature verification failed' };
+  }
+  if (!verified) return { ok: false, status: 401, reason: 'Signature does not match stake address' };
+  return { ok: true };
+}
+
+/** A signed "list my projects" read: same freshness rule, no payload digest. */
+export async function verifyProjectListSignature(
+  { stakeAddress, network, auth, now = new Date() }: {
+    stakeAddress: string;
+    network: string;
+    auth: StakeAuth;
+    now?: Date;
+  },
+): Promise<VerifyResult> {
+  const signed = parseProjectListMessage(auth.message);
+  if (!signed) return { ok: false, status: 401, reason: 'Malformed signing message' };
+  if (signed.network !== network) {
+    return { ok: false, status: 401, reason: 'Signed message is for a different network' };
+  }
+  if (signed.stakeAddress !== stakeAddress) {
+    return { ok: false, status: 401, reason: 'Signed stake address does not match request' };
+  }
+  const ts = Date.parse(signed.signedAt);
+  if (Number.isNaN(ts) || Math.abs(now.getTime() - ts) > FRESHNESS_WINDOW_MS) {
+    return { ok: false, status: 401, reason: 'Signed message is stale (>5 min)' };
+  }
+  let verified: boolean;
+  try {
+    verified = verifySignature(auth.signature, auth.key, auth.message, stakeAddress);
+  } catch (err) {
+    console.error('verifyProjectListSignature crypto error:', err);
     return { ok: false, status: 401, reason: 'Signature verification failed' };
   }
   if (!verified) return { ok: false, status: 401, reason: 'Signature does not match stake address' };
