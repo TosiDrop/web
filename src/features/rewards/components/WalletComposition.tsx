@@ -4,7 +4,7 @@ import { useWalletStore } from '@/store/wallet-state';
 
 const MAX_TOKENS = 5;
 const HEX_PAIR_RE = /^(?:[0-9a-fA-F]{2})+$/;
-const PALETTE = ['#6366F1', '#A855F7', '#F59E0B', '#EC4899', '#22C55E', '#14B8A6'];
+const PALETTE = ['#6366F1', '#A855F7', '#F59E0B', '#EC4899', '#22C55E', '#14B8A6', '#F97316'];
 const decoder = new TextDecoder();
 
 function decodeAssetName(assetName: string): string {
@@ -22,6 +22,7 @@ interface Part {
   label: string;
   value: string;
   color: string;
+  isAda: boolean;
 }
 
 function Card({ children }: { children: ReactNode }) {
@@ -44,7 +45,7 @@ export function WalletComposition() {
   const { parts, totalTokens } = useMemo(() => {
     const result: Part[] = [];
     if (adaBalance > 0) {
-      result.push({ label: 'ADA', value: String(adaBalance), color: PALETTE[0] });
+      result.push({ label: 'ADA', value: String(adaBalance), color: PALETTE[0], isAda: true });
     }
     const visible = tokenList.slice(0, MAX_TOKENS);
     const remaining = tokenList.length - visible.length;
@@ -55,6 +56,7 @@ export function WalletComposition() {
         label: ticker,
         value: formatRawQuantity(token.quantity),
         color: PALETTE[(i + 1) % PALETTE.length],
+        isAda: false,
       });
     });
 
@@ -63,6 +65,7 @@ export function WalletComposition() {
         label: `+${remaining} more`,
         value: '0',
         color: PALETTE[PALETTE.length - 1],
+        isAda: false,
       });
     }
 
@@ -104,7 +107,7 @@ export function WalletComposition() {
               style={{ backgroundColor: p.color }}
             />
             <span className="flex-1 truncate text-[12.5px] text-[#C5C8D2]">{p.label}</span>
-            {p.label !== 'ADA' && p.value !== '0' && <span className="font-mono text-[11px] text-[#8A8E9A]">{p.value}</span>}
+            {!p.isAda && p.value !== '0' && <span className="font-mono text-[11px] text-[#8A8E9A]">{p.value}</span>}
           </div>
         ))}
       </div>
