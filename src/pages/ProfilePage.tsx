@@ -188,7 +188,7 @@ function HeroStakeChip() {
 }
 
 export default function ProfilePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = Math.max(0, TABS.findIndex((tab) => tab.id === searchParams.get('tab')));
 
   return (
@@ -207,7 +207,14 @@ export default function ProfilePage() {
         </p>
       </header>
 
-      <TabGroup defaultIndex={defaultTab}>
+      <TabGroup
+        selectedIndex={defaultTab}
+        onChange={(index) => {
+          const next = new URLSearchParams(searchParams);
+          next.set('tab', TABS[index].id);
+          setSearchParams(next);
+        }}
+      >
         <TabList className="grid grid-cols-4 border-b border-border-subtle sm:flex sm:gap-1">
           {TABS.map(({ name, Icon }) => (
             <Tab

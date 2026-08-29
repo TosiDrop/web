@@ -47,7 +47,11 @@ function PoolCard({ pool }: { pool: TeamPool }) {
 
 function PoolsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div
+      role="status"
+      aria-label="Loading pools"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
+    >
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}

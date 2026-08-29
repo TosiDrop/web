@@ -13,9 +13,14 @@ function decodeAssetName(assetName: string): string {
   return decoder.decode(new Uint8Array(pairs.map((b) => parseInt(b, 16)))).slice(0, 8);
 }
 
+function formatRawQuantity(quantity: unknown): string {
+  if (typeof quantity !== 'string' || !/^\d+$/.test(quantity)) return '0';
+  return quantity.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 interface Part {
   label: string;
-  value: number;
+  value: string;
   color: string;
 }
 
@@ -39,7 +44,7 @@ export function WalletComposition() {
   const { parts, totalTokens } = useMemo(() => {
     const result: Part[] = [];
     if (adaBalance > 0) {
-      result.push({ label: 'ADA', value: adaBalance, color: PALETTE[0] });
+      result.push({ label: 'ADA', value: String(adaBalance), color: PALETTE[0] });
     }
     const visible = tokenList.slice(0, MAX_TOKENS);
     const remaining = tokenList.length - visible.length;
@@ -48,7 +53,7 @@ export function WalletComposition() {
       const ticker = token.assetName ? decodeAssetName(token.assetName) : `Token ${i + 1}`;
       result.push({
         label: ticker,
-        value: Number(token.quantity) || 0,
+        value: formatRawQuantity(token.quantity),
         color: PALETTE[(i + 1) % PALETTE.length],
       });
     });
@@ -56,7 +61,7 @@ export function WalletComposition() {
     if (remaining > 0) {
       result.push({
         label: `+${remaining} more`,
-        value: 0,
+        value: '0',
         color: PALETTE[PALETTE.length - 1],
       });
     }
@@ -99,7 +104,7 @@ export function WalletComposition() {
               style={{ backgroundColor: p.color }}
             />
             <span className="flex-1 truncate text-[12.5px] text-[#C5C8D2]">{p.label}</span>
-            {p.label !== 'ADA' && p.value > 0 && <span className="font-mono text-[11px] text-[#8A8E9A]">{p.value.toLocaleString()}</span>}
+            {p.label !== 'ADA' && p.value !== '0' && <span className="font-mono text-[11px] text-[#8A8E9A]">{p.value}</span>}
           </div>
         ))}
       </div>
