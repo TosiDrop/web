@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface ClaimRequestInfo {
   requestId: string;
   deposit: number;
+  overheadFee: number;
   withdrawalAddress: string;
 }
 

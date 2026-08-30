@@ -24,19 +24,19 @@ export function ClaimHero({
   canClaim,
 }: ClaimHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-accent/12 bg-[linear-gradient(135deg,rgba(34,211,238,0.045),rgba(34,211,238,0.02)_52%,rgba(255,255,255,0.012))] px-7 py-7 shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_18px_40px_-32px_rgba(8,145,178,0.22)]">
+    <section aria-labelledby="claim-hero-title" className="relative overflow-hidden rounded-2xl border border-accent/12 bg-[linear-gradient(135deg,rgba(34,211,238,0.045),rgba(34,211,238,0.02)_52%,rgba(255,255,255,0.012))] px-7 py-7 shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_18px_40px_-32px_rgba(8,145,178,0.22)]">
       <UmbrellaMark className="pointer-events-none absolute -right-4 -bottom-9 h-[250px] w-[250px] opacity-[0.06]" />
 
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-light">
+            <h2 id="claim-hero-title" className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-light">
               Ready to claim
-            </p>
+            </h2>
             <QueueCount />
           </div>
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-            <span className="text-[52px] font-semibold leading-[0.9] tracking-[-0.03em] tabular-nums text-[#F7F8FB]">
+            <span role="status" aria-live="polite" className="text-[52px] font-semibold leading-[0.9] tracking-[-0.03em] tabular-nums text-[#F7F8FB]">
               {selectedCount}
             </span>
             <span className="text-[17px] font-medium text-[#C5C8D2]">

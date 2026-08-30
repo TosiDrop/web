@@ -51,7 +51,7 @@ export default function DepositPage() {
   const [sendError, setSendError] = useState<string | null>(null);
 
   const { sendDeposit, canSend } = useWalletDeposit();
-  const { status, txExplorerUrl } = useClaimStatus({
+  const { status, error: statusError, refetch: refetchStatus, txExplorerUrl } = useClaimStatus({
     request_id: request?.requestId ?? null,
     staking_address: stakeAddress,
   });
@@ -61,13 +61,14 @@ export default function DepositPage() {
   }, [request, navigate]);
 
   if (!request) return null;
-  const { requestId, deposit, withdrawalAddress } = request;
+  const { requestId, deposit, overheadFee, withdrawalAddress } = request;
+  const totalDue = deposit + overheadFee;
 
   const handleSend = async () => {
     setSendError(null);
     setIsSending(true);
     try {
-      const hash = await sendDeposit({ toAddress: withdrawalAddress, lovelace: deposit });
+      const hash = await sendDeposit({ toAddress: withdrawalAddress, lovelace: totalDue });
       setTxHash(hash);
     } catch (e) {
       setSendError(e instanceof Error ? e.message : 'Wallet rejected or failed to broadcast.');
@@ -85,7 +86,7 @@ export default function DepositPage() {
   const statusCopy = STATUS_COPY[status?.kind ?? 'waiting'];
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <main className="mx-auto max-w-xl space-y-6" aria-labelledby="deposit-title">
       <button
         type="button"
         onClick={handleCancel}
@@ -97,10 +98,10 @@ export default function DepositPage() {
 
       <header>
         <p className="label-eyebrow">Step 2 · Deposit</p>
-        <h1 className="mt-2 text-2xl font-semibold text-white">Send your deposit</h1>
+        <h1 id="deposit-title" className="mt-2 text-2xl font-semibold text-white">Send your deposit</h1>
         <p className="mt-2 text-sm text-slate-400">
           Send exactly{' '}
-          <span className="font-mono text-white">{formatAda(deposit)} ADA</span> to the
+          <span className="font-mono text-white">{formatAda(totalDue)} ADA</span> to the
           withdrawal address below. The vending machine releases your rewards once
           the deposit is detected.
         </p>
@@ -108,14 +109,18 @@ export default function DepositPage() {
 
       <section className="card-premium overflow-hidden">
         <div className="flex flex-col items-center gap-5 p-6">
-          <QRCode value={withdrawalAddress} amountLovelace={deposit} size={184} />
+          <QRCode value={withdrawalAddress} amountLovelace={totalDue} size={184} />
 
           <div className="w-full space-y-3">
-            <div>
-              <p className="label-eyebrow">Amount</p>
+            <div aria-label="Payment breakdown">
+              <p className="label-eyebrow">Amount due</p>
               <p className="mt-1 font-mono text-lg font-semibold text-white">
-                {formatAda(deposit)} ADA
+                {formatAda(totalDue)} ADA
               </p>
+              <dl className="mt-2 space-y-1 text-xs text-slate-400">
+                <div className="flex justify-between gap-3"><dt>Reward deposit</dt><dd>{formatAda(deposit)} ADA</dd></div>
+                {overheadFee > 0 && <div className="flex justify-between gap-3"><dt>Processing fee</dt><dd>{formatAda(overheadFee)} ADA</dd></div>}
+              </dl>
             </div>
 
             <div>
@@ -153,7 +158,7 @@ export default function DepositPage() {
               Cancel
             </button>
           </div>
-          {sendError && <p className="mt-3 text-xs text-rose-300">{sendError}</p>}
+          {sendError && <FeedbackBanner tone="error" title="Deposit failed" message={sendError} />}
           {!canSend && (
             <p className="mt-3 text-xs text-slate-500">
               Connect your wallet here, or send the deposit manually from another wallet — either way the
@@ -163,13 +168,30 @@ export default function DepositPage() {
         </div>
       </section>
 
-      <FeedbackBanner
-        tone={statusCopy.tone}
-        title={statusCopy.title}
-        message={
-          status?.kind === 'failure' && status.reason ? status.reason : statusCopy.message
-        }
-      />
+      {statusError ? (
+        <div className="space-y-3" role="alert">
+          <FeedbackBanner
+            tone="error"
+            title="Could not check claim status"
+            message="Your deposit may still be processing. Check again to refresh the latest status."
+          />
+          <button
+            type="button"
+            onClick={() => void refetchStatus()}
+            className="rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-surface-overlay hover:text-white"
+          >
+            Check status again
+          </button>
+        </div>
+      ) : (
+        <FeedbackBanner
+          tone={statusCopy.tone}
+          title={statusCopy.title}
+          message={
+            status?.kind === 'failure' && status.reason ? status.reason : statusCopy.message
+          }
+        />
+      )}
 
       {(txHash || txExplorerUrl) && (
         <section className="card-premium space-y-3 p-5">
@@ -204,6 +226,6 @@ export default function DepositPage() {
           Done
         </button>
       )}
-    </div>
+    </main>
   );
 }

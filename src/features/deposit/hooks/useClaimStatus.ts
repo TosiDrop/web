@@ -22,6 +22,7 @@ export interface UseClaimStatusResult {
   status: ClaimStatus | undefined;
   isLoading: boolean;
   error: Error | null;
+  refetch: () => Promise<unknown>;
   txExplorerUrl: string | null;
   isTerminal: boolean;
 }
@@ -72,6 +73,7 @@ export function useClaimStatus({
     status,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
     txExplorerUrl,
     isTerminal: isTerminalStatus(status),
   };

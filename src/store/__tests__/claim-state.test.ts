@@ -69,7 +69,7 @@ describe('reset', () => {
     const s = useClaimStore.getState();
     s.setLookupAddress('stake1uxabc');
     s.initSelectionFor('stake1uxabc', ['a']);
-    s.setRequest({ requestId: 'r1', deposit: 3, withdrawalAddress: 'addr1' });
+    s.setRequest({ requestId: 'r1', deposit: 3, overheadFee: 0, withdrawalAddress: 'addr1' });
     s.reset();
     const after = useClaimStore.getState();
     expect(after.selectedAssetIds).toEqual([]);
