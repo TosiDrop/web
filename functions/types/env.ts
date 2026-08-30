@@ -3,6 +3,8 @@
 export interface Env {
   VITE_NETWORK?: string;
   VITE_VM_API_KEY: string;
+  /** Comma-separated pool bech32 IDs shown as TosiDrop partners. */
+  PARTNER_POOL_IDS?: string;
   VM_BASE_URL?: string;
   VM_BASE_URL_MAINNET?: string;
   VM_API_KEY_MAINNET?: string;

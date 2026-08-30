@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { IconAlertCircle, IconExternalLink } from '@tabler/icons-react';
-import { useWhitelistedPools, type TeamPool } from '@/features/team/api/team.queries';
+import { usePartnerPools, type TeamPool } from '@/features/team/api/team.queries';
 
 function PoolLogo({ logo, ticker }: { logo?: string; ticker: string }) {
   const [failed, setFailed] = useState(false);
@@ -69,7 +69,7 @@ function PoolsSkeleton() {
 }
 
 export default function TeamPage() {
-  const { data: pools, isLoading, error, refetch } = useWhitelistedPools();
+  const { data: pools, isLoading, error, refetch } = usePartnerPools();
 
   return (
     <div className="space-y-7">
@@ -115,7 +115,7 @@ export default function TeamPage() {
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-light tracking-tight text-white">
-            Whitelisted <span className="font-semibold">pools</span>
+            Partner <span className="font-semibold">pools</span>
           </h2>
           <p className="mt-1 text-sm text-slate-400">
             Delegate to these Tosi pools to earn rewards on TosiDrop.
@@ -137,7 +137,7 @@ export default function TeamPage() {
           <div className="card-premium px-6 py-16 text-center">
             <p className="label-eyebrow">No pools listed</p>
             <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-              The whitelist is empty right now — check back soon.
+              No partner pools are listed right now — check back soon.
             </p>
           </div>
         ) : (

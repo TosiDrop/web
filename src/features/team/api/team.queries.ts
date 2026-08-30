@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
-import { flattenWhitelist, type GetPoolsResponse } from '@/features/rewards/api/pools.queries';
-
-export { flattenWhitelist };
+import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
 
 export interface TeamPool {
   poolId: string;
@@ -13,16 +11,22 @@ export interface TeamPool {
   description?: string | null;
 }
 
-export function useWhitelistedPools() {
+export function normalizePartnerPoolIds(raw: unknown): Set<string> {
+  return new Set(
+    Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && id.length > 0) : [],
+  );
+}
+
+export function usePartnerPools() {
   return useQuery<TeamPool[], Error>({
-    queryKey: ['whitelisted-pools', DEPLOYMENT_NETWORK],
+    queryKey: ['partner-pools', DEPLOYMENT_NETWORK],
     staleTime: 300_000,
     queryFn: async () => {
-      const [pools, whitelist] = await Promise.all([
+      const [pools, partnerPoolIds] = await Promise.all([
         apiClient.get<GetPoolsResponse>('/api/getPools'),
-        apiClient.get<Record<string, string[]>>('/api/getWhitelist'),
+        apiClient.get<string[]>('/api/getPartnerPools'),
       ]);
-      const allowed = flattenWhitelist(whitelist);
+      const allowed = normalizePartnerPoolIds(partnerPoolIds);
       return Object.entries(pools ?? {})
         .filter(([key, pool]) => allowed.has(key) || allowed.has(pool?.id))
         .map(([key, pool]) => ({
