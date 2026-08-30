@@ -1,12 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { IconClock, IconBookmark, IconChartLine, IconSettings } from '@tabler/icons-react';
-import { Card } from '@/components/common/Card';
-import { CopyButton } from '@/components/common/CopyButton';
+import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
 import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
+import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
 import { HistoryList } from '@/features/history/components/HistoryList';
 import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
 import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
@@ -17,15 +16,56 @@ const TABS = [
   { id: 'history', name: 'History', Icon: IconClock },
   { id: 'favorites', name: 'Favorites', Icon: IconBookmark },
   { id: 'analytics', name: 'Analytics', Icon: IconChartLine },
-  { id: 'settings', name: 'Settings', Icon: IconSettings },
+  { id: 'preferences', name: 'Preferences', Icon: IconWallet },
 ];
+
+function StakeAddressDisplay({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="group inline-flex items-center gap-2 font-mono text-xs text-slate-300 transition hover:text-white"
+      aria-label="Copy stake address"
+    >
+      <span>{truncateHash(value, 14, 8)}</span>
+      <span className="text-slate-500 transition group-hover:text-accent-light">
+        {copied ? <IconCheck size={12} stroke={2} /> : <IconCopy size={12} stroke={1.6} />}
+      </span>
+    </button>
+  );
+}
 
 function HistoryTab() {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-text-primary">Claim history</h2>
-        <p className="mt-1 text-sm text-text-muted">Tokens delivered to your stake address.</p>
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-light tracking-tight text-white">
+            Claim <span className="font-semibold">history</span>
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Tokens delivered to your stake address.
+          </p>
+        </div>
+        <button
+          disabled
+          title="Coming soon"
+          className="font-mono text-[11px] uppercase tracking-wider text-slate-500 opacity-60 cursor-not-allowed"
+        >
+          Export · CSV
+        </button>
       </div>
       <HistoryList />
     </div>
@@ -36,15 +76,17 @@ function AnalyticsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-text-primary">Reward analytics</h2>
-        <p className="mt-1 text-sm text-text-muted">
+        <h2 className="text-xl font-light tracking-tight text-white">
+          Reward <span className="font-semibold">analytics</span>
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">
           Delivered claim trends, fee history, and current reward sources.
         </p>
       </div>
       <PersonalAnalytics />
       <div className="pt-2">
-        <h3 className="text-sm font-semibold text-text-primary">Current allocations</h3>
-        <p className="mt-1 text-xs text-text-muted">
+        <p className="label-eyebrow">Current allocations</p>
+        <p className="mt-1 text-xs text-slate-500">
           Rewards waiting for your next claim, grouped by source.
         </p>
       </div>
@@ -53,73 +95,83 @@ function AnalyticsTab() {
   );
 }
 
-function ProfileSkeleton() {
-  return (
-    <div role="status" aria-label="Loading profile" className="space-y-4">
-      <div className="skeleton-shimmer h-3 w-24 rounded" />
-      <div className="skeleton-shimmer h-10 w-full rounded-lg" />
-      <div className="skeleton-shimmer h-11 w-28 rounded-xl" />
-    </div>
-  );
-}
-
-function SettingsTab() {
+function PreferencesTab() {
   const { stakeAddress, connected, walletName, networkId } = useWalletStore();
   const { data: profile, isLoading } = useProfile(stakeAddress);
 
   return (
     <div className="space-y-5">
-      <Card as="section" className="p-6">
-        <h2 className="text-sm font-semibold text-text-primary">Connected wallet</h2>
-        <p className="mt-2 text-base font-medium text-text-primary">
-          {connected ? walletName ?? 'Wallet' : 'Not connected'}
-        </p>
+      <section className="card-premium px-6 py-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="label-eyebrow">Connected wallet</p>
+            <p className="mt-2 text-base font-medium text-white">
+              {connected ? walletName ?? 'Wallet' : 'Not connected'}
+            </p>
+          </div>
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-slate-500">
+            {connected ? 'Synced' : 'Offline'}
+          </span>
+        </div>
 
         {connected && stakeAddress ? (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid grid-cols-2 gap-4">
             <div>
               <p className="label-eyebrow">Network</p>
-              <p className="mt-1.5 font-mono text-xs text-text-secondary">
+              <p className="mt-1.5 font-mono text-xs text-slate-200">
                 {getNetworkLabel(networkId)}
               </p>
             </div>
-            <div>
+            <div className="text-right">
               <p className="label-eyebrow">Stake address</p>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="font-mono text-xs text-text-secondary">
-                  {truncateHash(stakeAddress, 14, 8)}
-                </span>
-                <CopyButton value={stakeAddress} ariaLabel="Copy stake address" />
+              <div className="mt-1.5 flex justify-end">
+                <StakeAddressDisplay value={stakeAddress} />
               </div>
             </div>
           </div>
         ) : (
-          <p className="mt-4 text-sm text-text-muted">Connect a wallet to view details.</p>
+          <p className="mt-4 text-sm text-slate-500">
+            Connect a wallet to view details.
+          </p>
         )}
-      </Card>
+      </section>
 
-      <Card as="section" className="p-6">
+      <section className="card-premium px-6 py-5">
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-text-primary">Display name</h2>
-          <p className="mt-2 text-sm text-text-muted">
+          <p className="label-eyebrow">Profile</p>
+          <p className="mt-2 text-sm text-slate-400">
             Sign a message to update the display name shown across TosiDrop.
           </p>
         </div>
 
         {isLoading ? (
-          <ProfileSkeleton />
+          <p className="text-sm text-slate-500 animate-pulse">Loading profile...</p>
         ) : (
           <>
             {profile?.value?.name && (
-              <div className="mb-4 flex items-center justify-between rounded-lg bg-surface-inset px-3 py-2">
+              <div className="mb-4 flex items-center justify-between rounded-lg bg-surface-inset/50 px-3 py-2">
                 <span className="label-eyebrow">Current</span>
-                <span className="text-sm font-medium text-text-primary">{profile.value.name}</span>
+                <span className="text-sm font-medium text-white">
+                  {profile.value.name}
+                </span>
               </div>
             )}
             <ProfileForm currentName={profile?.value?.name} />
           </>
         )}
-      </Card>
+      </section>
+
+      <section className="card-premium px-6 py-5">
+        <div>
+          <p className="label-eyebrow">Appearance</p>
+          <p className="mt-2 text-sm text-slate-400">
+            Personal preferences. Stored on your device.
+          </p>
+        </div>
+        <div className="mt-5 space-y-5">
+          <ThemeToggle />
+        </div>
+      </section>
     </div>
   );
 }
@@ -129,66 +181,67 @@ function HeroStakeChip() {
   const connected = useWalletStore((s) => s.connected);
   if (!connected || !stakeAddress) return null;
   return (
-    <span className="font-mono text-xs text-text-muted">{truncateHash(stakeAddress, 8, 6)}</span>
+    <span className="font-mono text-xs text-slate-500">
+      {truncateHash(stakeAddress, 8, 6)}
+    </span>
   );
 }
 
 export default function ProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabIndex = Math.max(0, TABS.findIndex((t) => t.id === searchParams.get('tab')));
-  const tabListRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    tabListRef.current
-      ?.querySelector('[aria-selected="true"]')
-      ?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
-  }, [tabIndex]);
+  const defaultTab = Math.max(0, TABS.findIndex((tab) => tab.id === searchParams.get('tab')));
 
   return (
     <div className="space-y-7">
       <header>
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Your profile</h1>
+        <p className="label-eyebrow">Account</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-3">
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            Your profile
+          </h1>
           <HeroStakeChip />
         </div>
-        <p className="mt-2 max-w-md text-sm text-text-muted">
-          Claim history, saved tokens, and your display name.
+        <p className="mt-2 max-w-md text-sm text-slate-400">
+          Track claim history, manage saved tokens, and tune how TosiDrop
+          talks to your wallet.
         </p>
       </header>
 
       <TabGroup
-        selectedIndex={tabIndex}
-        onChange={(i) => setSearchParams({ tab: TABS[i].id }, { replace: true })}
+        selectedIndex={defaultTab}
+        onChange={(index) => {
+          const next = new URLSearchParams(searchParams);
+          next.set('tab', TABS[index].id);
+          setSearchParams(next);
+        }}
       >
-        <div className="border-b border-border-subtle">
-          <TabList
-            ref={tabListRef}
-            className="-mb-px flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {TABS.map(({ name, Icon }) => (
-              <Tab
-                key={name}
-                className={({ selected }) =>
-                  'flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60 ' +
-                  (selected
-                    ? 'border-accent font-semibold text-text-primary'
-                    : 'border-transparent font-medium text-text-muted hover:text-text-secondary')
-                }
-              >
-                {({ selected }) => (
-                  <>
-                    <Icon
-                      size={14}
-                      stroke={1.6}
-                      aria-hidden
-                      className={selected ? 'text-accent-light' : ''}
-                    />
-                    {name}
-                  </>
-                )}
-              </Tab>
-            ))}
-          </TabList>
-        </div>
+        <TabList className="grid grid-cols-4 border-b border-border-subtle sm:flex sm:gap-1">
+          {TABS.map(({ name, Icon }) => (
+            <Tab
+              key={name}
+              className={({ selected }) =>
+                'group -mb-px flex min-w-0 items-center justify-center gap-1.5 border-b-2 px-1 py-2.5 text-xs transition focus:outline-none sm:gap-2 sm:px-3.5 sm:text-sm ' +
+                (selected
+                  ? 'border-accent font-semibold text-white'
+                  : 'border-transparent font-medium text-slate-500 hover:text-slate-200')
+              }
+            >
+              {({ selected }) => (
+                <>
+                  <Icon
+                    size={14}
+                    stroke={1.6}
+                    className={
+                      'hidden shrink-0 sm:block ' +
+                      (selected ? 'text-accent-light' : '')
+                    }
+                  />
+                  {name}
+                </>
+              )}
+            </Tab>
+          ))}
+        </TabList>
 
         <TabPanels className="mt-7">
           <TabPanel>
@@ -201,7 +254,7 @@ export default function ProfilePage() {
             <AnalyticsTab />
           </TabPanel>
           <TabPanel>
-            <SettingsTab />
+            <PreferencesTab />
           </TabPanel>
         </TabPanels>
       </TabGroup>

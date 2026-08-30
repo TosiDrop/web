@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAssets } from '@meshsdk/react';
 import { IconAlertCircle, IconArrowLeft, IconCheck } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-import { GradientButton } from '@/components/common/GradientButton';
-import { useOnboardingStore } from '@/store/onboarding-state';
+import { ConnectWallet } from '@/components/common/ConnectWallet';
 import { useWalletStore } from '@/store/wallet-state';
 import { useToastStore } from '@/store/toast-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
 import { tickerFor } from '@/features/history/api/history.queries';
 import { truncateHash } from '@/utils/format';
 import { EMPTY_DISTRIBUTION, validateProjectInput, normalizeProjectInput, type ProjectInput } from '@/shared/projects';
@@ -143,8 +143,8 @@ function TokenStep({ value, onChange }: { value: string; onChange: (tokenId: str
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { connected, stakeAddress, walletName } = useWalletStore();
-  const openModal = useOnboardingStore((s) => s.openModal);
   const pushToast = useToastStore((s) => s.push);
+  const openWalletModal = useOnboardingStore((s) => s.openModal);
   const { submit, isPending } = useProjectSubmit();
   const { data: tokens } = useTokenMap();
 
@@ -204,9 +204,11 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-400">Connect the wallet that owns the project token.</p>
             )}
             {!walletReady && (
-              <GradientButton size="sm" onClick={openModal}>
-                Connect wallet
-              </GradientButton>
+              connected ? (
+                <button type="button" onClick={openWalletModal} className="text-xs text-accent-light hover:underline">
+                  Change wallet
+                </button>
+              ) : <ConnectWallet />
             )}
           </div>
         )}

@@ -193,6 +193,15 @@ describe('/api/projects', () => {
     expect(res.status).toBe(404);
   });
 
+  it('GET /:id does not expose pending project submissions', async () => {
+    const db = fakeDb({ first: [ROW] });
+    const res = await getOne(
+      ctx(new Request('https://x/api/projects/p1', { headers: ORIGIN }), env(db), { id: 'p1' }),
+    );
+    expect(res.status).toBe(404);
+    expect(db.__calls[0].sql).toContain("status = 'approved'");
+  });
+
   it('PUT 403 for non-owners, 200 for owners', async () => {
     const other = fakeDb({ first: [{ owner_address: 'stake1other' }] });
     const r1 = await onRequestPut(

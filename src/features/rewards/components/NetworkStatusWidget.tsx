@@ -1,21 +1,26 @@
-import { Card } from '@/components/common/Card';
 import { useWalletStore } from '@/store/wallet-state';
 import { getNetworkLabel } from '@/utils/format';
 
 export function NetworkStatusWidget() {
-  const networkId = useWalletStore((s) => s.networkId);
+  const { networkId, connected } = useWalletStore();
 
   return (
-    <Card className="p-5">
+    <div className="card-premium p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-text-secondary">Network</h3>
-        <span className="rounded-full border border-border-subtle bg-surface-inset px-2.5 py-1 font-mono text-2xs uppercase tracking-wider text-text-secondary">
-          {getNetworkLabel(networkId)}
-        </span>
+        <h3 className="text-[13.5px] font-semibold text-[#C5C8D2]">Network</h3>
+        {connected ? (
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#C5C8D2]">
+            {getNetworkLabel(networkId)}
+          </span>
+        ) : (
+          <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#6B6F7B]">
+            Disconnected
+          </span>
+        )}
       </div>
-      <p className="mt-2.5 text-xs leading-relaxed text-text-muted">
+      <p className="mt-2.5 text-[12px] leading-relaxed text-[#6B6F7B]">
         Rewards are processed automatically each epoch.
       </p>
-    </Card>
+    </div>
   );
 }
