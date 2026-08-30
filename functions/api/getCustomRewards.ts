@@ -60,7 +60,7 @@ async function handleRequest(
       {
         request_id: result.request_id,
         deposit: result.deposit,
-        overhead_fee: result.overhead_fee ?? overhead_fee ?? 0,
+        overhead_fee: Number(result.overhead_fee ?? overhead_fee ?? 0),
         withdrawal_address: result.withdrawal_address,
       },
       200,
