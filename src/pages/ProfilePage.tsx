@@ -1,16 +1,42 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
-import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
-import { ThemeToggle } from '@/features/preferences/components/ThemeToggle';
-import { HistoryList } from '@/features/history/components/HistoryList';
-import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
-import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
-import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
+
+// These panels are independent of the profile header and are only needed
+// after the user opens their tab. Keeping them out of the route entry avoids
+// loading charting, history, and wallet-editing code for every profile visit.
+const HistoryList = lazy(async () => {
+  const module = await import('@/features/history/components/HistoryList');
+  return { default: module.HistoryList };
+});
+const FavoritesTab = lazy(async () => {
+  const module = await import('@/features/favorites/components/FavoritesTab');
+  return { default: module.FavoritesTab };
+});
+const PersonalAnalytics = lazy(async () => {
+  const module = await import('@/features/profile/components/PersonalAnalytics');
+  return { default: module.PersonalAnalytics };
+});
+const RewardBreakdown = lazy(async () => {
+  const module = await import('@/features/profile/components/RewardBreakdown');
+  return { default: module.RewardBreakdown };
+});
+const ProfileForm = lazy(async () => {
+  const module = await import('@/features/profile/components/ProfileForm');
+  return { default: module.ProfileForm };
+});
+const ThemeToggle = lazy(async () => {
+  const module = await import('@/features/preferences/components/ThemeToggle');
+  return { default: module.ThemeToggle };
+});
+
+function TabLoading() {
+  return <div className="card-premium h-48 animate-pulse" aria-label="Loading profile tab" />;
+}
 
 const TABS = [
   { id: 'history', name: 'History', Icon: IconClock },
@@ -245,16 +271,16 @@ export default function ProfilePage() {
 
         <TabPanels className="mt-7">
           <TabPanel>
-            <HistoryTab />
+            <Suspense fallback={<TabLoading />}><HistoryTab /></Suspense>
           </TabPanel>
           <TabPanel>
-            <FavoritesTab />
+            <Suspense fallback={<TabLoading />}><FavoritesTab /></Suspense>
           </TabPanel>
           <TabPanel>
-            <AnalyticsTab />
+            <Suspense fallback={<TabLoading />}><AnalyticsTab /></Suspense>
           </TabPanel>
           <TabPanel>
-            <PreferencesTab />
+            <Suspense fallback={<TabLoading />}><PreferencesTab /></Suspense>
           </TabPanel>
         </TabPanels>
       </TabGroup>
