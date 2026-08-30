@@ -2,7 +2,7 @@
 
 export interface Env {
   VITE_NETWORK?: string;
-  VITE_VM_API_KEY: string;
+  VITE_VM_API_KEY?: string;
   VM_BASE_URL?: string;
   VM_BASE_URL_MAINNET?: string;
   VM_API_KEY_MAINNET?: string;

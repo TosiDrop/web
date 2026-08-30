@@ -25,7 +25,7 @@ vi.mock('vm-sdk', () => ({
 
 const previewEnv = {
   VITE_NETWORK: 'preview',
-  VITE_VM_API_KEY: 'preview-key',
+  VM_API_KEY_PREVIEW: 'preview-key',
   VM_WEB_PROFILES: {} as never,
 } as Env;
 
@@ -55,8 +55,8 @@ describe('vmConfig', () => {
       vmConfig({
         ...previewEnv,
         VITE_NETWORK: 'mainnet',
-        VM_BASE_URL: 'https://vm-mainnet.example',
-        VITE_VM_API_KEY: 'mainnet-key',
+        VM_BASE_URL_MAINNET: 'https://vm-mainnet.example',
+        VM_API_KEY_MAINNET: 'mainnet-key',
       }),
     ).toEqual({
       baseUrl: 'https://vm-mainnet.example',
@@ -68,14 +68,24 @@ describe('vmConfig', () => {
     expect(vmConfig({ ...previewEnv, VITE_NETWORK: 'mainnet' })).toBeNull();
   });
 
-  it('rejects an empty API key on either deployment network', () => {
-    expect(vmConfig({ ...previewEnv, VITE_VM_API_KEY: '' })).toBeNull();
+  it('fails closed when Mainnet has only the legacy preview key', () => {
     expect(
       vmConfig({
         ...previewEnv,
         VITE_NETWORK: 'mainnet',
-        VM_BASE_URL: 'https://vm-mainnet.example',
-        VITE_VM_API_KEY: ' ',
+        VM_BASE_URL_MAINNET: 'https://vm-mainnet.example',
+      }),
+    ).toBeNull();
+  });
+
+  it('rejects an empty API key on either deployment network', () => {
+    expect(vmConfig({ ...previewEnv, VM_API_KEY_PREVIEW: '' })).toBeNull();
+    expect(
+      vmConfig({
+        ...previewEnv,
+        VITE_NETWORK: 'mainnet',
+        VM_BASE_URL_MAINNET: 'https://vm-mainnet.example',
+        VM_API_KEY_MAINNET: ' ',
       }),
     ).toBeNull();
   });
@@ -115,8 +125,8 @@ describe('vmGet', () => {
     const env = {
       ...previewEnv,
       VITE_NETWORK: 'mainnet',
-      VM_BASE_URL: 'https://vm-mainnet.example',
-      VITE_VM_API_KEY: 'mainnet-key',
+      VM_BASE_URL_MAINNET: 'https://vm-mainnet.example',
+      VM_API_KEY_MAINNET: 'mainnet-key',
     };
 
     await expect(
