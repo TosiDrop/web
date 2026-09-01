@@ -1,19 +1,15 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-
-interface Props {
-  children: ReactNode;
-}
+import { GradientButton } from './GradientButton';
 
 interface State {
-  hasError: boolean;
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
+  state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { error };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -21,19 +17,16 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.error) {
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-          <h1 className="text-xl font-semibold text-white">Something went wrong</h1>
-          <p className="mt-2 max-w-md text-sm text-gray-400">
-            {this.state.error?.message ?? 'An unexpected error occurred.'}
+          <h1 className="text-xl font-semibold text-text-primary">Something went wrong</h1>
+          <p className="mt-2 max-w-md text-sm text-text-muted">
+            {this.state.error.message || 'An unexpected error occurred.'}
           </p>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            className="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-500"
-          >
-            Try Again
-          </button>
+          <GradientButton className="mt-6" onClick={() => this.setState({ error: null })}>
+            Try again
+          </GradientButton>
         </div>
       );
     }

@@ -96,7 +96,7 @@ export function PersonalAnalytics() {
   if (!stakeAddress) {
     return (
       <StateMessage
-        eyebrow="Personal history"
+        title="Personal history"
         message="Connect a wallet to see your claim trends."
       />
     );
@@ -126,7 +126,7 @@ export function PersonalAnalytics() {
   if (!data || data.summary.totalClaims === 0) {
     return (
       <StateMessage
-        eyebrow={data?.degraded ? 'History archive unavailable' : 'No claims yet'}
+        title={data?.degraded ? 'History archive unavailable' : 'No claims yet'}
         message={
           data?.degraded
             ? 'Personal trends appear once the history archive is connected.'
