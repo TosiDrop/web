@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { IconCopy, IconCheck, IconWallet, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
+import { IconCopy, IconCheck, IconSettings, IconClock, IconBookmark, IconChartLine } from '@tabler/icons-react';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
@@ -29,10 +29,6 @@ const ProfileForm = lazy(async () => {
   const module = await import('@/features/profile/components/ProfileForm');
   return { default: module.ProfileForm };
 });
-const ThemeToggle = lazy(async () => {
-  const module = await import('@/features/preferences/components/ThemeToggle');
-  return { default: module.ThemeToggle };
-});
 
 function TabLoading() {
   return <div className="card-premium h-48 animate-pulse" aria-label="Loading profile tab" />;
@@ -42,7 +38,7 @@ const TABS = [
   { id: 'history', name: 'History', Icon: IconClock },
   { id: 'favorites', name: 'Favorites', Icon: IconBookmark },
   { id: 'analytics', name: 'Analytics', Icon: IconChartLine },
-  { id: 'preferences', name: 'Preferences', Icon: IconWallet },
+  { id: 'settings', name: 'Settings', Icon: IconSettings },
 ];
 
 function StakeAddressDisplay({ value }: { value: string }) {
@@ -187,17 +183,6 @@ function PreferencesTab() {
         )}
       </section>
 
-      <section className="card-premium px-6 py-5">
-        <div>
-          <p className="label-eyebrow">Appearance</p>
-          <p className="mt-2 text-sm text-slate-400">
-            Personal preferences. Stored on your device.
-          </p>
-        </div>
-        <div className="mt-5 space-y-5">
-          <ThemeToggle />
-        </div>
-      </section>
     </div>
   );
 }
