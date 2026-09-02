@@ -1,13 +1,9 @@
 import { create } from 'zustand';
 
-export type OnboardingStep =
-  | 'welcome'
-  | 'select-wallet'
-  | 'connecting'
-  | 'profile-setup'
-  | 'onboarding-tour'
-  | 'welcome-back'
-  | 'complete';
+export type OnboardingStep = 'select-wallet' | 'connecting' | 'profile-setup';
+
+/** Set when the user skips profile setup on this device; we stop asking. */
+export const PROFILE_SKIPPED_KEY = 'tosidrop-profile-skipped';
 
 interface OnboardingStore {
   isOpen: boolean;
@@ -18,7 +14,6 @@ interface OnboardingStore {
   isFirstTime: boolean;
   connectError: string | null;
   saveError: string | null;
-  returningUserName: string | null;
 
   openModal: () => void;
   closeModal: () => void;
@@ -29,25 +24,22 @@ interface OnboardingStore {
   setIsFirstTime: (value: boolean) => void;
   setConnectError: (err: string | null) => void;
   setSaveError: (err: string | null) => void;
-  setReturningUserName: (name: string | null) => void;
-  reset: () => void;
 }
 
 const initialState = {
   isOpen: false,
-  step: 'welcome' as OnboardingStep,
+  step: 'select-wallet' as OnboardingStep,
   profileName: '',
   profileBio: '',
   profileAvatar: null as string | null,
   isFirstTime: true,
   connectError: null as string | null,
   saveError: null as string | null,
-  returningUserName: null as string | null,
 };
 
 export const useOnboardingStore = create<OnboardingStore>((set) => ({
   ...initialState,
-  openModal: () => set({ ...initialState, isOpen: true, step: 'welcome' }),
+  openModal: () => set({ ...initialState, isOpen: true }),
   closeModal: () => set({ ...initialState }),
   setStep: (step) => set({ step }),
   setProfileName: (profileName) => set({ profileName }),
@@ -56,6 +48,7 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   setIsFirstTime: (isFirstTime) => set({ isFirstTime }),
   setConnectError: (connectError) => set({ connectError }),
   setSaveError: (saveError) => set({ saveError }),
-  setReturningUserName: (returningUserName) => set({ returningUserName }),
-  reset: () => set(initialState),
 }));
+
+export const profileSetupSkipped = () =>
+  typeof localStorage !== 'undefined' && localStorage.getItem(PROFILE_SKIPPED_KEY) === '1';

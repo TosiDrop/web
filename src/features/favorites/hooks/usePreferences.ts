@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useWallet } from '@meshsdk/react';
 import { useWalletStore } from '@/store/wallet-state';
 import {
   usePreferencesQuery,
@@ -23,7 +22,8 @@ const without = (list: TokenRef[], assetId: string) =>
   list.filter((f) => f.assetId !== assetId);
 
 export function usePreferences() {
-  const { wallet, connected } = useWallet();
+  const wallet = useWalletStore((s) => s.wallet);
+  const connected = useWalletStore((s) => s.connected);
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
 
   const query = usePreferencesQuery(stakeAddress);
