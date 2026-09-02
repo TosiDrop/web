@@ -1,4 +1,8 @@
+import { Card } from '@/components/common/Card';
+import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { GradientButton } from '@/components/common/GradientButton';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
+import { usePreferencesQuery } from '@/features/favorites/api/preferences.queries';
 import { tokenImageSrc } from '@/shared/tokenImage';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { FavoriteStarButton } from './FavoriteStarButton';
@@ -6,38 +10,60 @@ import { DislikeButton } from './DislikeButton';
 import { FavoritesSaveBar } from './FavoritesSaveBar';
 import type { TokenRef } from '@/features/favorites/types';
 
-function TokenRow({
-  token,
-  control,
-}: {
-  token: TokenRef;
-  control: React.ReactNode;
-}) {
+function TokenRow({ token, control }: { token: TokenRef; control: React.ReactNode }) {
   const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-raised px-4 py-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium text-slate-400">
+    <li className="flex items-center gap-3 px-5 py-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-inset text-xs font-medium uppercase text-text-muted">
         {img.failed || !img.src ? (
           (token.ticker || token.assetId).slice(0, 2)
         ) : (
-          <img
-            src={img.src}
-            alt={token.ticker}
-            className="h-8 w-8 rounded-full"
-            onError={img.onError}
-          />
+          <img src={img.src} alt="" className="h-8 w-8 rounded-full" onError={img.onError} />
         )}
-      </div>
-      <span className="truncate text-sm font-medium text-white">
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">
         {token.ticker || token.assetId}
       </span>
-      <span className="ml-auto">{control}</span>
+      {control}
     </li>
+  );
+}
+
+function TokenList({ children }: { children: React.ReactNode }) {
+  return (
+    <Card className="overflow-hidden">
+      <ul className="divide-y divide-border-subtle">{children}</ul>
+    </Card>
+  );
+}
+
+function EmptyState({ title, message }: { title: string; message: string }) {
+  return (
+    <Card variant="inset" className="px-6 py-16 text-center">
+      <p className="text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">{message}</p>
+    </Card>
+  );
+}
+
+function SkeletonRows() {
+  return (
+    <Card role="status" aria-label="Loading saved tokens" className="overflow-hidden">
+      <ul className="divide-y divide-border-subtle">
+        {[0, 1, 2].map((i) => (
+          <li key={i} className="flex items-center gap-3 px-5 py-3">
+            <div className="skeleton-shimmer h-8 w-8 rounded-full" />
+            <div className="skeleton-shimmer h-3 w-28 rounded" />
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 
 export function FavoritesTab() {
   const {
+    stakeAddress,
     favorites,
     dislikes,
     connected,
@@ -46,52 +72,41 @@ export function FavoritesTab() {
     toggleFavorite,
     toggleDislike,
     isLoading,
-    preferencesError,
-    refetchPreferences,
-    preferencesReady,
   } = usePreferences();
+  const { error: loadError, refetch } = usePreferencesQuery(stakeAddress);
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-light tracking-tight text-white">
-          Favorite <span className="font-semibold">tokens</span>
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <h2 className="text-xl font-semibold text-text-primary">Saved tokens</h2>
+        <p className="mt-1 text-sm text-text-muted">
           Saved tokens rise to the top of your claimable list.
         </p>
       </div>
 
       {!connected ? (
-        <div className="card-premium px-6 py-16 text-center">
-          <p className="label-eyebrow">Not connected</p>
-          <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-            Connect a wallet to manage your favorite tokens.
-          </p>
+        <EmptyState title="Not connected" message="Connect a wallet to manage your saved tokens." />
+      ) : loadError ? (
+        <div className="space-y-3">
+          <FeedbackBanner tone="error" title="Couldn't load saved tokens" message={loadError.message} />
+          <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
+            Try again
+          </GradientButton>
         </div>
       ) : (
         <>
           <FavoritesSaveBar />
           {isLoading ? (
-            <p className="text-sm text-slate-500 animate-pulse">Loading preferences…</p>
-          ) : preferencesError ? (
-            <div role="alert" className="card-premium px-6 py-8 text-center">
-              <p className="text-sm text-rose-200">Couldn't load preferences.</p>
-              <button type="button" onClick={() => refetchPreferences()} className="mt-3 text-xs text-accent-light hover:underline">
-                Try again
-              </button>
-            </div>
-          ) : !preferencesReady ? null : (
+            <SkeletonRows />
+          ) : (
             <>
               {favorites.length === 0 ? (
-                <div className="card-premium px-6 py-16 text-center">
-                  <p className="label-eyebrow">No favorites yet</p>
-                  <p className="mx-auto mt-3 max-w-sm text-sm text-slate-400">
-                    Tap the bookmark on a token in your claimable list to add it here.
-                  </p>
-                </div>
+                <EmptyState
+                  title="No saved tokens"
+                  message="Star a token on the claim page to keep it here."
+                />
               ) : (
-                <ul className="space-y-2">
+                <TokenList>
                   {favorites.map((token) => (
                     <TokenRow
                       key={token.assetId}
@@ -104,18 +119,20 @@ export function FavoritesTab() {
                       }
                     />
                   ))}
-                </ul>
+                </TokenList>
               )}
 
-              <div className="pt-4">
-                <h3 className="text-sm font-medium text-white">Hidden tokens</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Disliked tokens are tucked into a collapsed section on the claim page.
-                </p>
+              <div className="space-y-3 pt-4">
+                <div>
+                  <h3 className="text-sm font-medium text-text-primary">Hidden tokens</h3>
+                  <p className="mt-1 text-xs text-text-muted">
+                    Hidden tokens are tucked into a collapsed section on the claim page.
+                  </p>
+                </div>
                 {dislikes.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">Nothing hidden.</p>
+                  <p className="text-sm text-text-muted">Nothing hidden.</p>
                 ) : (
-                  <ul className="mt-3 space-y-2">
+                  <TokenList>
                     {dislikes.map((token) => (
                       <TokenRow
                         key={token.assetId}
@@ -128,7 +145,7 @@ export function FavoritesTab() {
                         }
                       />
                     ))}
-                  </ul>
+                  </TokenList>
                 )}
               </div>
             </>

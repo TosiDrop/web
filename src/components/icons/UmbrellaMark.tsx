@@ -6,12 +6,12 @@ interface UmbrellaMarkProps {
 }
 
 /**
- * Line-art rendering of the TosiDrop umbrella, pulled from the brand mark.
+ * TosiDrop umbrella — cream canopy, the brand's identity mark.
  * Used as a faint hero watermark and in empty states.
  */
 export function UmbrellaMark({
   className,
-  stroke = '#E7DCC2',
+  stroke = '#DCCFA8',
   strokeWidth = 1.3,
 }: UmbrellaMarkProps) {
   return (
