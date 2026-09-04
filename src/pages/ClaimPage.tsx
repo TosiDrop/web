@@ -137,6 +137,7 @@ export default function ClaimPage() {
       setRequest({
         requestId: result.request_id,
         deposit: result.deposit,
+        overheadFee: result.overhead_fee,
         withdrawalAddress: result.withdrawal_address,
       });
       navigate('/deposit');

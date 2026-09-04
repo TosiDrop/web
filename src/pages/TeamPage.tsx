@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { IconExternalLink } from '@tabler/icons-react';
-import { useWhitelistedPools, type TeamPool } from '@/features/team/api/team.queries';
+import { usePartnerPools, type TeamPool } from '@/features/team/api/team.queries';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -56,7 +56,7 @@ function PoolsSkeleton() {
     <div
       className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
       role="status"
-      aria-label="Loading whitelisted pools"
+      aria-label="Loading partner pools"
     >
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <Card key={i} className="flex items-center gap-4 p-4">
@@ -74,7 +74,7 @@ function PoolsSkeleton() {
 const EXTERNAL_LINK_CLASS = buttonClassName('secondary', 'sm');
 
 export default function TeamPage() {
-  const { data: pools, isLoading, error, refetch } = useWhitelistedPools();
+  const { data: pools, isLoading, error, refetch } = usePartnerPools();
 
   return (
     <div className="space-y-7">
@@ -117,9 +117,9 @@ export default function TeamPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Whitelisted pools</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Partner pools</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Delegate to a whitelisted pool to earn rewards on TosiDrop.
+            Delegate to these partner pools to earn rewards on TosiDrop.
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export default function TeamPage() {
           <Card variant="inset" className="px-6 py-16 text-center">
             <p className="text-sm font-semibold text-text-primary">No pools listed</p>
             <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">
-              The whitelist is empty right now — check back soon.
+              No partner pools are listed right now — check back soon.
             </p>
           </Card>
         ) : (

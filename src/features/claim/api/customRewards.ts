@@ -4,6 +4,7 @@ import { sessionIdFor } from '@/shared/claim/session';
 export interface CustomRewardsResult {
   request_id: string;
   deposit: number;
+  overhead_fee: number;
   withdrawal_address: string;
 }
 
