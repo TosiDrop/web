@@ -3,7 +3,7 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { TokenMap } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
-import { flattenWhitelist } from '@/features/team/api/team.queries';
+import { flattenWhitelist } from '@/features/rewards/api/pools.queries';
 import { buildPoolComparison, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
 export type OptionalSource = 'statistics' | 'whitelist' | 'tokens';
