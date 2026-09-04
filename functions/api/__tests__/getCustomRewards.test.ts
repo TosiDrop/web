@@ -69,6 +69,7 @@ describe('POST /api/getCustomRewards', () => {
     expect(await res.json()).toEqual({
       request_id: 55,
       deposit: 4_000_000,
+      overhead_fee: 1_000_000,
       withdrawal_address: 'addr_test1abc',
     });
     expect(deferred).toHaveLength(1);
@@ -84,6 +85,16 @@ describe('POST /api/getCustomRewards', () => {
       '180000',
       '1000000',
     );
+  });
+
+  it('returns the submitted fee when the VM omits it', async () => {
+    vmGet.mockResolvedValueOnce({ request_id: 2, deposit: 1, withdrawal_address: 'addr' });
+
+    const res = await onRequestPost(
+      ctx({ staking_address: STAKE, session_id: STAKE.slice(0, 40), selected: 'a1', overhead_fee: 250_000 }),
+    );
+
+    expect(await res.json()).toMatchObject({ overhead_fee: 250_000 });
   });
 
   it('does not touch D1 when the binding is absent', async () => {

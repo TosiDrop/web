@@ -26,16 +26,16 @@ export function ClaimHero({
   const noun = selectedCount === 1 ? 'token' : 'tokens';
 
   return (
-    <Card as="section" className="relative overflow-hidden p-6">
+    <Card as="section" aria-labelledby="claim-hero-title" className="relative overflow-hidden p-6">
 
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="label-eyebrow">Ready to claim</p>
+            <h2 id="claim-hero-title" className="label-eyebrow">Ready to claim</h2>
             <QueueCount />
           </div>
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-5xl font-semibold leading-none tracking-tight tabular-nums text-text-primary">
+            <span role="status" aria-live="polite" className="text-5xl font-semibold leading-none tracking-tight tabular-nums text-text-primary">
               {selectedCount}
             </span>
             <span className="text-lg font-medium text-text-secondary">{noun}</span>
