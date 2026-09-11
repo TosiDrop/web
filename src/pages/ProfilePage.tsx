@@ -1,17 +1,39 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 import { IconClock, IconBookmark, IconChartLine, IconSettings } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
-import { ProfileForm } from '@/features/profile/components/ProfileForm';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
-import { HistoryList } from '@/features/history/components/HistoryList';
-import { FavoritesTab } from '@/features/favorites/components/FavoritesTab';
-import { RewardBreakdown } from '@/features/profile/components/RewardBreakdown';
-import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
+
+const HistoryList = lazy(async () => {
+  const module = await import('@/features/history/components/HistoryList');
+  return { default: module.HistoryList };
+});
+const FavoritesTab = lazy(async () => {
+  const module = await import('@/features/favorites/components/FavoritesTab');
+  return { default: module.FavoritesTab };
+});
+const RewardBreakdown = lazy(async () => {
+  const module = await import('@/features/profile/components/RewardBreakdown');
+  return { default: module.RewardBreakdown };
+});
+const PersonalAnalytics = lazy(async () => {
+  const module = await import('@/features/profile/components/PersonalAnalytics');
+  return { default: module.PersonalAnalytics };
+});
+const ProfileForm = lazy(async () => {
+  const module = await import('@/features/profile/components/ProfileForm');
+  return { default: module.ProfileForm };
+});
+
+function TabLoading() {
+  return (
+    <div role="status" aria-label="Loading profile tab" className="card-premium h-48 animate-pulse" />
+  );
+}
 
 const TABS = [
   { id: 'history', name: 'History', Icon: IconClock },
@@ -192,16 +214,24 @@ export default function ProfilePage() {
 
         <TabPanels className="mt-7">
           <TabPanel>
-            <HistoryTab />
+            <Suspense fallback={<TabLoading />}>
+              <HistoryTab />
+            </Suspense>
           </TabPanel>
           <TabPanel>
-            <FavoritesTab />
+            <Suspense fallback={<TabLoading />}>
+              <FavoritesTab />
+            </Suspense>
           </TabPanel>
           <TabPanel>
-            <AnalyticsTab />
+            <Suspense fallback={<TabLoading />}>
+              <AnalyticsTab />
+            </Suspense>
           </TabPanel>
           <TabPanel>
-            <SettingsTab />
+            <Suspense fallback={<TabLoading />}>
+              <SettingsTab />
+            </Suspense>
           </TabPanel>
         </TabPanels>
       </TabGroup>
