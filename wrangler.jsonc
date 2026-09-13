@@ -4,14 +4,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vm-web-profiles",
   "compatibility_date": "2025-02-04",
+  "compatibility_flags": ["nodejs_compat", "enable_nodejs_http_modules"],
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "kv_namespaces": [
     {
       "binding": "VM_WEB_PROFILES",
-      "id": "7a6e9597aa6d4e708c3e100c63ab2881"
-    }
+      "id": "7a6e9597aa6d4e708c3e100c63ab2881",
+    },
   ],
   // D1 persistence (tosidrop-db on the tosidrop.me account). Handlers
   // feature-detect the binding and degrade gracefully when it is absent, so
@@ -22,12 +23,12 @@
     {
       "binding": "DB",
       "database_name": "tosidrop-db",
-      "database_id": "689c7608-8a46-415e-9f46-99849222031c"
-    }
+      "database_id": "689c7608-8a46-415e-9f46-99849222031c",
+    },
   ],
   // R2-backed token image cache (bucket exists; see infrastructure#84).
   // /api/tokenImage feature-detects the binding and degrades to a redirect.
   "r2_buckets": [
-    { "binding": "TOKEN_IMAGES", "bucket_name": "tosidrop-token-images" }
-  ]
+    { "binding": "TOKEN_IMAGES", "bucket_name": "tosidrop-token-images" },
+  ],
 }
