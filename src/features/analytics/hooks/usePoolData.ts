@@ -3,10 +3,9 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { TokenMap } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
-import { flattenWhitelist } from '@/features/rewards/api/pools.queries';
 import { buildPoolComparison, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
-export type OptionalSource = 'statistics' | 'whitelist' | 'tokens';
+export type OptionalSource = 'partnerPools' | 'tokens';
 
 export interface PoolData {
   rows: PoolComparisonRow[];
@@ -30,23 +29,20 @@ export function usePoolData() {
     staleTime: 5 * 60_000,
     queryFn: async () => {
       // Pools and distributions are the table; the rest annotate it.
-      const [pools, distributions, statistics, whitelist, tokens] = await Promise.all([
+      const [pools, distributions, partnerPoolIds, tokens] = await Promise.all([
         apiClient.get<GetPoolsResponse>('/api/getPools'),
         apiClient.get<unknown>('/api/getDistributions'),
-        optional('statistics', apiClient.get<unknown>('/api/getStatistics')),
-        optional('whitelist', apiClient.get<Record<string, string[]>>('/api/getWhitelist')),
+        optional('partnerPools', apiClient.get<string[]>('/api/getPartnerPools')),
         optional('tokens', apiClient.get<TokenMap>('/api/getTokens')),
       ]);
       const unavailable: OptionalSource[] = [];
-      if (statistics === null) unavailable.push('statistics');
-      if (whitelist === null) unavailable.push('whitelist');
+      if (partnerPoolIds === null) unavailable.push('partnerPools');
       if (tokens === null) unavailable.push('tokens');
       return {
         rows: buildPoolComparison({
           pools,
           distributions,
-          statistics,
-          whitelist: whitelist === null ? null : flattenWhitelist(whitelist),
+          partnerPoolIds: partnerPoolIds === null ? null : new Set(partnerPoolIds),
           tokens,
         }),
         unavailable,

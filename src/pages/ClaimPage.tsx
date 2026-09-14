@@ -10,7 +10,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
-import { toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
+import { limitSelection, toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
 
@@ -18,11 +18,12 @@ import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
 import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
 import { ClaimHero } from '@/features/rewards/components/ClaimHero';
 import { AvailableDistributions } from '@/features/rewards/components/AvailableDistributions';
-import { NetworkStatusWidget } from '@/features/rewards/components/NetworkStatusWidget';
 import { RewardsSummary } from '@/features/rewards/components/RewardsSummary';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 import { PoolInfo } from '@/features/rewards/components/PoolInfo';
 import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
+import { useVmSettings } from '@/features/rewards/api/settings.queries';
+import { useProfile } from '@/features/profile/api/profile.queries';
 
 function LoadingTokens() {
   return (
@@ -50,6 +51,8 @@ function NoRewardsState() {
 export default function ClaimPage() {
   const navigate = useNavigate();
   const { stakeAddress, connected, networkId } = useWalletStore();
+  const { data: settings } = useVmSettings();
+  const { data: profile } = useProfile(stakeAddress);
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const setSelected = useClaimStore((s) => s.setSelected);
   const setRequest = useClaimStore((s) => s.setRequest);
@@ -92,8 +95,13 @@ export default function ClaimPage() {
     () => partitionPreferences(rewards ?? [], favoriteIds, dislikedIds).visible.map((r) => r.assetId),
     [rewards, favoriteIds, dislikedIds],
   );
-  const selectedVisible = visibleSelection(selectedAssetIds, visibleAssetIds);
-  const total = visibleAssetIds.length;
+  const configuredMaxAssets = settings?.max_assets_in_request;
+  const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
+    ? configuredMaxAssets
+    : 25;
+  const selectableAssetIds = visibleAssetIds.slice(0, maxAssets);
+  const selectedVisible = limitSelection(visibleSelection(selectedAssetIds, selectableAssetIds), maxAssets);
+  const total = selectableAssetIds.length;
   const allSelected = total > 0 && selectedVisible.length === total;
 
   useEffect(() => {
@@ -150,7 +158,7 @@ export default function ClaimPage() {
   };
 
   const toggleAll = () => {
-    setSelected(toggleAllSelection(allSelected, visibleAssetIds));
+    setSelected(toggleAllSelection(allSelected, selectableAssetIds));
   };
 
   const claimDisabled = !canClaim || selectedVisible.length === 0 || claimMutation.isPending;
@@ -162,6 +170,7 @@ export default function ClaimPage() {
         onLookup={handleLookup}
         isLoading={loading}
         activeAddress={lookupAddress}
+        displayName={profile?.value.name}
       />
 
       {resolveError && (
@@ -225,7 +234,6 @@ export default function ClaimPage() {
             {connected && (
               <>
                 <WalletComposition />
-                <NetworkStatusWidget />
               </>
             )}
           </div>

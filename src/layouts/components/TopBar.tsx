@@ -6,6 +6,7 @@ import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
+import { useProfile } from '@/features/profile/api/profile.queries';
 import { toast } from '@/store/toast-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
@@ -40,7 +41,7 @@ function Identicon({ seed }: { seed: string }) {
   );
 }
 
-function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networkId: number | null }) {
+function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: string; networkId: number | null; displayName?: string }) {
   const disconnect = useWalletStore((s) => s.disconnect);
   const walletName = useWalletStore((s) => s.walletName);
 
@@ -76,7 +77,7 @@ function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networ
       >
         <div className="px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-text-primary">{walletName ?? 'Wallet'}</p>
+            <p className="text-sm font-medium text-text-primary">{displayName ?? walletName ?? 'Wallet'}</p>
             <span className="rounded-md border border-border-default px-1.5 py-0.5 text-2xs text-text-muted">
               {getNetworkLabel(networkId)}
             </span>
@@ -113,6 +114,7 @@ function AccountMenu({ stakeAddress, networkId }: { stakeAddress: string; networ
 
 export function TopBar() {
   const { connected, stakeAddress, networkId } = useWalletStore();
+  const { data: profile } = useProfile(stakeAddress);
   const openModal = useOnboardingStore((s) => s.openModal);
   const { open: openMobileMenu } = useMobileMenu();
   const title = usePageTitle();
@@ -133,7 +135,11 @@ export function TopBar() {
         </div>
 
         {connected && stakeAddress ? (
-          <AccountMenu stakeAddress={stakeAddress} networkId={networkId} />
+          <AccountMenu
+            stakeAddress={stakeAddress}
+            networkId={networkId}
+            displayName={profile?.value.name}
+          />
         ) : (
           <GradientButton
             variant="secondary"

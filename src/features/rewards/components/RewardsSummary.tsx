@@ -85,7 +85,7 @@ export function RewardsSummary({ tokenCount }: RewardsSummaryProps) {
           </div>
 
           <p className="mt-3 text-2xs leading-snug text-text-muted">
-            A 1 ADA non-whitelisted pool fee applies if your delegated pool is not whitelisted.
+            A 1 ADA non-partner pool fee applies if your delegated pool is not a partner.
             The final amount is confirmed on the deposit page.
           </p>
         </>

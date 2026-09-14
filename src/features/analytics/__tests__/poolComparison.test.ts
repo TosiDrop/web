@@ -38,20 +38,17 @@ describe('buildPoolComparison', () => {
   };
   const tokens = { 'pol.6d544f5349': { ticker: 'mTOSI', decimals: '3' } };
 
-  it('joins offerings, stats, whitelist and sorts whitelisted first', () => {
+  it('joins offerings and partner pools, sorting pools with distributions first', () => {
     const rows = buildPoolComparison({
       pools,
       distributions: { everyone: [DIST, { ...DIST, id: '9', enabled: 'f' }] },
-      statistics: [{ pool_id: 'pool1a', withdrawals: '3', collected_fees: '1500000' }],
-      whitelist: new Set(['pool1a']),
+      partnerPoolIds: new Set(['pool1a']),
       tokens,
     });
     expect(rows.map((r) => r.ticker)).toEqual(['AAA', 'BBB']);
     expect(rows[0]).toMatchObject({
       delegators: 12,
-      whitelisted: true,
-      withdrawals: 3,
-      collectedFeesAda: 1.5,
+      partner: true,
       offerings: [
         {
           id: '20',
@@ -78,8 +75,7 @@ describe('buildPoolComparison', () => {
         everyone: [DIST],
         vip: [{ ...DIST, id: '30', amount: '900000', min_stake: '500000000', min_age: '3' }],
       },
-      statistics: [],
-      whitelist: new Set(),
+      partnerPoolIds: new Set(),
       tokens,
     });
     const offerings = rows.find((r) => r.poolId === 'pool1a')!.offerings;
@@ -91,22 +87,20 @@ describe('buildPoolComparison', () => {
     const rows = buildPoolComparison({
       pools,
       distributions: undefined,
-      statistics: null,
-      whitelist: null,
+      partnerPoolIds: null,
       tokens: null,
     });
-    expect(rows[0]).toMatchObject({ whitelisted: null, withdrawals: null, collectedFeesAda: null });
+    expect(rows[0]).toMatchObject({ partner: null });
   });
 
   it('falls back gracefully on malformed data', () => {
     const rows = buildPoolComparison({
       pools: { x: { id: '', ticker: 'X', name: '', enabled: 't', logo: '' } },
       distributions: undefined,
-      statistics: { error: true },
-      whitelist: new Set(),
+      partnerPoolIds: new Set(),
       tokens: undefined,
     });
-    expect(rows[0]).toMatchObject({ poolId: 'x', delegators: null, withdrawals: 0, collectedFeesAda: 0, whitelisted: false });
+    expect(rows[0]).toMatchObject({ poolId: 'x', delegators: null, partner: false });
   });
 });
 

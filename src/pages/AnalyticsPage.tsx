@@ -34,7 +34,7 @@ export default function AnalyticsPage() {
             Pool <span className="font-semibold">comparison</span>
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            Token programs, delegation size, whitelist status, and claim volume per pool.
+            Token programs, delegation size, partner status, and claim volume per pool.
           </p>
         </div>
         <PoolComparison />

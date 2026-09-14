@@ -35,9 +35,25 @@ function Panel({ children }: { children: ReactNode }) {
 
 export function WalletComposition() {
   const { connected, wallet, stakeAddress } = useWalletStore();
-  const { data } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['wallet-composition', stakeAddress],
     queryFn: async () => {
+      const getBalanceMesh = (wallet as unknown as {
+        getBalanceMesh?: () => Promise<Array<{ unit: string; quantity: string }>>;
+      }).getBalanceMesh;
+      if (getBalanceMesh) {
+        const balance = await getBalanceMesh.call(wallet);
+        const ada = balance.find((asset) => asset.unit === 'lovelace');
+        return {
+          lovelace: ada?.quantity ?? '0',
+          assets: balance
+            .filter((asset) => asset.unit !== 'lovelace')
+            .map((asset) => ({
+              assetName: asset.unit.length > 56 ? asset.unit.slice(56) : asset.unit,
+              quantity: asset.quantity,
+            })),
+        };
+      }
       const [lovelace, assets] = await Promise.all([wallet!.getLovelace(), wallet!.getAssets()]);
       return { lovelace, assets };
     },
@@ -87,7 +103,13 @@ export function WalletComposition() {
   if (parts.length === 0) {
     return (
       <Panel>
-        <p className="mt-3 text-xs text-text-muted">No assets found</p>
+        {isLoading ? (
+          <p className="mt-3 text-xs text-text-muted">Loading wallet balance…</p>
+        ) : error ? (
+          <p className="mt-3 text-xs text-status-error-light">Couldn&apos;t load wallet balance.</p>
+        ) : (
+          <p className="mt-3 text-xs text-text-muted">No assets found</p>
+        )}
       </Panel>
     );
   }
