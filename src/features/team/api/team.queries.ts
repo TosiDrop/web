@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
-import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
+import { canonicalPoolId, type GetPoolsResponse } from '@/features/rewards/api/pools.queries';
 
 export interface TeamPool {
   poolId: string;
@@ -27,8 +27,11 @@ export function usePartnerPools() {
         apiClient.get<string[]>('/api/getPartnerPools'),
       ]);
       const allowed = normalizePartnerPoolIds(partnerPoolIds);
+      const configured = [...allowed].map(canonicalPoolId);
       return Object.entries(pools ?? {})
-        .filter(([key, pool]) => allowed.has(key) || allowed.has(pool?.id))
+        .filter(([key, pool]) => {
+          return configured.includes(canonicalPoolId(key)) || configured.includes(canonicalPoolId(pool?.id ?? ''));
+        })
         .map(([key, pool]) => ({
           poolId: pool?.id || key,
           ticker: pool?.ticker ?? '',

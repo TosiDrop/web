@@ -11,12 +11,11 @@ vi.mock('@/features/analytics/hooks/usePoolData', () => ({ usePoolData: () => po
 import AnalyticsPage from '../AnalyticsPage';
 
 const ROW = {
-  poolId: 'pool1a', ticker: 'TOSI', name: 'TosiDrop', delegators: 12, whitelisted: true,
+  poolId: 'pool1a', ticker: 'TOSI', name: 'TosiDrop', delegators: 12, partner: true,
   offerings: [{
     id: '20', token: 't', ticker: 'mTOSI', amountPerEpoch: 420, promise: true,
     audience: 'everyone', target: 'group_1', model: '0', minStakeAda: null, minAgeEpochs: null, stakeCapAda: null,
   }],
-  withdrawals: 3, collectedFeesAda: 1.5,
 };
 
 describe('AnalyticsPage', () => {
@@ -25,7 +24,7 @@ describe('AnalyticsPage', () => {
   it('renders public sections and links to personal analytics', () => {
     poolsMock.mockReturnValue({
       data: {
-        rows: [ROW, { ...ROW, poolId: 'pool1b', ticker: 'APEX', name: 'Apex', whitelisted: false, offerings: [] }],
+        rows: [ROW, { ...ROW, poolId: 'pool1b', ticker: 'APEX', name: 'Apex', partner: false, offerings: [] }],
         unavailable: [],
       },
       isLoading: false,
@@ -41,7 +40,7 @@ describe('AnalyticsPage', () => {
 
     expect(screen.getAllByRole('row')).toHaveLength(3);
     expect(screen.getByText('mTOSI')).toBeInTheDocument();
-    expect(screen.getByLabelText('Whitelisted')).toBeInTheDocument();
+    expect(screen.getByText('Partner')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Filter pools'), { target: { value: 'apex' } });
     expect(screen.getAllByRole('row')).toHaveLength(2);

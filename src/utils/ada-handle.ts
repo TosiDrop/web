@@ -23,6 +23,25 @@ export async function resolveAdaHandle(handle: string): Promise<string> {
 
 const STAKE_HRP: Record<Network, string> = { mainnet: 'stake', preview: 'stake_test' };
 const STAKE_KEY_BYTES = 29; // 1 header byte + 28-byte credential (CIP-19)
+export const ADA_HANDLE_POLICY_ID = 'f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a';
+const HANDLE_LABELS = new Set(['000de140', '0013ab30']);
+
+export function adaHandlesFromAssets(assets: Array<{ policyId?: string; assetName?: string }>): string[] {
+  const handles = new Set<string>();
+  for (const asset of assets) {
+    if (asset.policyId?.toLowerCase() !== ADA_HANDLE_POLICY_ID || !asset.assetName) continue;
+    const encoded = asset.assetName.toLowerCase();
+    const nameHex = HANDLE_LABELS.has(encoded.slice(0, 8)) ? encoded.slice(8) : encoded;
+    if (!/^(?:[0-9a-f]{2})+$/.test(nameHex)) continue;
+    try {
+      const name = new TextDecoder().decode(new Uint8Array(nameHex.match(/../g)!.map((byte) => parseInt(byte, 16))));
+      if (/^[a-z0-9_.-]{1,15}$/i.test(name)) handles.add(`$${name}`);
+    } catch {
+      // Ignore malformed wallet assets.
+    }
+  }
+  return [...handles].sort();
+}
 
 /**
  * Why the input is not a stake address for this deployment, or null when it

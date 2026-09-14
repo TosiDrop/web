@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { bech32 } from 'bech32';
 import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 
@@ -13,6 +14,19 @@ export interface Pool {
 }
 
 export type GetPoolsResponse = Record<string, Pool>;
+
+/** The VM returns hex pool keys while configuration uses bech32 pool IDs. */
+export function canonicalPoolId(id: string): string {
+  try {
+    const decoded = bech32.decode(id, 100);
+    if (decoded.prefix === 'pool') {
+      return Array.from(bech32.fromWords(decoded.words), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    }
+  } catch {
+    // Hex VM identifiers are already canonical.
+  }
+  return id.toLowerCase();
+}
 
 export function usePools() {
   return useQuery<GetPoolsResponse, Error>({
@@ -42,5 +56,13 @@ export function useWhitelist() {
     queryFn: async () =>
       flattenWhitelist(await apiClient.get<Record<string, string[]>>('/api/getWhitelist')),
     staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function usePartnerPoolIds() {
+  return useQuery<string[], Error>({
+    queryKey: ['partner-pool-ids', DEPLOYMENT_NETWORK],
+    queryFn: () => apiClient.get<string[]>('/api/getPartnerPools'),
+    staleTime: 5 * 60 * 1000,
   });
 }

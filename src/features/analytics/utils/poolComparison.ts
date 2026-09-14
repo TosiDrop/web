@@ -1,6 +1,7 @@
 import type { TokenMap } from '@/features/history/api/history.queries';
 import { decimalsFor, tickerFor } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
+import { canonicalPoolId } from '@/features/rewards/api/pools.queries';
 
 /**
  * One VM distribution rule. The VM returns rules grouped by audience
@@ -20,12 +21,6 @@ export interface VmDistribution {
   min_age?: string;
   stake_cap?: string;
   audience?: string;
-}
-
-export interface VmStatistic {
-  pool_id: string;
-  withdrawals: string;
-  collected_fees: string;
 }
 
 /** A single rule, never an aggregate: two rules for the same token stay distinct. */
@@ -50,19 +45,15 @@ export interface PoolComparisonRow {
   name: string;
   logo?: string;
   delegators: number | null;
-  /** Null when the whitelist could not be fetched. */
-  whitelisted: boolean | null;
+  /** Whether this pool is configured as a TosiDrop partner. */
+  partner: boolean | null;
   offerings: PoolOffering[];
-  /** Null when statistics could not be fetched. */
-  withdrawals: number | null;
-  collectedFeesAda: number | null;
 }
 
 interface Inputs {
   pools: GetPoolsResponse | null | undefined;
   distributions: unknown;
-  statistics: unknown | null;
-  whitelist: Set<string> | null;
+  partnerPoolIds: Set<string> | null;
   tokens: TokenMap | null | undefined;
 }
 
@@ -97,8 +88,7 @@ function positiveInt(raw: string | undefined): number | null {
 export function buildPoolComparison({
   pools,
   distributions,
-  statistics,
-  whitelist,
+  partnerPoolIds,
   tokens,
 }: Inputs): PoolComparisonRow[] {
   const offeringsByPool = new Map<string, PoolOffering[]>();
@@ -123,17 +113,10 @@ export function buildPoolComparison({
     offeringsByPool.set(d.pool_id, list);
   }
 
-  const statsByPool = statistics === null ? null : new Map<string, VmStatistic>();
-  if (statsByPool && Array.isArray(statistics)) {
-    for (const s of statistics as VmStatistic[]) {
-      if (s && typeof s.pool_id === 'string') statsByPool.set(s.pool_id, s);
-    }
-  }
-
   const rows = Object.entries(pools ?? {}).map(([key, pool]): PoolComparisonRow => {
     const poolId = pool?.id || key;
-    const stat = statsByPool?.get(poolId);
     const delegators = Number(pool?.delegator_count);
+    const canonicalIds = partnerPoolIds && [...partnerPoolIds].map(canonicalPoolId);
     return {
       poolId,
       ticker: pool?.ticker ?? '',
@@ -141,18 +124,17 @@ export function buildPoolComparison({
       logo: pool?.logo || undefined,
       delegators:
         Number.isFinite(delegators) && pool?.delegator_count !== undefined ? delegators : null,
-      whitelisted: whitelist === null ? null : whitelist.has(poolId) || whitelist.has(key),
+      partner: canonicalIds === null ? null : canonicalIds!.includes(canonicalPoolId(poolId)) || canonicalIds!.includes(canonicalPoolId(key)),
       offerings: (offeringsByPool.get(poolId) ?? []).sort(
         (a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id),
       ),
-      withdrawals: statsByPool === null ? null : Number(stat?.withdrawals) || 0,
-      collectedFeesAda: statsByPool === null ? null : (Number(stat?.collected_fees) || 0) / 1_000_000,
     };
   });
 
   return rows.sort(
     (a, b) =>
-      Number(b.whitelisted ?? false) - Number(a.whitelisted ?? false) ||
+      Number(b.offerings.length > 0) - Number(a.offerings.length > 0) ||
+      Number(b.partner ?? false) - Number(a.partner ?? false) ||
       (b.delegators ?? -1) - (a.delegators ?? -1) ||
       a.ticker.localeCompare(b.ticker),
   );

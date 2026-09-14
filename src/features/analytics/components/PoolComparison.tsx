@@ -21,8 +21,10 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
       <div className="min-w-0">
         <p className="flex items-center gap-1.5 text-sm font-medium text-white">
           <span className="truncate">{row.ticker || row.name || 'Pool'}</span>
-          {row.whitelisted === true && (
-            <IconShieldCheck size={14} stroke={1.8} className="shrink-0 text-emerald-300" aria-label="Whitelisted" />
+          {row.partner === true && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-300">
+              <IconShieldCheck size={11} stroke={1.8} /> Partner
+            </span>
           )}
         </p>
         <p className="truncate text-xs text-slate-500">{row.name}</p>
@@ -64,8 +66,6 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
             <th scope="col" className="px-5 py-3 font-medium">Pool</th>
             <th scope="col" className="px-5 py-3 text-right font-medium">Delegators</th>
             <th scope="col" className="px-5 py-3 font-medium">Tokens / epoch</th>
-            <th scope="col" className="px-5 py-3 text-right font-medium">Withdrawals</th>
-            <th scope="col" className="px-5 py-3 text-right font-medium">Fees collected</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border-subtle/50">
@@ -76,12 +76,6 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
                 {row.delegators === null ? '—' : row.delegators.toLocaleString()}
               </td>
               <td className="px-5 py-3"><Offerings offerings={row.offerings} /></td>
-              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
-                {row.withdrawals === null ? '—' : row.withdrawals.toLocaleString()}
-              </td>
-              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
-                {row.collectedFeesAda === null ? '—' : `₳ ${fmt(row.collectedFeesAda)}`}
-              </td>
             </tr>
           ))}
         </tbody>

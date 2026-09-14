@@ -28,8 +28,7 @@ describe('usePoolData', () => {
     getMock.mockImplementation((url: string) => {
       if (url === '/api/getPools') return Promise.resolve(POOLS);
       if (url === '/api/getDistributions') return Promise.resolve({});
-      if (url === '/api/getStatistics') return Promise.reject(new Error('stats down'));
-      if (url === '/api/getWhitelist') return Promise.resolve({ main: ['pool1a'] });
+      if (url === '/api/getPartnerPools') return Promise.reject(new Error('partner pools down'));
       return Promise.resolve({});
     });
 
@@ -37,12 +36,10 @@ describe('usePoolData', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
 
     expect(result.current.error).toBeNull();
-    expect(result.current.data!.unavailable).toEqual(['statistics']);
+    expect(result.current.data!.unavailable).toEqual(['partnerPools']);
     expect(result.current.data!.rows[0]).toMatchObject({
       poolId: 'pool1a',
-      whitelisted: true,
-      withdrawals: null,
-      collectedFeesAda: null,
+      partner: null,
     });
   });
 

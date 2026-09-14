@@ -10,3 +10,7 @@ export function visibleSelection(selectedAssetIds: string[], visibleAssetIds: st
 export function toggleAllSelection(allSelected: boolean, visibleAssetIds: string[]): string[] {
   return allSelected ? [] : [...visibleAssetIds];
 }
+
+export function limitSelection(selectedAssetIds: string[], maxAssets: number): string[] {
+  return selectedAssetIds.slice(0, Math.max(0, maxAssets));
+}

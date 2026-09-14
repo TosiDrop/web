@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { IconShieldCheck, IconAlertTriangle } from '@tabler/icons-react';
-import { usePools, useWhitelist, type Pool } from '@/features/rewards/api/pools.queries';
+import { IconShieldCheck } from '@tabler/icons-react';
+import { canonicalPoolId, usePartnerPoolIds, usePools, type Pool } from '@/features/rewards/api/pools.queries';
 
 interface PoolInfoProps {
   poolId: string | null;
@@ -30,53 +30,20 @@ function PoolLogo({ pool }: { pool: Pool }) {
   );
 }
 
-function WhitelistBadge({ enabled }: { enabled: boolean }) {
-  if (enabled) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
-        <IconShieldCheck size={11} stroke={1.8} />
-        Whitelisted
-      </span>
-    );
-  }
+function PartnerBadge({ poolId }: { poolId: string }) {
+  const { data: partnerIds, isLoading } = usePartnerPoolIds();
+  if (isLoading || !partnerIds?.some((id) => canonicalPoolId(id) === canonicalPoolId(poolId))) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-300">
-      <IconAlertTriangle size={11} stroke={1.8} />
-      Not whitelisted
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+      <IconShieldCheck size={11} stroke={1.8} />
+      Partner
     </span>
   );
 }
 
-function WhitelistStatus({
-  poolId,
-  whitelist,
-  isLoading,
-  isError,
-}: {
-  poolId: string;
-  whitelist: Set<string> | undefined;
-  isLoading: boolean;
-  isError: boolean;
-}) {
-  if (isError) {
-    return <span className="text-[10px] text-amber-300">Whitelist unavailable</span>;
-  }
-  if (isLoading || !whitelist) return null;
-  return <WhitelistBadge enabled={whitelist.has(poolId)} />;
-}
-
 export function PoolInfo({ poolId, isLoading: resolving = false, error = null }: PoolInfoProps) {
   const { data: pools, isLoading: poolsLoading, isError } = usePools();
-  const whitelistQuery = useWhitelist();
   const isLoading = resolving || (!!poolId && poolsLoading);
-  const status = poolId ? (
-    <WhitelistStatus
-      poolId={poolId}
-      whitelist={whitelistQuery.data}
-      isLoading={whitelistQuery.isLoading}
-      isError={whitelistQuery.isError}
-    />
-  ) : null;
 
   if (isLoading) {
     return (
@@ -121,15 +88,17 @@ export function PoolInfo({ poolId, isLoading: resolving = false, error = null }:
     );
   }
 
-  const pool = pools?.[poolId];
+  const pool = pools?.[poolId] ?? Object.entries(pools ?? {}).find(([key, value]) =>
+    canonicalPoolId(key) === canonicalPoolId(poolId) || canonicalPoolId(value.id) === canonicalPoolId(poolId),
+  )?.[1];
 
   if (!pool) {
     return (
       <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
         <p className="label-eyebrow">Delegation</p>
         <p className="mt-2 text-sm text-white">Unknown pool</p>
-        <p className="mt-1 font-mono text-[11px] text-slate-500">{poolId}</p>
-        {status && <div className="mt-3">{status}</div>}
+        <p className="mt-1 truncate font-mono text-[11px] text-slate-500" title={poolId}>{poolId}</p>
+        <div className="mt-3"><PartnerBadge poolId={poolId} /></div>
       </div>
     );
   }
@@ -138,7 +107,7 @@ export function PoolInfo({ poolId, isLoading: resolving = false, error = null }:
     <div className="rounded-xl border border-border-subtle bg-surface-raised p-4">
       <div className="flex items-center justify-between">
         <p className="label-eyebrow">Delegation</p>
-        {status}
+        <PartnerBadge poolId={poolId} />
       </div>
       <div className="mt-3 flex items-center gap-3">
         <PoolLogo pool={pool} />
@@ -149,6 +118,7 @@ export function PoolInfo({ poolId, isLoading: resolving = false, error = null }:
           {pool.ticker && (
             <p className="mt-0.5 font-mono text-[11px] text-slate-400">[{pool.ticker}]</p>
           )}
+          <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500" title={poolId}>{poolId}</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toggleAllSelection, visibleSelection } from '../utils/claimSelection';
+import { limitSelection, toggleAllSelection, visibleSelection } from '../utils/claimSelection';
 
 describe('claim selection', () => {
   it('select all only selects visible tokens', () => {
@@ -10,5 +10,9 @@ describe('claim selection', () => {
   it('drops hidden tokens from a selection before it is submitted', () => {
     // 'hidden' was selected before the user disliked it.
     expect(visibleSelection(['a', 'hidden', 'b'], ['a', 'b'])).toEqual(['a', 'b']);
+  });
+
+  it('limits selected tokens to the VM request maximum', () => {
+    expect(limitSelection(['a', 'b', 'c'], 2)).toEqual(['a', 'b']);
   });
 });
