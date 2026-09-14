@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
-import type { IInitiator } from '@meshsdk/core';
-import { createMeshTransactionBuilder } from '@/services/mesh-transaction-builder';
+import { createMeshTransactionBuilder, type MeshWalletInitiator } from '@/services/mesh-transaction-builder';
 
 export interface SendDepositArgs {
   toAddress: string;
@@ -45,10 +44,9 @@ export function useWalletDeposit(): UseWalletDepositResult {
         }
       }
 
-      // @meshsdk/react (beta.2) and @meshsdk/transaction ship slightly
-      // different getCollateral() signatures. The wallet satisfies the runtime
-      // contract of IInitiator, so cast at the boundary.
-      const builder = createMeshTransactionBuilder(wallet as unknown as IInitiator);
+      // @meshsdk/react's wallet wrapper has both CIP-30 CBOR methods and Mesh
+      // convenience methods. The transaction builder adapts that boundary.
+      const builder = createMeshTransactionBuilder(wallet as unknown as MeshWalletInitiator);
       const unsignedTx = await builder.buildTransfer({
         toAddress,
         amount: BigInt(Math.floor(lovelace)),
