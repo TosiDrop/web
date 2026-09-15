@@ -11,6 +11,10 @@ export interface TeamPool {
   description?: string | null;
 }
 
+export function poolExplorerUrl(poolId: string): string {
+  return `https://cexplorer.io/pool/${encodeURIComponent(poolId)}`;
+}
+
 export function normalizePartnerPoolIds(raw: unknown): Set<string> {
   return new Set(
     Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && id.length > 0) : [],
