@@ -67,13 +67,23 @@ describe('/api/projects', () => {
 
   const SIGNED_LIST = { Authorization: 'Stake ' + btoa(JSON.stringify({ signature: 's', key: 'k', message: 'm' })) };
 
-  it('GET 400 without owner, degrades without DB', async () => {
+  it('GET public catalog degrades without DB', async () => {
     const r1 = await onRequestGet(ctx(new Request('https://x/api/projects', { headers: ORIGIN }), env()));
-    expect(r1.status).toBe(400);
+    expect(r1.status).toBe(200);
+    expect(await r1.json()).toEqual({ projects: [], degraded: true, scope: 'public' });
     const r2 = await onRequestGet(
       ctx(new Request(`https://x/api/projects?owner=${STAKE}`, { headers: ORIGIN }), env()),
     );
     expect(await r2.json()).toEqual({ projects: [], degraded: true, scope: 'public' });
+  });
+
+  it('GET without an owner returns only approved projects for the public catalog', async () => {
+    const db = fakeDb({ all: [ROW] });
+    const res = await onRequestGet(ctx(new Request('https://x/api/projects', { headers: ORIGIN }), env(db)));
+    expect(res.status).toBe(200);
+    expect(db.__calls[0].sql).toContain("status = 'approved'");
+    expect(db.__calls[0].binds).toEqual(['preview']);
+    expect(verifyListMock).not.toHaveBeenCalled();
   });
 
   it('GET without a signature only exposes approved projects', async () => {

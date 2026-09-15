@@ -18,7 +18,7 @@ import TosiDropLogo from '@/assets/tosidrop_logo.png';
 const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
   { name: 'Profile', href: '/profile', icon: IconUserCircle },
-  { name: 'Projects', href: '/projects', icon: IconRocket },
+  { name: 'Tokens', href: '/tokens', icon: IconRocket },
   { name: 'Analytics', href: '/analytics', icon: IconChartLine },
   { name: 'Team', href: '/team', icon: IconUsers },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },

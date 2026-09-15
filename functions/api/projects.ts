@@ -21,16 +21,17 @@ import {
 const MAX_PROJECTS_PER_OWNER = 20;
 
 /**
- * GET /api/projects?owner=…
+ * GET /api/projects[?owner=…]
  * Without a signature the response is the public view: approved projects
- * only. With a valid `Authorization: Stake …` header for that owner it is the
- * owner's full list, including pending and rejected registrations, which are
- * private to the wallet that made them.
+ * only. Omitting `owner` returns the public catalog; supplying it keeps the
+ * owner-scoped public lookup used by existing consumers. With a valid
+ * `Authorization: Stake …` header for that owner it is the owner's full list,
+ * including pending and rejected registrations, which are private to the
+ * wallet that made them.
  */
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get('Origin');
   const owner = new URL(request.url).searchParams.get('owner');
-  if (!owner) return errorResponse('owner is required', 400, origin);
   const network = deploymentNetwork(env);
 
   const auth = decodeStakeAuth(request.headers.get('Authorization'));
@@ -39,6 +40,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }
   let scope: 'owner' | 'public' = 'public';
   if (auth) {
+    if (!owner) return errorResponse('owner is required for signed project lists', 400, origin);
     const verification = await verifyProjectListSignature({ stakeAddress: owner, network, auth });
     if (!verification.ok) return errorResponse(verification.reason, verification.status, origin);
     scope = 'owner';
@@ -48,13 +50,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (!hasDb(env)) return jsonResponse({ projects: [], degraded: true, scope }, 200, origin);
 
   try {
-    const { results } = await env.DB.prepare(
-      `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND owner_address = ? ` +
+    const query = owner
+      ? `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND owner_address = ? ` +
         (scope === 'public' ? "AND status = 'approved' " : '') +
-        'ORDER BY created_at DESC',
-    )
-      .bind(network, owner)
-      .all<ProjectRow>();
+        'ORDER BY created_at DESC'
+      : `SELECT ${PROJECT_COLUMNS} FROM projects WHERE network = ? AND status = 'approved' ORDER BY created_at DESC`;
+    const statement = owner ? env.DB.prepare(query).bind(network, owner) : env.DB.prepare(query).bind(network);
+    const { results } = await statement.all<ProjectRow>();
     return jsonResponse(
       { projects: (results ?? []).map(rowToProject), degraded: false, scope },
       200,

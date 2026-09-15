@@ -13,7 +13,8 @@ import { truncateHash, getNetworkLabel } from '@/utils/format';
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Claim',
   '/profile': 'Profile',
-  '/projects': 'Projects',
+  '/tokens': 'Tokens',
+  '/projects': 'Manage tokens',
   '/team': 'Team',
   '/analytics': 'Analytics',
   '/deposit': 'Deposit',
