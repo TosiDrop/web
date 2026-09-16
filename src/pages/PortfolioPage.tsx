@@ -1,10 +1,74 @@
 import { Link } from 'react-router-dom';
-import { IconArrowRight, IconGift } from '@tabler/icons-react';
+import { IconArrowRight, IconChartLine, IconGift, IconRocket, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
+import { GradientButton } from '@/components/common/GradientButton';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 import { DelegationCard } from '@/features/rewards/components/DelegationCard';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
+import { preloadWalletRuntime } from '@/features/wallet/preload';
+
+function PublicLanding() {
+  const openModal = useOnboardingStore((state) => state.openModal);
+
+  return (
+    <div className="space-y-10">
+      <section className="card-premium relative overflow-hidden px-6 py-8 sm:px-10 sm:py-12">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+        <div className="relative max-w-3xl">
+          <p className="label-eyebrow">Cardano token distribution</p>
+          <h1 className="mt-4 max-w-2xl text-4xl font-semibold leading-tight tracking-tight text-text-primary sm:text-5xl">
+            Claim the tokens you earned.
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-text-secondary">
+            TosiDrop connects Cardano delegators with token rewards from community projects and dApps. Connect your wallet to see what is waiting for you, or explore how to distribute tokens to your own community.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <GradientButton onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime}>
+              <IconWallet size={17} /> Connect wallet
+            </GradientButton>
+            <Link to="/claim" className="inline-flex h-11 items-center gap-2 rounded-xl border border-border-default px-4 text-sm font-medium text-text-secondary transition hover:border-accent/50 hover:text-text-primary">
+              See how claiming works <IconArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="audiences" className="space-y-4">
+        <div><p className="label-eyebrow">Choose your path</p><h2 id="audiences" className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">A home for Cardano rewards</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">Whether you are here to receive tokens or distribute them, TosiDrop gives you a clear next step.</p></div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="p-6 transition hover:border-accent/40">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent-light"><IconWallet size={20} /></span>
+            <h3 className="mt-5 text-lg font-semibold text-text-primary">I am a Cardano delegator</h3>
+            <p className="mt-2 text-sm leading-6 text-text-muted">Connect your wallet to check your claimable tokens, see your current stake pool, and claim rewards in a few guided steps.</p>
+            <button type="button" onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime} className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light transition hover:text-white">Check my rewards <IconArrowRight size={16} /></button>
+          </Card>
+          <Card className="p-6 transition hover:border-cream/40">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream/10 text-cream"><IconRocket size={20} /></span>
+            <h3 className="mt-5 text-lg font-semibold text-text-primary">I run a token project or dApp</h3>
+            <p className="mt-2 text-sm leading-6 text-text-muted">Bring your distribution to Cardano users. Set up a project, define eligibility, and make your token program discoverable.</p>
+            <Link to="/projects/new" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cream-light transition hover:text-white">Start a distribution <IconArrowRight size={16} /></Link>
+          </Card>
+        </div>
+      </section>
+
+      <section aria-labelledby="how-it-works" className="card-premium px-6 py-6 sm:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="label-eyebrow">For delegators</p><h2 id="how-it-works" className="mt-2 text-xl font-semibold text-text-primary">How claiming works</h2></div><Link to="/team" className="text-xs text-text-muted transition hover:text-accent-light">Explore partner pools <IconArrowRight size={14} className="ml-1 inline" /></Link></div>
+        <ol className="mt-6 grid gap-5 border-t border-border-subtle pt-5 md:grid-cols-3">
+          {[['01', 'Connect your wallet', 'We read your stake address and current delegation.'], ['02', 'Review your rewards', 'See each eligible token and choose what to claim.'], ['03', 'Approve once', 'Your wallet signs the claim and tokens settle to you.']].map(([number, title, text]) => (
+            <li key={number} className="flex gap-3"><span className="font-mono text-xs text-accent-light">{number}</span><div><h3 className="text-sm font-medium text-text-primary">{title}</h3><p className="mt-1 text-xs leading-5 text-text-muted">{text}</p></div></li>
+          ))}
+        </ol>
+      </section>
+
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-border-subtle pt-5 text-xs text-text-muted">
+        <span>TosiDrop is open infrastructure for Cardano token programs.</span>
+        <div className="flex items-center gap-4"><Link to="/analytics" className="inline-flex items-center gap-1.5 hover:text-accent-light"><IconChartLine size={14} /> Public analytics</Link><a href="https://docs.tosidrop.me/" target="_blank" rel="noopener noreferrer" className="hover:text-accent-light">Read the docs</a></div>
+      </footer>
+    </div>
+  );
+}
 
 function ClaimPrompt() {
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
@@ -41,6 +105,9 @@ function ClaimPrompt() {
 }
 
 export default function PortfolioPage() {
+  const connected = useWalletStore((state) => state.connected);
+  if (!connected) return <PublicLanding />;
+
   return (
     <div className="space-y-6">
       <header><p className="label-eyebrow">Your Cardano wallet</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your portfolio</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">A home for your balance, delegation, and rewards. Your wallet is the source of truth for what you own.</p></header>
