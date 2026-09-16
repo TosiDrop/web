@@ -58,6 +58,7 @@ describe('useDelegatedPool', () => {
     await waitFor(() => expect(result.current.error).not.toBeNull());
     expect(result.current.error?.message).toBe('Failed to look up delegation');
     expect(result.current.poolId).toBeNull();
+    expect(result.current.registered).toBeNull();
   });
 
   it('refetch retries a failed lookup and clears the error on success', async () => {

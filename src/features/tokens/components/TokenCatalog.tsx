@@ -5,7 +5,7 @@ import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
 import { StateMessage } from '@/features/profile/components/StateMessage';
 import { useTokenMap } from '@/features/projects/api/projects.queries';
-import { tickerFor } from '@/features/history/api/history.queries';
+import { tickerFor, type TokenInfo } from '@/features/history/api/history.queries';
 import { usePublicTokens } from '../api/tokens.queries';
 import { describeDistribution } from '@/features/projects/utils/describeDistribution';
 import { truncateHash } from '@/utils/format';
@@ -23,7 +23,8 @@ function TokenMark({ token }: { token: Project }) {
   );
 }
 
-function TokenCard({ token, ticker }: { token: Project; ticker: string }) {
+function TokenCard({ token, ticker, info }: { token: Project; ticker: string; info?: TokenInfo }) {
+  const hasDistribution = token.distribution.amountPerEpoch !== '';
   return (
     <Card as="article" className="flex h-full flex-col p-5 transition hover:border-border-strong">
       <div className="flex items-start gap-3">
@@ -38,9 +39,12 @@ function TokenCard({ token, ticker }: { token: Project; ticker: string }) {
       <p className="mt-4 line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-text-muted">
         {token.description || 'A TosiDrop token distribution program.'}
       </p>
-      <p className="mt-4 border-t border-border-subtle pt-3 text-xs text-text-muted">
-        {describeDistribution(token, ticker)}
-      </p>
+      <div className="mt-4 border-t border-border-subtle pt-3 text-xs text-text-muted">
+        <p>{hasDistribution ? describeDistribution(token, ticker) : 'Platform token · no active distribution'}</p>
+        <p className="mt-2 font-mono text-2xs text-text-faint">
+          {info?.decimals !== undefined ? `${info.decimals} decimal places` : 'Token metadata'}
+        </p>
+      </div>
       {token.website && (
         <a
           href={token.website}
@@ -59,7 +63,8 @@ function TokenCard({ token, ticker }: { token: Project; ticker: string }) {
 export function TokenCatalog() {
   const [search, setSearch] = useState('');
   const { data, isLoading, error, refetch } = usePublicTokens();
-  const { data: tokens } = useTokenMap();
+  const { data: fallbackTokens } = useTokenMap();
+  const tokens = data?.tokens ?? fallbackTokens;
   const visibleTokens = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (data?.projects ?? []).filter((token) => {
@@ -79,7 +84,7 @@ export function TokenCatalog() {
     return <StateMessage title="Token catalog unavailable" message="Token distribution programs could not be loaded right now. Try again shortly." />;
   }
   if (!data?.projects.length) {
-    return <StateMessage title="No tokens listed yet" message="Approved token distribution programs will appear here." />;
+    return <StateMessage title="No tokens listed yet" message="Token metadata and approved distribution programs will appear here." />;
   }
 
   return (
@@ -89,9 +94,14 @@ export function TokenCatalog() {
         <IconSearch size={16} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50" />
       </label>
+      {data.metadataDegraded && (
+        <p role="status" className="text-xs text-text-muted">
+          Some token details are temporarily unavailable; the catalog is showing the data it could retrieve.
+        </p>
+      )}
       {visibleTokens.length ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visibleTokens.map((token) => <TokenCard key={token.id} token={token} ticker={tickerFor(token.tokenId, tokens?.[token.tokenId])} />)}
+          {visibleTokens.map((token) => <TokenCard key={token.id} token={token} ticker={tickerFor(token.tokenId, tokens?.[token.tokenId])} info={tokens?.[token.tokenId]} />)}
         </div>
       ) : (
         <StateMessage title="No matching tokens" message="Try a different name, ticker, or token ID." />

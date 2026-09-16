@@ -4,7 +4,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 
 export interface Delegation {
   poolId: string | null;
-  registered: boolean;
+  registered: boolean | null;
 }
 
 /**
@@ -26,7 +26,8 @@ export function useDelegatedPool(stakeAddress: string | null) {
   });
   return {
     poolId: query.data?.poolId ?? null,
-    registered: query.data?.registered ?? false,
+    // Null means the ledger lookup has not confirmed registration yet.
+    registered: query.data ? query.data.registered : null,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

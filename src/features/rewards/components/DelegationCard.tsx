@@ -34,9 +34,10 @@ export function DelegationCard() {
   );
   const selectedPool = pools?.find((pool) => pool.poolId === selectedPoolId);
   const choice = selectedPool ?? (currentPool ? undefined : pools?.[0]);
+  const delegationKnown = !delegationLoading && !delegationError && registered !== null;
 
   async function handleDelegate() {
-    if (!choice || !networkMatches || isPending) return;
+    if (!choice || !networkMatches || !delegationKnown || registered === null || isPending) return;
     setTxHash(null);
     const result = await delegate(choice.poolId, registered);
     setTxHash(result);
@@ -87,7 +88,7 @@ export function DelegationCard() {
             <select id="delegation-pool" value={selectedPoolId || currentPool?.poolId || pools[0].poolId} onChange={(event) => setSelectedPoolId(event.target.value)} className="w-full rounded-lg border border-border-default bg-surface-inset px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent">
               {pools.map((pool) => <option key={pool.poolId} value={pool.poolId}>{pool.ticker || pool.name} — {pool.name}</option>)}
             </select>
-            <GradientButton className="w-full" onClick={handleDelegate} disabled={!networkMatches || isPending || !choice || canonicalPoolId(choice.poolId) === canonicalPoolId(poolId ?? '')}>
+            <GradientButton className="w-full" onClick={handleDelegate} disabled={!networkMatches || !delegationKnown || isPending || !choice || canonicalPoolId(choice.poolId) === canonicalPoolId(poolId ?? '')}>
               {isPending ? <><IconLoader2 size={16} className="animate-spin" /> Waiting for wallet…</> : <><IconArrowRight size={16} /> {poolId ? 'Switch delegation' : 'Delegate wallet'}</>}
             </GradientButton>
             {!networkMatches && <p className="text-xs text-status-error-light">Switch your wallet to {DEPLOYMENT_NETWORK} before delegating.</p>}
