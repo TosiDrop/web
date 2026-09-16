@@ -166,12 +166,14 @@ export default function ClaimPage() {
 
   return (
     <div className="space-y-6">
-      <GlobalClaimCard
-        onLookup={handleLookup}
-        isLoading={loading}
-        activeAddress={lookupAddress}
-        displayName={profile?.value.name}
-      />
+      {connected && (
+        <GlobalClaimCard
+          onLookup={handleLookup}
+          isLoading={loading}
+          activeAddress={lookupAddress}
+          displayName={profile?.value.name}
+        />
+      )}
 
       {resolveError && (
         <FeedbackBanner
