@@ -11,6 +11,7 @@ const DepositPage = lazy(() => import('@/pages/DepositPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const TeamPage = lazy(() => import('@/pages/TeamPage'));
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'));
+const TokensPage = lazy(() => import('@/pages/TokensPage'));
 const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const ApiTesterPage = import.meta.env.DEV
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/team" element={<TeamPage />} />
+                <Route path="/tokens" element={<TokensPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />

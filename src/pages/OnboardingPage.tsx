@@ -168,7 +168,7 @@ export default function OnboardingPage() {
     setError(null);
     try {
       await submit(normalized);
-      pushToast({ tone: 'success', title: 'Project submitted', message: 'We will review it shortly.' });
+      pushToast({ tone: 'success', title: 'Token submitted', message: 'We will review it shortly.' });
       navigate('/projects');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Submission failed');
@@ -180,8 +180,8 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-7">
       <header>
-        <p className="label-eyebrow">Project onboarding</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Register a project</h1>
+        <p className="label-eyebrow">Token onboarding</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Register a token</h1>
         <p className="mt-2 max-w-md text-sm text-slate-400">
           Tell us about your token and how you want to reward delegators. You sign the
           registration with your wallet; nothing leaves your wallet.
@@ -201,7 +201,7 @@ export default function OnboardingPage() {
                 <span className="font-mono text-xs text-slate-500">{truncateHash(stakeAddress!, 10, 6)}</span>
               </p>
             ) : (
-              <p className="text-sm text-slate-400">Connect the wallet that owns the project token.</p>
+              <p className="text-sm text-slate-400">Connect the wallet that owns the token.</p>
             )}
             {!walletReady && (
               <GradientButton size="sm" onClick={openModal}>

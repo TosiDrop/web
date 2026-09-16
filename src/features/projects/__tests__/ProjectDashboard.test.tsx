@@ -42,14 +42,14 @@ describe('ProjectDashboard', () => {
   it('does not present an unreachable store as an empty list', () => {
     projectsMock.mockReturnValue({ data: { projects: [], degraded: true }, isLoading: false, error: null });
     render(<MemoryRouter><ProjectDashboard /></MemoryRouter>);
-    expect(screen.getByText('Project list unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('No projects yet')).not.toBeInTheDocument();
+    expect(screen.getByText('Token list unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('No tokens yet')).not.toBeInTheDocument();
   });
 
   it('links to onboarding when the owner has no projects', () => {
     projectsMock.mockReturnValue({ data: { projects: [], degraded: false }, isLoading: false, error: null });
     renderIt();
-    expect(screen.getByRole('link', { name: /Register a project/ })).toHaveAttribute('href', '/projects/new');
+    expect(screen.getByRole('link', { name: /Register a token/ })).toHaveAttribute('href', '/projects/new');
   });
 
   it('lists projects with status and distribution summary, and saves edits', async () => {
@@ -60,7 +60,7 @@ describe('ProjectDashboard', () => {
     expect(screen.getByText('10 TOSI / epoch · min 100 ADA · expires after 2 epochs · any pool')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Edit/ }));
-    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: 'Tosi v2' } });
+    fireEvent.change(screen.getByLabelText('Token program name'), { target: { value: 'Tosi v2' } });
     fireEvent.click(screen.getByRole('button', { name: /Sign & save/ }));
     await screen.findByRole('button', { name: /Edit/ });
     expect(submitMock).toHaveBeenCalledWith(expect.objectContaining({ name: 'Tosi v2' }), 'p1');

@@ -7,6 +7,7 @@ import { useFirstTimeCheck } from '@/features/onboarding/hooks/useFirstTimeCheck
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { useWalletStore } from '@/store/wallet-state';
 import { Toaster } from '@/components/common/Toaster';
+import { Footer } from './components/Footer';
 
 import { preloadWalletRuntime } from '@/features/wallet/preload';
 
@@ -53,6 +54,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
               <NetworkMismatchBanner />
               {children}
             </main>
+            <Footer />
           </div>
         </div>
       </div>

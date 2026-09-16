@@ -7,7 +7,7 @@ import { preloadWalletRuntime } from '@/features/wallet/preload';
 
 // The claim flow really is a sequence, so the numbers carry information.
 const STEPS = [
-  ['Connect a wallet, or paste any stake address to preview.'],
+  ['Connect a wallet to view and claim your rewards.'],
   ['Review every claimable token across active distributions.'],
   ['Approve once. Tokens settle straight to your wallet.'],
 ];
@@ -28,7 +28,7 @@ export function ClaimWelcome() {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
           TosiDrop delivers token rewards to delegators of partner Cardano stake pools.
-          Connect a wallet to claim, or paste a stake address above to see what's waiting.
+          Connect a wallet to see what's waiting and claim your rewards.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">

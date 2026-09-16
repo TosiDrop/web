@@ -2,12 +2,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
   IconUserCircle,
+  IconGift,
   IconUsers,
   IconFileText,
   IconRocket,
   IconChartLine,
   IconWallet,
-  IconGift,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { name: 'Claim rewards', href: '/claim', icon: IconGift },
   { name: 'Wallet history', href: '/profile', icon: IconUserCircle },
   { name: 'Projects', href: '/projects', icon: IconRocket },
+  { name: 'Tokens', href: '/tokens', icon: IconRocket },
   { name: 'Analytics', href: '/analytics', icon: IconChartLine },
   { name: 'Team', href: '/team', icon: IconUsers },
   { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },

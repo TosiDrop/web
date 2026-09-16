@@ -23,7 +23,7 @@ interface DetailsProps {
 export function ProjectDetailsFields({ value, onChange }: DetailsProps) {
   return (
     <div className="space-y-4">
-      <Field label="Project name">
+      <Field label="Token program name">
         <input
           className={INPUT_CLASS}
           value={value.name}
