@@ -11,6 +11,7 @@ vi.mock('@/features/analytics/hooks/usePoolData', () => ({ usePoolData: () => po
 import AnalyticsPage from '../AnalyticsPage';
 
 const ROW = {
+  kind: 'pool' as const,
   poolId: 'pool1a', ticker: 'TOSI', name: 'TosiDrop', delegators: 12, partner: true,
   offerings: [{
     id: '20', token: 't', ticker: 'mTOSI', amountPerEpoch: 420, promise: true,
@@ -38,12 +39,12 @@ describe('AnalyticsPage', () => {
     expect(screen.getByLabelText('Loading platform statistics')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open personal analytics' })).toHaveAttribute('href', '/profile?tab=analytics');
 
-    expect(screen.getAllByRole('row')).toHaveLength(3);
+    expect(screen.getAllByRole('row')).toHaveLength(4);
     expect(screen.getByText('mTOSI')).toBeInTheDocument();
     expect(screen.getByText('Partner')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Filter pools'), { target: { value: 'apex' } });
-    expect(screen.getAllByRole('row')).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(3);
     expect(screen.queryByText('TosiDrop')).not.toBeInTheDocument();
   });
 });

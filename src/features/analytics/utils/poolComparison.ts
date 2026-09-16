@@ -2,6 +2,7 @@ import type { TokenMap } from '@/features/history/api/history.queries';
 import { decimalsFor, tickerFor } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
 import { canonicalPoolId } from '@/features/rewards/api/pools.queries';
+import type { Network } from '@/shared/network';
 
 /**
  * One VM distribution rule. The VM returns rules grouped by audience
@@ -40,6 +41,7 @@ export interface PoolOffering {
 }
 
 export interface PoolComparisonRow {
+  kind: 'pool' | 'project';
   poolId: string;
   ticker: string;
   name: string;
@@ -55,6 +57,16 @@ interface Inputs {
   distributions: unknown;
   partnerPoolIds: Set<string> | null;
   tokens: TokenMap | null | undefined;
+  network?: Network;
+}
+
+function isProjectAttribution(id: string): boolean {
+  return id.startsWith('P_');
+}
+
+function projectName(id: string, network: Network): string {
+  if (network === 'mainnet' && id === 'P_BTC') return 'TosiDrop';
+  return id.slice(2) || 'Project';
 }
 
 export function flattenDistributions(raw: unknown): VmDistribution[] {
@@ -90,12 +102,13 @@ export function buildPoolComparison({
   distributions,
   partnerPoolIds,
   tokens,
+  network = 'mainnet',
 }: Inputs): PoolComparisonRow[] {
-  const offeringsByPool = new Map<string, PoolOffering[]>();
+  const offeringsByAttribution = new Map<string, PoolOffering[]>();
   for (const d of flattenDistributions(distributions)) {
     if (d.enabled !== 't') continue;
     const info = tokens?.[d.token_id];
-    const list = offeringsByPool.get(d.pool_id) ?? [];
+    const list = offeringsByAttribution.get(d.pool_id) ?? [];
     list.push({
       id: d.id,
       token: d.token_id,
@@ -110,14 +123,16 @@ export function buildPoolComparison({
       minAgeEpochs: positiveInt(d.min_age),
       stakeCapAda: lovelaceThreshold(d.stake_cap),
     });
-    offeringsByPool.set(d.pool_id, list);
+    offeringsByAttribution.set(d.pool_id, list);
   }
 
   const rows = Object.entries(pools ?? {}).map(([key, pool]): PoolComparisonRow => {
     const poolId = pool?.id || key;
     const delegators = Number(pool?.delegator_count);
     const canonicalIds = partnerPoolIds && [...partnerPoolIds].map(canonicalPoolId);
+    const offerings = offeringsByAttribution.get(poolId) ?? offeringsByAttribution.get(key) ?? [];
     return {
+      kind: 'pool',
       poolId,
       ticker: pool?.ticker ?? '',
       name: pool?.name ?? '',
@@ -125,15 +140,53 @@ export function buildPoolComparison({
       delegators:
         Number.isFinite(delegators) && pool?.delegator_count !== undefined ? delegators : null,
       partner: canonicalIds === null ? null : canonicalIds!.includes(canonicalPoolId(poolId)) || canonicalIds!.includes(canonicalPoolId(key)),
-      offerings: (offeringsByPool.get(poolId) ?? []).sort(
+      offerings: offerings.sort(
         (a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id),
       ),
     };
   });
 
-  return rows.sort(
+  const knownPoolIds = new Set(
+    Object.entries(pools ?? {}).flatMap(([key, pool]) => [key, pool?.id ?? key].map(canonicalPoolId)),
+  );
+  const offeringsByCanonicalPool = new Map<string, PoolOffering[]>();
+  for (const [attributionId, offerings] of offeringsByAttribution) {
+    if (!isProjectAttribution(attributionId)) {
+      offeringsByCanonicalPool.set(canonicalPoolId(attributionId), offerings);
+    }
+  }
+  for (const row of rows) {
+    if (row.kind === 'pool' && row.offerings.length === 0) {
+      row.offerings = offeringsByCanonicalPool.get(canonicalPoolId(row.poolId)) ?? [];
+    }
+  }
+  const activePoolIds = new Set(rows.filter((row) => row.kind === 'pool' && row.offerings.length > 0).map((row) => canonicalPoolId(row.poolId)));
+  for (const [attributionId, offerings] of offeringsByAttribution) {
+    if (isProjectAttribution(attributionId)) {
+      rows.push({
+        kind: 'project',
+        poolId: attributionId,
+        ticker: attributionId.slice(2) || 'PROJECT',
+        name: projectName(attributionId, network),
+        delegators: null,
+        partner: null,
+        offerings: offerings.sort((a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id)),
+      });
+    } else if (!knownPoolIds.has(canonicalPoolId(attributionId)) && !activePoolIds.has(canonicalPoolId(attributionId))) {
+      rows.push({
+        kind: 'pool',
+        poolId: attributionId,
+        ticker: 'Unknown pool',
+        name: attributionId,
+        delegators: null,
+        partner: null,
+        offerings: offerings.sort((a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id)),
+      });
+    }
+  }
+
+  return rows.filter((row) => row.offerings.length > 0).sort(
     (a, b) =>
-      Number(b.offerings.length > 0) - Number(a.offerings.length > 0) ||
       Number(b.partner ?? false) - Number(a.partner ?? false) ||
       (b.delegators ?? -1) - (a.delegators ?? -1) ||
       a.ticker.localeCompare(b.ticker),

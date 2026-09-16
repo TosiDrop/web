@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { IconAlertCircle, IconSearch, IconShieldCheck } from '@tabler/icons-react';
+import { Fragment, useMemo, useState } from 'react';
+import { IconAlertCircle, IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
 import { usePoolData } from '@/features/analytics/hooks/usePoolData';
 import { describeEligibility, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
@@ -9,7 +9,7 @@ const fmt = (n: number) =>
 function PoolCell({ row }: { row: PoolComparisonRow }) {
   const [failed, setFailed] = useState(false);
   const initials = (row.ticker || row.name || '??').slice(0, 3).toUpperCase();
-  return (
+  const content = (
     <div className="flex items-center gap-3">
       {row.logo && !failed ? (
         <img src={row.logo} alt="" onError={() => setFailed(true)} className="h-9 w-9 shrink-0 rounded-full border border-border-subtle bg-surface-inset object-cover" />
@@ -21,7 +21,12 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
       <div className="min-w-0">
         <p className="flex items-center gap-1.5 text-sm font-medium text-white">
           <span className="truncate">{row.ticker || row.name || 'Pool'}</span>
-          {row.partner === true && (
+          {row.kind === 'project' && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-medium text-violet-300">
+              <IconBriefcase size={11} stroke={1.8} /> Project
+            </span>
+          )}
+          {row.kind === 'pool' && row.partner === true && (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-300">
               <IconShieldCheck size={11} stroke={1.8} /> Partner
             </span>
@@ -31,6 +36,11 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
       </div>
     </div>
   );
+  return row.kind === 'pool' && row.poolId.startsWith('pool') ? (
+    <a href={`https://cexplorer.io/pool/${row.poolId}`} target="_blank" rel="noopener noreferrer" className="hover:text-accent-light">
+      {content}
+    </a>
+  ) : content;
 }
 
 function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] }) {
@@ -63,21 +73,34 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
       <table className="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr className="border-b border-border-subtle text-[10px] uppercase tracking-wider text-slate-500">
-            <th scope="col" className="px-5 py-3 font-medium">Pool</th>
+            <th scope="col" className="px-5 py-3 font-medium">Pool / project</th>
             <th scope="col" className="px-5 py-3 text-right font-medium">Delegators</th>
             <th scope="col" className="px-5 py-3 font-medium">Tokens / epoch</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border-subtle/50">
-          {rows.map((row) => (
-            <tr key={row.poolId}>
-              <td className="px-5 py-3"><PoolCell row={row} /></td>
-              <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
-                {row.delegators === null ? '—' : row.delegators.toLocaleString()}
-              </td>
-              <td className="px-5 py-3"><Offerings offerings={row.offerings} /></td>
-            </tr>
-          ))}
+          {(['pool', 'project'] as const).map((kind) => {
+            const group = rows.filter((row) => row.kind === kind);
+            if (!group.length) return null;
+            return (
+              <Fragment key={kind}>
+                <tr className="bg-surface-inset/40">
+                  <th scope="rowgroup" colSpan={3} className="px-5 py-2 text-[10px] uppercase tracking-wider text-slate-500">
+                    {kind === 'pool' ? 'Stake pools' : 'Projects'}
+                  </th>
+                </tr>
+                {group.map((row) => (
+                  <tr key={row.poolId}>
+                    <td className="px-5 py-3"><PoolCell row={row} /></td>
+                    <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
+                      {row.delegators === null ? '—' : row.delegators.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3"><Offerings offerings={row.offerings} /></td>
+                  </tr>
+                ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
