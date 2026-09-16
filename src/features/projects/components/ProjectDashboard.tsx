@@ -124,7 +124,7 @@ export function ProjectDashboard() {
   const { data: tokens } = useTokenMap();
 
   if (!stakeAddress) {
-    return <StateMessage title="Not connected" message="Connect a wallet to manage your projects." />;
+    return <StateMessage title="Not connected" message="Connect a wallet to manage your tokens." />;
   }
   if (isLoading) {
     return (
@@ -144,19 +144,19 @@ export function ProjectDashboard() {
   if (data?.degraded) {
     return (
       <StateMessage
-        title="Project list unavailable"
-        message="Project storage is not reachable right now, so your projects can't be shown. Nothing has been lost."
+        title="Token list unavailable"
+        message="Token storage is not reachable right now, so your tokens can't be shown. Nothing has been lost."
       />
     );
   }
   if (!projects?.length) {
     return (
-      <StateMessage title="No projects yet" message="Register a token to start distributing rewards through TosiDrop.">
+      <StateMessage title="No tokens yet" message="Register a token to start distributing rewards through TosiDrop.">
         <Link
           to="/projects/new"
           className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light hover:text-white"
         >
-          <IconRocket size={16} stroke={1.7} /> Register a project
+          <IconRocket size={16} stroke={1.7} /> Register a token
         </Link>
       </StateMessage>
     );

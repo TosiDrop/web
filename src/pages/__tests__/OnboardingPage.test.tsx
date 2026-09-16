@@ -41,7 +41,7 @@ describe('OnboardingPage', () => {
     next();
 
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: ' Tosi ' } });
+    fireEvent.change(screen.getByLabelText('Token program name'), { target: { value: ' Tosi ' } });
     next();
 
     fireEvent.click(screen.getByRole('button', { name: /TOSI/ }));
