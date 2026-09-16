@@ -44,6 +44,7 @@ export function usePoolData() {
           distributions,
           partnerPoolIds: partnerPoolIds === null ? null : new Set(partnerPoolIds),
           tokens,
+          network: DEPLOYMENT_NETWORK,
         }),
         unavailable,
       };
