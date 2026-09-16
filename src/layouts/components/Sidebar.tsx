@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
   IconGift,
-  IconUserCircle,
   IconUsers,
   IconFileText,
   IconRocket,
@@ -17,7 +16,6 @@ import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
 const NAV_LINKS = [
   { name: 'Claim', href: '/', icon: IconGift },
-  { name: 'Profile', href: '/profile', icon: IconUserCircle },
   { name: 'Tokens', href: '/tokens', icon: IconRocket },
   { name: 'Analytics', href: '/analytics', icon: IconChartLine },
   { name: 'Team', href: '/team', icon: IconUsers },

@@ -4,7 +4,7 @@ import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { adaHandlesFromAssets, isAdaHandle, stakeAddressError } from '@/utils/ada-handle';
-import { getNetworkLabel, truncateHash } from '@/utils/format';
+import { truncateHash } from '@/utils/format';
 
 interface GlobalClaimCardProps {
   onLookup: (address: string) => void;
@@ -14,7 +14,7 @@ interface GlobalClaimCardProps {
 }
 
 export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayName }: GlobalClaimCardProps) {
-  const { connected, stakeAddress, wallet, walletName, networkId } = useWalletStore();
+  const { connected, stakeAddress, wallet, walletName } = useWalletStore();
   const { data: handles = [] } = useQuery({
     queryKey: ['wallet-handles', stakeAddress],
     queryFn: async () => adaHandlesFromAssets(await wallet!.getAssets()),
@@ -133,9 +133,6 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
             <p className="truncate text-xs font-medium text-text-secondary">{displayName ?? walletName ?? 'Connected wallet'}</p>
             <p className="font-mono text-[11px] text-text-muted">{truncateHash(stakeAddress, 10, 6)}</p>
           </div>
-          <span className="rounded-full border border-border-subtle bg-surface-inset px-2 py-1 text-[10px] uppercase tracking-wider text-text-muted">
-            {getNetworkLabel(networkId)}
-          </span>
           <GradientButton variant="ghost" size="sm" onClick={handleWalletLookup} disabled={isLoading}>
             Use connected wallet
           </GradientButton>
