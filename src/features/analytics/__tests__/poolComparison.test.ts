@@ -38,14 +38,14 @@ describe('buildPoolComparison', () => {
   };
   const tokens = { 'pol.6d544f5349': { ticker: 'mTOSI', decimals: '3' } };
 
-  it('joins offerings and partner pools, sorting pools with distributions first', () => {
+  it('joins offerings and partner pools, excluding pools without active distributions', () => {
     const rows = buildPoolComparison({
       pools,
       distributions: { everyone: [DIST, { ...DIST, id: '9', enabled: 'f' }] },
       partnerPoolIds: new Set(['pool1a']),
       tokens,
     });
-    expect(rows.map((r) => r.ticker)).toEqual(['AAA', 'BBB']);
+    expect(rows.map((r) => r.ticker)).toEqual(['AAA']);
     expect(rows[0]).toMatchObject({
       delegators: 12,
       partner: true,
@@ -64,8 +64,16 @@ describe('buildPoolComparison', () => {
         },
       ],
     });
-    expect(rows[1].offerings).toEqual([]);
-    expect(rows[1].delegators).toBe(500);
+  });
+
+  it('excludes pools whose distributions are all disabled', () => {
+    const rows = buildPoolComparison({
+      pools,
+      distributions: { everyone: [{ ...DIST, enabled: 'f' }] },
+      partnerPoolIds: new Set(),
+      tokens,
+    });
+    expect(rows).toEqual([]);
   });
 
   it('keeps two rules for the same token distinct instead of merging them', () => {
@@ -83,14 +91,14 @@ describe('buildPoolComparison', () => {
     expect(offerings.map(describeEligibility)).toEqual(['vip · ≥ 500 ₳ · 3+ epochs', '≥ 1 ₳']);
   });
 
-  it('marks columns unknown, not zero, when an optional source is missing', () => {
+  it('marks optional columns unknown while retaining active pools', () => {
     const rows = buildPoolComparison({
       pools,
-      distributions: undefined,
+      distributions: { everyone: [DIST] },
       partnerPoolIds: null,
       tokens: null,
     });
-    expect(rows[0]).toMatchObject({ partner: null });
+    expect(rows[0]).toMatchObject({ poolId: 'pool1a', partner: null });
   });
 
   it('falls back gracefully on malformed data', () => {
@@ -100,7 +108,7 @@ describe('buildPoolComparison', () => {
       partnerPoolIds: new Set(),
       tokens: undefined,
     });
-    expect(rows[0]).toMatchObject({ poolId: 'x', delegators: null, partner: false });
+    expect(rows).toEqual([]);
   });
 });
 

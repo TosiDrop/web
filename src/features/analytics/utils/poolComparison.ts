@@ -129,11 +129,10 @@ export function buildPoolComparison({
         (a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id),
       ),
     };
-  });
+  }).filter((row) => row.offerings.length > 0);
 
   return rows.sort(
     (a, b) =>
-      Number(b.offerings.length > 0) - Number(a.offerings.length > 0) ||
       Number(b.partner ?? false) - Number(a.partner ?? false) ||
       (b.delegators ?? -1) - (a.delegators ?? -1) ||
       a.ticker.localeCompare(b.ticker),
