@@ -1,12 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
-  IconGift,
   IconUserCircle,
   IconUsers,
   IconFileText,
   IconRocket,
   IconChartLine,
+  IconWallet,
+  IconGift,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -16,8 +17,9 @@ import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
 const NAV_LINKS = [
-  { name: 'Claim', href: '/', icon: IconGift },
-  { name: 'Profile', href: '/profile', icon: IconUserCircle },
+  { name: 'Portfolio', href: '/', icon: IconWallet },
+  { name: 'Claim rewards', href: '/claim', icon: IconGift },
+  { name: 'Wallet history', href: '/profile', icon: IconUserCircle },
   { name: 'Projects', href: '/projects', icon: IconRocket },
   { name: 'Analytics', href: '/analytics', icon: IconChartLine },
   { name: 'Team', href: '/team', icon: IconUsers },

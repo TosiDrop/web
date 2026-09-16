@@ -11,7 +11,8 @@ import { toast } from '@/store/toast-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Claim',
+  '/': 'Portfolio',
+  '/claim': 'Claim rewards',
   '/profile': 'Profile',
   '/projects': 'Projects',
   '/team': 'Team',

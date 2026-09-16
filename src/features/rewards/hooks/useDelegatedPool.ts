@@ -26,6 +26,7 @@ export function useDelegatedPool(stakeAddress: string | null) {
   });
   return {
     poolId: query.data?.poolId ?? null,
+    registered: query.data?.registered ?? false,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
