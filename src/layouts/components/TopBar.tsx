@@ -1,6 +1,6 @@
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconWallet } from '@tabler/icons-react';
+import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconUserCircle, IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
@@ -8,7 +8,9 @@ import { preloadWalletRuntime } from '@/features/wallet/preload';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { toast } from '@/store/toast-state';
-import { truncateHash, getNetworkLabel } from '@/utils/format';
+import { getNetworkLabel } from '@/utils/format';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { networkLabel } from '@/shared/network';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Claim',
@@ -45,6 +47,7 @@ function Identicon({ seed }: { seed: string }) {
 function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: string; networkId: number | null; displayName?: string }) {
   const disconnect = useWalletStore((s) => s.disconnect);
   const walletName = useWalletStore((s) => s.walletName);
+  const accountName = displayName?.trim() || walletName || 'Wallet';
 
   const copy = async () => {
     try {
@@ -62,8 +65,8 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
         className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-white/[0.03] pl-2 pr-3 transition hover:bg-white/[0.06] data-[open]:bg-white/[0.06]"
       >
         <Identicon seed={stakeAddress} />
-        <span className="font-mono text-xs text-text-secondary group-hover:text-text-primary">
-          {truncateHash(stakeAddress, 6, 4)}
+        <span className="max-w-[9rem] truncate text-xs font-medium text-text-secondary group-hover:text-text-primary">
+          {accountName}
         </span>
         <IconChevronDown
           size={13}
@@ -88,6 +91,15 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
           </p>
         </div>
         <div className="my-1 h-px bg-border-subtle" />
+        <MenuItem>
+          <Link
+            to="/profile"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
+          >
+            <IconUserCircle size={14} stroke={1.6} />
+            Profile
+          </Link>
+        </MenuItem>
         <MenuItem>
           <button
             type="button"
@@ -135,24 +147,29 @@ export function TopBar() {
           <p className="text-sm font-medium text-text-muted">{title}</p>
         </div>
 
-        {connected && stakeAddress ? (
-          <AccountMenu
-            stakeAddress={stakeAddress}
-            networkId={networkId}
-            displayName={profile?.value.name}
-          />
-        ) : (
-          <GradientButton
-            variant="secondary"
-            className="h-10 rounded-full px-4"
-            onClick={openModal}
-            onPointerEnter={preloadWalletRuntime}
-            onFocus={preloadWalletRuntime}
-          >
-            <IconWallet size={16} stroke={1.8} />
-            Connect wallet
-          </GradientButton>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-border-subtle bg-surface-inset px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-text-muted">
+            {networkLabel(DEPLOYMENT_NETWORK)}
+          </span>
+          {connected && stakeAddress ? (
+            <AccountMenu
+              stakeAddress={stakeAddress}
+              networkId={networkId}
+              displayName={profile?.value.name}
+            />
+          ) : (
+            <GradientButton
+              variant="secondary"
+              className="h-10 rounded-full px-4"
+              onClick={openModal}
+              onPointerEnter={preloadWalletRuntime}
+              onFocus={preloadWalletRuntime}
+            >
+              <IconWallet size={16} stroke={1.8} />
+              Connect wallet
+            </GradientButton>
+          )}
+        </div>
       </div>
     </header>
   );
