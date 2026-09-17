@@ -20,19 +20,16 @@ export function Footer() {
 
   return (
     <>
-      <footer className="mx-auto flex w-full max-w-6xl flex-col gap-4 border-t border-border-subtle px-5 py-6 text-xs lg:flex-row lg:items-center lg:justify-between lg:px-9">
-        <div>
-          <p className="font-medium text-text-secondary">Need a hand?</p>
-          <p className="mt-1 text-text-muted">Share feedback or find the TosiDrop community.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <footer className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 border-t border-border-subtle px-5 py-5 text-xs lg:px-9">
+        <p className="text-text-faint">TosiDrop · Cardano rewards</p>
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="inline-flex items-center gap-1.5 font-medium text-accent-light transition hover:text-text-primary"
           >
-            <IconHelpCircle size={15} stroke={1.8} aria-hidden />
-            Send feedback
+            <IconHelpCircle size={14} stroke={1.8} aria-hidden />
+            Feedback
           </button>
           {SUPPORT_LINKS.filter((link) => isSafeExternalUrl(link.href)).map((link) => (
             <a

@@ -13,7 +13,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkLabel } from '@/shared/network';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Portfolio',
+  '/': 'Home',
   '/claim': 'Claim rewards',
   '/profile': 'Profile',
   '/tokens': 'Tokens',
