@@ -24,7 +24,12 @@ export function useDelegateToPool() {
 
       const builder = createMeshTransactionBuilder(walletWithReward);
       const unsignedTx = await builder.buildDelegation({ rewardAddress, poolId, registered });
-      const signedTx = await wallet.signTx(unsignedTx, false);
+      const signTxReturnFullTx = (
+        wallet as unknown as { signTxReturnFullTx?: (tx: string, partialSign?: boolean) => Promise<string> }
+      ).signTxReturnFullTx;
+      const signedTx = signTxReturnFullTx
+        ? await signTxReturnFullTx.call(wallet, unsignedTx, false)
+        : await wallet.signTx(unsignedTx, false);
       return await wallet.submitTx(signedTx);
     } catch (cause) {
       const nextError = cause instanceof Error ? cause : new Error('Delegation failed');

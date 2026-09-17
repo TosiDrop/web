@@ -12,6 +12,13 @@ describe('claim selection', () => {
     expect(visibleSelection(['a', 'hidden', 'b'], ['a', 'b'])).toEqual(['a', 'b']);
   });
 
+  it('prioritizes displayed tokens when capping a selection', () => {
+    // Favorites are displayed first. They must remain counted when selected
+    // after ordinary tokens have filled the request limit.
+    const selected = visibleSelection(['a', 'b', 'favorite'], ['favorite', 'a', 'b']);
+    expect(limitSelection(selected, 2)).toEqual(['favorite', 'a']);
+  });
+
   it('limits selected tokens to the VM request maximum', () => {
     expect(limitSelection(['a', 'b', 'c'], 2)).toEqual(['a', 'b']);
   });
