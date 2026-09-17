@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { IconArrowRight, IconChartLine, IconGift, IconRocket, IconWallet } from '@tabler/icons-react';
+import { IconArrowRight, IconGift, IconRocket, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
@@ -54,18 +54,13 @@ function PublicLanding() {
       </section>
 
       <section aria-labelledby="how-it-works" className="card-premium px-6 py-6 sm:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="label-eyebrow">For delegators</p><h2 id="how-it-works" className="mt-2 text-xl font-semibold text-text-primary">How claiming works</h2></div><Link to="/team" className="text-xs text-text-muted transition hover:text-accent-light">Explore partner pools <IconArrowRight size={14} className="ml-1 inline" /></Link></div>
+        <div><p className="label-eyebrow">For delegators</p><h2 id="how-it-works" className="mt-2 text-xl font-semibold text-text-primary">How claiming works</h2></div>
         <ol className="mt-6 grid gap-5 border-t border-border-subtle pt-5 md:grid-cols-3">
           {[['01', 'Connect your wallet', 'We read your stake address and current delegation.'], ['02', 'Review your rewards', 'See each eligible token and choose what to claim.'], ['03', 'Approve once', 'Your wallet signs the claim and tokens settle to you.']].map(([number, title, text]) => (
             <li key={number} className="flex gap-3"><span className="font-mono text-xs text-accent-light">{number}</span><div><h3 className="text-sm font-medium text-text-primary">{title}</h3><p className="mt-1 text-xs leading-5 text-text-muted">{text}</p></div></li>
           ))}
         </ol>
       </section>
-
-      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-border-subtle pt-5 text-xs text-text-muted">
-        <span>TosiDrop is open infrastructure for Cardano token programs.</span>
-        <div className="flex items-center gap-4"><Link to="/analytics" className="inline-flex items-center gap-1.5 hover:text-accent-light"><IconChartLine size={14} /> Public analytics</Link><a href="https://docs.tosidrop.me/" target="_blank" rel="noopener noreferrer" className="hover:text-accent-light">Read the docs</a></div>
-      </footer>
     </div>
   );
 }
