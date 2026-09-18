@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconUserCircle, IconWallet } from '@tabler/icons-react';
+import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconUserCircle, IconClock, IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
@@ -13,7 +13,8 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkLabel } from '@/shared/network';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Claim',
+  '/': 'Home',
+  '/claim': 'Claim rewards',
   '/profile': 'Profile',
   '/tokens': 'Tokens',
   '/projects': 'Manage tokens',
@@ -98,6 +99,15 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
           >
             <IconUserCircle size={14} stroke={1.6} />
             Profile
+          </Link>
+        </MenuItem>
+        <MenuItem>
+          <Link
+            to="/profile?tab=history"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
+          >
+            <IconClock size={14} stroke={1.6} />
+            Wallet history
           </Link>
         </MenuItem>
         <MenuItem>

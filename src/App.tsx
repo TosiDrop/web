@@ -4,6 +4,7 @@ import { AppProviders } from '@/app/providers';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import ClaimPage from '@/pages/ClaimPage';
+const HomePage = lazy(() => import('@/pages/HomePage'));
 
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const DepositPage = lazy(() => import('@/pages/DepositPage'));
@@ -35,11 +36,13 @@ export default function App() {
           <ErrorBoundary>
             <Suspense fallback={<PageFallback />}>
               <Routes>
-                <Route path="/" element={<ClaimPage />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/claim" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/tokens" element={<TokensPage />} />
+                <Route path="/token" element={<TokensPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />

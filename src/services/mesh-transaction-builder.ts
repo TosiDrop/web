@@ -2,6 +2,7 @@ import { Transaction, type IInitiator, type UTxO } from '@meshsdk/core';
 import type {
   TransactionBuilder,
   TransferParams,
+  DelegationParams,
   UnsignedTx,
 } from './transaction-builder';
 
@@ -37,6 +38,17 @@ export function createMeshTransactionBuilder(wallet: MeshWalletInitiator): Trans
         toAddress,
         amount.toString(),
       );
+      return tx.build();
+    },
+    async buildDelegation({ rewardAddress, poolId, registered }: DelegationParams): Promise<UnsignedTx> {
+      if (!rewardAddress.startsWith('stake')) throw new Error('Invalid reward address');
+      if (!poolId.startsWith('pool') && !/^[0-9a-f]{56}$/i.test(poolId)) {
+        throw new Error('Invalid stake pool ID');
+      }
+
+      const tx = new Transaction({ initiator });
+      if (!registered) tx.registerStake(rewardAddress);
+      tx.delegateStake(rewardAddress, poolId);
       return tx.build();
     },
   };

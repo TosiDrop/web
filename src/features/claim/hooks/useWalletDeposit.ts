@@ -51,7 +51,14 @@ export function useWalletDeposit(): UseWalletDepositResult {
         toAddress,
         amount: BigInt(Math.floor(lovelace)),
       });
-      const signedTx = await wallet.signTx(unsignedTx, false);
+      // Mesh v2's signTx returns only a witness set. submitTx needs the full
+      // transaction, so use the compatibility helper when it is available.
+      const signTxReturnFullTx = (
+        wallet as unknown as { signTxReturnFullTx?: (tx: string, partialSign?: boolean) => Promise<string> }
+      ).signTxReturnFullTx;
+      const signedTx = signTxReturnFullTx
+        ? await signTxReturnFullTx.call(wallet, unsignedTx, false)
+        : await wallet.signTx(unsignedTx, false);
       return wallet.submitTx(signedTx);
     },
     [wallet],

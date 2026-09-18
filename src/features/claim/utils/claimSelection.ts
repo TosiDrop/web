@@ -3,8 +3,8 @@
  * derived here is intersected with the tokens the user can actually see.
  */
 export function visibleSelection(selectedAssetIds: string[], visibleAssetIds: string[]): string[] {
-  const visible = new Set(visibleAssetIds);
-  return selectedAssetIds.filter((id) => visible.has(id));
+  const selected = new Set(selectedAssetIds);
+  return visibleAssetIds.filter((id) => selected.has(id));
 }
 
 export function toggleAllSelection(allSelected: boolean, visibleAssetIds: string[]): string[] {

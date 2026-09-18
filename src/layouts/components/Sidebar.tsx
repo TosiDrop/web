@@ -6,6 +6,8 @@ import {
   IconFileText,
   IconRocket,
   IconChartLine,
+  IconHome2,
+  IconCoins,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -14,12 +16,30 @@ import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
 
-const NAV_LINKS = [
-  { name: 'Claim', href: '/', icon: IconGift },
-  { name: 'Tokens', href: '/tokens', icon: IconRocket },
-  { name: 'Analytics', href: '/analytics', icon: IconChartLine },
-  { name: 'Team', href: '/team', icon: IconUsers },
-  { name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true },
+const NAV_GROUPS = [
+  {
+    label: 'Your wallet',
+    links: [
+      { name: 'Home', href: '/', icon: IconHome2 },
+      { name: 'Claim rewards', href: '/claim', icon: IconGift },
+    ],
+  },
+  {
+    label: 'Explore',
+    links: [
+      { name: 'Tokens', href: '/tokens', icon: IconCoins },
+      { name: 'Analytics', href: '/analytics', icon: IconChartLine },
+      { name: 'Team', href: '/team', icon: IconUsers },
+    ],
+  },
+  {
+    label: 'Build',
+    links: [{ name: 'Projects', href: '/projects', icon: IconRocket }],
+  },
+  {
+    label: 'Resources',
+    links: [{ name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true }],
+  },
 ];
 
 const SOCIAL_LINKS = [
@@ -46,10 +66,13 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </div>
 
       <nav aria-label="Main" className="flex-1 px-4">
-        <ul className="space-y-0.5">
-          {NAV_LINKS.map((link) => {
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="mb-6 last:mb-0">
+            <p className="mb-2 px-3 text-2xs font-medium uppercase tracking-[0.16em] text-text-faint">{group.label}</p>
+            <ul className="space-y-0.5">
+              {group.links.map((link) => {
             const Icon = link.icon;
-            if (link.external) {
+            if ('external' in link && link.external) {
               return (
                 <li key={link.name}>
                   <a
@@ -91,8 +114,10 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 </Link>
               </li>
             );
-          })}
-        </ul>
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       <div className="flex items-center gap-1 px-4 pb-4 pt-4">
