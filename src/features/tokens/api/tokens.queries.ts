@@ -29,7 +29,9 @@ export function usePublicTokens() {
         throw new Error('Token catalog is temporarily unavailable');
       }
 
-      const projects = projectsResponse?.projects ?? [];
+      const projects = Array.isArray(projectsResponse?.projects)
+        ? projectsResponse.projects
+        : [];
       const known = new Set(projects.map((project) => project.tokenId));
       const metadataProjects: Project[] = Object.entries(tokenMap)
         .filter(([tokenId]) => !known.has(tokenId))
@@ -57,7 +59,7 @@ export function usePublicTokens() {
         projects: [...projects, ...metadataProjects],
         degraded: projectsResponse?.degraded === true && projects.length === 0 && Object.keys(tokenMap).length === 0,
         metadataDegraded: !projectsResponse || projectsResponse.degraded || tokensResult.status === 'rejected',
-        tokens: tokenMap,
+        tokens: tokensResult.status === 'fulfilled' ? tokenMap : undefined,
         scope: 'public' as const,
       };
     },

@@ -17,7 +17,7 @@ const ORIGIN = { Origin: 'http://localhost:5173' };
 
 interface Call { sql: string; binds: unknown[] }
 
-function fakeDb(opts: { first?: unknown[]; all?: unknown[]; changes?: number } = {}) {
+function fakeDb(opts: { first?: unknown[]; all?: unknown[]; allError?: Error; changes?: number } = {}) {
   const calls: Call[] = [];
   const firsts = [...(opts.first ?? [])];
   const prepare = (sql: string) => ({
@@ -25,7 +25,10 @@ function fakeDb(opts: { first?: unknown[]; all?: unknown[]; changes?: number } =
       calls.push({ sql, binds: b });
       return this;
     },
-    all: async () => ({ results: opts.all ?? [] }),
+    all: async () => {
+      if (opts.allError) throw opts.allError;
+      return { results: opts.all ?? [] };
+    },
     first: async () => firsts.shift() ?? null,
     run: async () => ({ meta: { changes: opts.changes ?? 1 } }),
   });
@@ -84,6 +87,13 @@ describe('/api/projects', () => {
     expect(db.__calls[0].sql).toContain("status = 'approved'");
     expect(db.__calls[0].binds).toEqual(['preview']);
     expect(verifyListMock).not.toHaveBeenCalled();
+  });
+
+  it('GET degrades when the projects migration is not applied yet', async () => {
+    const db = fakeDb({ allError: new Error('no such table: projects') });
+    const res = await onRequestGet(ctx(new Request('https://x/api/projects', { headers: ORIGIN }), env(db)));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ projects: [], degraded: true, scope: 'public' });
   });
 
   it('GET without a signature only exposes approved projects', async () => {
