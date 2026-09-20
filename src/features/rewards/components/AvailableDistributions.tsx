@@ -5,14 +5,16 @@ import { GradientButton } from '@/components/common/GradientButton';
 import { useClaimStore } from '@/store/claim-state';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
+import { limitSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
 import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
 
 interface AvailableDistributionsProps {
   tokens: ClaimableToken[];
+  maxAssets: number;
 }
 
-export function AvailableDistributions({ tokens }: AvailableDistributionsProps) {
+export function AvailableDistributions({ tokens, maxAssets }: AvailableDistributionsProps) {
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
 
@@ -32,6 +34,11 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
     () => partitionPreferences(tokens, favoriteIds, dislikedIds),
     [tokens, favoriteIds, dislikedIds],
   );
+  const visibleAssetIds = useMemo(() => visible.map((token) => token.assetId), [visible]);
+  const selectedVisible = useMemo(
+    () => limitSelection(visibleSelection(selectedAssetIds, visibleAssetIds), maxAssets),
+    [selectedAssetIds, visibleAssetIds, maxAssets],
+  );
 
   // Disliking a selected token also deselects it so hidden tokens can't ride
   // along into a claim unnoticed.
@@ -46,8 +53,10 @@ export function AvailableDistributions({ tokens }: AvailableDistributionsProps) 
     <DistributionCard
       key={token.assetId}
       token={token}
-      selected={selectedAssetIds.includes(token.assetId)}
-      onToggle={() => toggleAsset(token.assetId)}
+      selected={selectedVisible.includes(token.assetId)}
+      onToggle={() => {
+        if (selectedVisible.includes(token.assetId) || selectedVisible.length < maxAssets) toggleAsset(token.assetId);
+      }}
       favorite={
         connected
           ? {

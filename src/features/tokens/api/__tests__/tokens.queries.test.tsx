@@ -43,6 +43,26 @@ describe('usePublicTokens', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.projects).toHaveLength(1);
+    expect(result.current.data?.metadataDegraded).toBe(true);
+  });
+
+  it('drops malformed projects and token metadata while retaining valid entries', async () => {
+    getMock.mockImplementation((path: string) => {
+      if (path === '/api/projects') {
+        return Promise.resolve({ projects: [null, { tokenId: 'policy.valid', name: 'Valid token' }, { name: 'Missing ID' }], degraded: false, scope: 'public' });
+      }
+      return Promise.resolve({
+        'policy.valid': { ticker: 'VALID', decimals: 6 },
+        'policy.bad': { decimals: 'not-a-number' },
+      });
+    });
+    const { result } = renderHook(() => usePublicTokens(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.projects.map((project) => project.tokenId)).toContain('policy.valid');
+    expect(result.current.data?.projects).not.toContainEqual(expect.objectContaining({ name: 'Missing ID' }));
+    expect(result.current.data?.tokens).toEqual({ 'policy.valid': { ticker: 'VALID', decimals: 6 } });
+    expect(result.current.data?.metadataDegraded).toBe(true);
   });
 
   it('leaves token metadata undefined when its request fails', async () => {

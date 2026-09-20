@@ -55,7 +55,6 @@ export default function ClaimPage() {
   const setRequest = useClaimStore((s) => s.setRequest);
   const lookupAddress = useClaimStore((s) => s.lookupAddress);
   const setLookupAddress = useClaimStore((s) => s.setLookupAddress);
-  const initSelectionFor = useClaimStore((s) => s.initSelectionFor);
 
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
@@ -90,15 +89,15 @@ export default function ClaimPage() {
   const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
     ? configuredMaxAssets
     : 25;
-  const selectableAssetIds = visibleAssetIds.slice(0, maxAssets);
+  const selectableAssetIds = useMemo(() => visibleAssetIds.slice(0, maxAssets), [visibleAssetIds, maxAssets]);
   const selectedVisible = limitSelection(visibleSelection(selectedAssetIds, selectableAssetIds), maxAssets);
   const total = selectableAssetIds.length;
   const allSelected = total > 0 && selectedVisible.length === total;
 
   useEffect(() => {
     if (!rewards || !lookupAddress) return;
-    initSelectionFor(lookupAddress, rewards.map((r) => r.assetId));
-  }, [rewards, lookupAddress, initSelectionFor]);
+    setSelected(selectableAssetIds);
+  }, [rewards, lookupAddress, selectableAssetIds, setSelected]);
 
   const handleLookup = useCallback(
     async (input: string) => {
@@ -213,7 +212,7 @@ export default function ClaimPage() {
             {loading ? (
               <LoadingTokens />
             ) : hasRewards ? (
-              <AvailableDistributions tokens={rewards ?? []} />
+              <AvailableDistributions tokens={rewards ?? []} maxAssets={maxAssets} />
             ) : (
               !error && <NoRewardsState />
             )}
