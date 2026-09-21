@@ -5,6 +5,10 @@ export interface KoiosAccountInfo {
   stake_address?: string;
   status?: string;
   total_balance?: string;
+  utxo?: string;
+  rewards?: string;
+  withdrawals?: string;
+  deposit?: string;
   rewards_available?: string;
   delegated_pool?: string | null;
 }
@@ -50,15 +54,62 @@ function normalizeBaseUrl(value: string): string {
   return value.trim().replace(/\/+$/, '').replace(/\/(?:api\/v1|api)$/i, '');
 }
 
+function validateAuthenticatedBaseUrl(baseUrl: string, apiKey?: string): void {
+  if (!apiKey) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new Error('KOIOS_BASE_URL must be a valid URL when an API key is configured');
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error('KOIOS_BASE_URL must use HTTPS when an API key is configured');
+  }
+}
+
 export function koiosConfig(env: Pick<Env, 'VITE_NETWORK' | 'KOIOS_BASE_URL_MAINNET' | 'KOIOS_BASE_URL_PREVIEW' | 'KOIOS_API_KEY_MAINNET' | 'KOIOS_API_KEY_PREVIEW'>): KoiosConfig {
   const network = deploymentNetwork(env);
   const configured = network === 'mainnet' ? env.KOIOS_BASE_URL_MAINNET : env.KOIOS_BASE_URL_PREVIEW;
   const key = network === 'mainnet' ? env.KOIOS_API_KEY_MAINNET : env.KOIOS_API_KEY_PREVIEW;
+  const baseUrl = `${normalizeBaseUrl(configured || DEFAULT_BASES[network])}/api/v1`;
+  const apiKey = key?.trim() || undefined;
+  validateAuthenticatedBaseUrl(baseUrl, apiKey);
   return {
     network,
-    baseUrl: `${normalizeBaseUrl(configured || DEFAULT_BASES[network])}/api/v1`,
-    apiKey: key?.trim() || undefined,
+    baseUrl,
+    apiKey,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function validatePayload(endpoint: string, payload: unknown): unknown {
+  if (!Array.isArray(payload)) throw new Error(`Koios ${endpoint} returned an invalid response`);
+  for (const row of payload) {
+    if (!isRecord(row)) throw new Error(`Koios ${endpoint} returned an invalid row`);
+  }
+  if (endpoint === 'account_assets') {
+    for (const row of payload) {
+      if (typeof row.asset_policy !== 'string' || typeof row.asset_name !== 'string' || typeof row.quantity !== 'string') {
+        throw new Error('Koios account_assets returned an incomplete asset row');
+      }
+    }
+  }
+  if (endpoint === 'account_info') {
+    for (const row of payload) {
+      for (const field of ['total_balance', 'utxo', 'rewards_available']) {
+        if (field in row && typeof row[field] !== 'string') throw new Error(`Koios account_info returned an invalid ${field}`);
+      }
+    }
+  }
+  if (endpoint === 'account_rewards') {
+    for (const row of payload) {
+      if ('amount' in row && typeof row.amount !== 'string') throw new Error('Koios account_rewards returned an invalid amount');
+    }
+  }
+  return payload;
 }
 
 export class KoiosClient {
@@ -79,7 +130,7 @@ export class KoiosClient {
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) throw new Error(`Koios ${endpoint} failed (${response.status})`);
-    return (await response.json()) as T;
+    return validatePayload(endpoint, await response.json()) as T;
   }
 
   accountInfo(stakeAddress: string) {

@@ -12,9 +12,11 @@ import {
   type KoiosReward,
 } from '../../services/koiosClient';
 import { persistWalletSnapshot } from '../../services/walletSnapshots';
+import { readMarketPrices, readValueHistory } from '../../services/marketPrices';
 import { stakeAddressError } from '../../../src/shared/stakeAddress';
 
 const MAX_METADATA_ASSETS = 100;
+const MAX_PRICED_ASSETS = 25;
 
 function unitFor(asset: KoiosAccountAsset): string | null {
   const policy = asset.asset_policy?.trim();
@@ -61,10 +63,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const units = usableAssets.map((asset) => unitFor(asset)!);
     const metadata = units.length ? await koios.assetInfo(units.slice(0, MAX_METADATA_ASSETS)) : [];
     const metadataMap = metadataByUnit(metadata);
+    const pricedAssets = usableAssets.slice(0, MAX_PRICED_ASSETS);
+    const marketByUnit = await readMarketPrices(
+      env,
+      network,
+      ['lovelace', ...pricedAssets.map((asset) => unitFor(asset)!)],
+    );
+    const adaMarket = marketByUnit.get('lovelace');
+    const adaPriceUsd = adaMarket?.priceUsd ?? null;
+    const adaPriceChange24h = adaMarket?.priceChange24h ?? null;
     const holdings = usableAssets.map((asset) => {
       const unit = unitFor(asset)!;
       const info = metadataMap.get(unit);
       const registry = info?.token_registry_metadata;
+      const decimals = registry?.decimals ?? info?.decimals ?? null;
+      const price = marketByUnit.get(unit)?.priceUsd ?? null;
       return {
         unit,
         policyId: asset.asset_policy,
@@ -72,19 +85,42 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         quantity: asset.quantity ?? '0',
         name: registry?.name ?? info?.asset_name_ascii ?? null,
         ticker: registry?.ticker ?? null,
-        decimals: registry?.decimals ?? info?.decimals ?? null,
+        decimals,
         logo: registry?.logo ?? null,
         metadataPending: !info,
+        priceUsd: price,
+        priceChange24h: marketByUnit.get(unit)?.priceChange24h ?? null,
+        valueUsd: price === null || decimals === null
+          ? null
+          : Number(asset.quantity ?? 0) / 10 ** decimals * price,
+        pricePending: price === null,
       };
     });
+    const history = await readValueHistory(
+      env,
+      network,
+      holdings.flatMap((holding) => {
+        const decimals = holding.decimals;
+        if (decimals === null) return [];
+        const amount = Number(holding.quantity) / 10 ** decimals;
+        return Number.isFinite(amount) ? [{ unit: holding.unit, amount }] : [];
+      }),
+      Number(account.utxo ?? account.total_balance ?? 0) / 1_000_000,
+    );
     const observedAt = Math.floor(Date.now() / 1000);
     const payload = {
       network,
       stakeAddress,
       observedAt,
       balance: {
-        lovelace: account.total_balance ?? '0',
+        accountLovelace: account.total_balance ?? '0',
+        utxoLovelace: account.utxo ?? '0',
         rewardsAvailableLovelace: account.rewards_available ?? '0',
+        adaPriceUsd,
+        adaPriceChange24h,
+        accountValueUsd: adaPriceUsd === null
+          ? null
+          : Number(account.total_balance ?? 0) / 1_000_000 * adaPriceUsd,
       },
       delegation: {
         poolId: account.delegated_pool ?? null,
@@ -104,6 +140,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         returned: metadata.length,
         total: units.length,
         complete: metadata.length >= units.length,
+      },
+      market: {
+        configured: env.DB !== undefined,
+        priced: Math.max(0, marketByUnit.size - (marketByUnit.has('lovelace') ? 1 : 0)),
+        requested: pricedAssets.length,
+      },
+      valueHistory: {
+        points: history,
+        basis: 'current-holdings',
+        rangeDays: 30,
       },
     };
 

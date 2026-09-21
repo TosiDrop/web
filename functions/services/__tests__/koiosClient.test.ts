@@ -22,6 +22,14 @@ describe('koiosConfig', () => {
       baseUrl: 'https://preview.koios.rest/api/v1',
     });
   });
+
+  it('rejects an HTTP endpoint when bearer authentication is configured', () => {
+    expect(() => koiosConfig({
+      VITE_NETWORK: 'preview',
+      KOIOS_BASE_URL_PREVIEW: 'http://koios.internal',
+      KOIOS_API_KEY_PREVIEW: 'secret',
+    })).toThrow('HTTPS');
+  });
 });
 
 describe('KoiosClient', () => {
@@ -46,5 +54,14 @@ describe('KoiosClient', () => {
         body: JSON.stringify({ _stake_addresses: ['stake1example'] }),
       }),
     );
+  });
+
+  it('rejects incomplete account asset rows', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([{ asset_policy: 'policy', quantity: '1' }]), { status: 200 }),
+    );
+    const client = new KoiosClient({ VITE_NETWORK: 'preview' });
+
+    await expect(client.accountAssets('stake_test1example')).rejects.toThrow('incomplete asset row');
   });
 });

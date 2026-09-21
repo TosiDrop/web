@@ -18,14 +18,18 @@ response contracts.
 ## Information architecture
 
 The disconnected home page keeps its current onboarding and claim-oriented
-purpose. The connected application is reorganized as:
+purpose. The connected application uses one wallet workspace rather than
+duplicating wallet destinations in the sidebar and in separate pages:
 
 ```text
 Home
 Your wallet
-  Portfolio
+  Overview
+  Holdings
   Activity
   Rewards
+  Favorites
+  Settings
 Discover
   Token programs
   Token details
@@ -38,9 +42,10 @@ Resources
   Docs
 ```
 
-Existing routes remain compatible. `/profile`, `/profile?tab=history`, and
-`/profile?tab=analytics` continue to work while new navigation aliases point to
-the clearer wallet destinations.
+The sidebar exposes the workspace once as `Wallet`; the sections above are
+its internal navigation. Existing routes remain compatible, including
+`/profile`, `/profile?tab=history`, and `/profile?tab=analytics`, while older
+aliases redirect into the corresponding wallet section.
 
 ### Home
 
@@ -59,9 +64,9 @@ the existing Profile surface:
 - Activity: claims plus indexed on-chain activity.
 - Rewards: existing personal claim analytics plus staking rewards.
 
-The current wallet composition display is a UI placeholder for token valuation;
-it must not be presented as a marked-to-market portfolio until indexed prices
-and metadata are available.
+The wallet composition display is a marked-to-market view only where an
+indexed price is available. Unpriced assets remain visible with an explicit
+pending state rather than being silently omitted.
 
 ### Discover
 
@@ -84,8 +89,8 @@ market context.
 ## Data and API architecture
 
 ```text
-Configured Koios and DEX sources
-        -> scheduled ingestion and adapters
+Configured Koios and independent market sources
+        -> scheduled ingestion adapters
         -> canonical, provenance-aware facts
         -> UI read models and API read models
         -> TosiDrop web and external customers
@@ -108,6 +113,17 @@ Cloudflare storage responsibilities:
 - KV: short-lived hot response caches.
 - Queues: ingestion backpressure and retry work.
 - R2: raw response archives, replay fixtures, and large exports where useful.
+
+Market prices are source-specific rows, not a single-provider cache. Scheduled
+adapters populate current prices and hourly history in D1; Pages Functions
+only read those tables on a wallet request. Aggregation can expose source
+count, freshness, and provenance without making the browser fan out to DEX
+providers or repeatedly querying any one provider.
+
+Wallet value history is explicitly a current-holdings replay against historical
+price snapshots. It is useful for showing portfolio sensitivity over time, but
+it must not be described as the wallet's actual historical contents until
+historical holdings snapshots are available.
 
 The application API remains under `/api/...`. The future commercial API uses a
 separate versioned namespace:
@@ -139,12 +155,12 @@ estimated, provider-sourced, licensed for redistribution, or internal-only.
 7. Expose stable `/v1` DEX-data endpoints.
 8. Add API authentication, quotas, metering, documentation, and billing.
 
-The first implementation slice now covers steps 1–3 in a deliberately narrow
-form: wallet-first navigation, a configurable shared Koios client, real wallet
-balance/holdings/rewards/delegation data, and a D1 wallet snapshot. It does not
-mark holdings to market or expose commercial DEX endpoints yet; those require
-an indexed price source, licensing decisions, and the authenticated API
-boundary described above.
+The first implementation slice now covers wallet-first navigation, a
+configurable shared Koios client, real wallet balance/holdings/rewards/
+delegation data, D1 wallet snapshots, and the read side of the indexed market
+model. It does not fetch providers from the browser or expose commercial DEX
+endpoints yet; scheduled ingestion, licensing decisions, and the authenticated
+API boundary remain prerequisites.
 
 Deployment must set `KOIOS_BASE_URL_MAINNET` and/or
 `KOIOS_BASE_URL_PREVIEW` when using private or self-hosted Koios instances.

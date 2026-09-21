@@ -75,7 +75,7 @@ describe('GET /api/wallet/summary', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       network: 'preview',
-      balance: { lovelace: '1234567', rewardsAvailableLovelace: '42' },
+      balance: { accountLovelace: '1234567', rewardsAvailableLovelace: '42' },
       delegation: { poolId: 'pool1abc', registered: true },
       rewards: { totalLovelace: '99' },
       holdings: [{ unit: 'policyname', quantity: '2500', ticker: 'EX', decimals: 2 }],

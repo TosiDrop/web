@@ -6,6 +6,10 @@ export interface VmEnv {
   VITE_NETWORK?: string;
   VITE_VM_API_KEY: string;
   VM_BASE_URL?: string;
+  VM_BASE_URL_MAINNET?: string;
+  VM_BASE_URL_PREVIEW?: string;
+  VM_API_KEY_MAINNET?: string;
+  VM_API_KEY_PREVIEW?: string;
 }
 
 export function deploymentNetwork(env: Pick<VmEnv, 'VITE_NETWORK'>): Network {
@@ -13,12 +17,17 @@ export function deploymentNetwork(env: Pick<VmEnv, 'VITE_NETWORK'>): Network {
 }
 
 export function vmConfig(env: VmEnv): { baseUrl: string; apiKey: string } | null {
-  const apiKey = env.VITE_VM_API_KEY;
-  if (!apiKey || apiKey.trim() === '') return null;
   const network = deploymentNetwork(env);
-  if (network === 'mainnet' && !env.VM_BASE_URL) return null;
+  const apiKey = network === 'mainnet'
+    ? env.VM_API_KEY_MAINNET || env.VITE_VM_API_KEY
+    : env.VM_API_KEY_PREVIEW || env.VITE_VM_API_KEY;
+  if (!apiKey || apiKey.trim() === '') return null;
+  const baseUrl = network === 'mainnet'
+    ? env.VM_BASE_URL_MAINNET || env.VM_BASE_URL
+    : env.VM_BASE_URL_PREVIEW || env.VM_BASE_URL;
+  if (network === 'mainnet' && !baseUrl) return null;
   return {
-    baseUrl: env.VM_BASE_URL || DEFAULT_VM_BASE_URL,
+    baseUrl: baseUrl || DEFAULT_VM_BASE_URL,
     apiKey,
   };
 }

@@ -17,15 +17,10 @@ function textToHex(text: string): string {
 }
 
 async function lookupHolder(koios: KoiosClient, assetName: string): Promise<string | null> {
-  let data: Array<{ payment_address?: string }>;
-  try {
-    data = await koios.post('asset_nft_address', {
-      _asset_policy: ADA_HANDLE_POLICY_ID,
-      _asset_name: assetName,
-    });
-  } catch {
-    return null;
-  }
+  const data = await koios.post<Array<{ payment_address?: string }>>('asset_nft_address', {
+    _asset_policy: ADA_HANDLE_POLICY_ID,
+    _asset_name: assetName,
+  });
   return data[0]?.payment_address ?? null;
 }
 
@@ -79,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return jsonResponse({ handle: `$${name}`, stakeAddress }, 200, origin);
   } catch (error) {
     console.error('resolveHandle error:', error);
-    return errorResponse('Failed to resolve handle', 500, origin);
+    return errorResponse('Failed to resolve handle', 502, origin);
   }
 };
 

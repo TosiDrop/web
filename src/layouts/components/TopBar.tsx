@@ -1,16 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconCopy, IconUserCircle, IconClock, IconWallet } from '@tabler/icons-react';
+import { IconMenu2, IconChevronDown, IconLogout, IconUserCircle, IconClock, IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { useProfile } from '@/features/profile/api/profile.queries';
-import { toast } from '@/store/toast-state';
 import { getNetworkLabel } from '@/utils/format';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkLabel } from '@/shared/network';
+import { CopyButton } from '@/components/common/CopyButton';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
@@ -51,15 +51,6 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
   const walletName = useWalletStore((s) => s.walletName);
   const accountName = displayName?.trim() || walletName || 'Wallet';
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(stakeAddress);
-      toast.success('Stake address copied');
-    } catch {
-      toast.error('Could not copy — select the address and copy it manually.');
-    }
-  };
-
   return (
     <Menu>
       <MenuButton
@@ -88,9 +79,17 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
               {getNetworkLabel(networkId)}
             </span>
           </div>
-          <p className="mt-1.5 break-all font-mono text-2xs leading-relaxed text-text-muted">
-            {stakeAddress}
-          </p>
+          <div className="mt-1.5 flex items-start gap-2">
+            <p className="min-w-0 flex-1 break-all font-mono text-2xs leading-relaxed text-text-muted">
+              {stakeAddress}
+            </p>
+            <CopyButton
+              value={stakeAddress}
+              iconSize={14}
+              className="h-8 w-8 shrink-0"
+              ariaLabel="Copy stake address"
+            />
+          </div>
         </div>
         <div className="my-1 h-px bg-border-subtle" />
         <MenuItem>
@@ -110,16 +109,6 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
             <IconClock size={14} stroke={1.6} />
             Wallet history
           </Link>
-        </MenuItem>
-        <MenuItem>
-          <button
-            type="button"
-            onClick={copy}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
-          >
-            <IconCopy size={14} stroke={1.6} />
-            Copy stake address
-          </button>
         </MenuItem>
         <MenuItem>
           <button

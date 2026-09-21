@@ -8,7 +8,6 @@ import {
   IconChartLine,
   IconHome2,
   IconCoins,
-  IconHistory,
   IconWallet,
   IconExternalLink,
   IconX,
@@ -23,9 +22,7 @@ const NAV_GROUPS = [
     label: 'Your wallet',
     links: [
       { name: 'Home', href: '/', icon: IconHome2 },
-      { name: 'Portfolio', href: '/profile?tab=overview', icon: IconWallet },
-      { name: 'Activity', href: '/profile?tab=history', icon: IconHistory },
-      { name: 'Rewards', href: '/profile?tab=analytics', icon: IconChartLine },
+      { name: 'Wallet', href: '/profile?tab=overview', icon: IconWallet },
       { name: 'Claim rewards', href: '/claim', icon: IconGift },
     ],
   },
@@ -104,10 +101,12 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
               );
             }
             const [linkPath, linkQuery] = link.href.split('?');
+            const requiredTab = new URLSearchParams(linkQuery).get('tab');
+            const currentTab = new URLSearchParams(location.search).get('tab');
             const isActive = link.href === '/'
               ? location.pathname === '/'
-              : linkQuery
-                ? location.pathname === linkPath && location.search === `?${linkQuery}`
+              : requiredTab
+                ? location.pathname === linkPath && currentTab === requiredTab
                 : location.pathname.startsWith(linkPath);
             return (
               <li key={link.name}>
