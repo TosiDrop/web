@@ -64,6 +64,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     );
   } catch (err) {
     console.error('D1 GET projects error:', err);
+    if (err instanceof Error && /no such table:\s*projects/i.test(err.message)) {
+      return jsonResponse({ projects: [], degraded: true, scope }, 200, origin);
+    }
     return errorResponse('Error fetching projects', 500, origin);
   }
 };

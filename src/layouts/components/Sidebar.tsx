@@ -65,7 +65,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
         </Link>
       </div>
 
-      <nav aria-label="Main" className="flex-1 px-4">
+      <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-6 last:mb-0">
             <p className="mb-2 px-3 text-2xs font-medium uppercase tracking-[0.16em] text-text-faint">{group.label}</p>

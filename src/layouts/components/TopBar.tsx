@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/claim': 'Claim rewards',
   '/profile': 'Profile',
   '/tokens': 'Tokens',
+  '/token': 'Tokens',
   '/projects': 'Manage tokens',
   '/team': 'Team',
   '/analytics': 'Analytics',

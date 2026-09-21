@@ -73,7 +73,9 @@ export function DelegationCard() {
       <div className="space-y-4 px-5 py-4">
         <div className="rounded-xl border border-border-subtle bg-surface-inset p-3">
           <p className="label-eyebrow">Current pool</p>
-          {delegationLoading ? <p className="mt-2 text-sm text-text-muted">Checking ledger state…</p> : currentPool ? (
+          {delegationLoading ? <p className="mt-2 text-sm text-text-muted">Checking ledger state…</p> : !delegationKnown ? (
+            <p className="mt-2 text-sm text-text-muted">Delegation status is unavailable. Try checking again before submitting a delegation.</p>
+          ) : currentPool ? (
             <div className="mt-2 flex items-center gap-3">
               <PoolLogo pool={currentPool} />
               <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-primary">{currentPool.name || currentPool.ticker}</p><p className="font-mono text-2xs text-text-muted">[{currentPool.ticker}]</p></div>
@@ -95,7 +97,7 @@ export function DelegationCard() {
           </div>
         ) : <p className="text-sm text-text-muted">No partner pools are listed right now.</p>}
       </div>
-      {currentPool && <a href={`https://cexplorer.io/pool/${currentPool.poolId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border-t border-border-subtle px-5 py-3 text-xs text-text-muted transition hover:text-accent-light">View pool details <IconExternalLink size={12} /></a>}
+      {currentPool && <a href={`https://${DEPLOYMENT_NETWORK === 'mainnet' ? '' : 'preview.'}cexplorer.io/pool/${currentPool.poolId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 border-t border-border-subtle px-5 py-3 text-xs text-text-muted transition hover:text-accent-light">View pool details <IconExternalLink size={12} /></a>}
     </Card>
   );
 }

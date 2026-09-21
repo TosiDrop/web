@@ -56,7 +56,7 @@ function PublicHome() {
       <section aria-labelledby="how-it-works" className="card-premium px-6 py-6 sm:px-8">
         <div><p className="label-eyebrow">For delegators</p><h2 id="how-it-works" className="mt-2 text-xl font-semibold text-text-primary">How claiming works</h2></div>
         <ol className="mt-6 grid gap-5 border-t border-border-subtle pt-5 md:grid-cols-3">
-          {[['01', 'Connect your wallet', 'We read your stake address and current delegation.'], ['02', 'Review your rewards', 'See each eligible token and choose what to claim.'], ['03', 'Approve once', 'Your wallet signs the claim and tokens settle to you.']].map(([number, title, text]) => (
+          {[['01', 'Connect your wallet', 'We read your stake address and current delegation.'], ['02', 'Review your rewards', 'See each eligible token and choose what to claim.'], ['03', 'Approve once', 'Send the displayed reward deposit plus any processing or overhead fee, then TosiDrop releases your rewards.']].map(([number, title, text]) => (
             <li key={number} className="flex gap-3"><span className="font-mono text-xs text-accent-light">{number}</span><div><h3 className="text-sm font-medium text-text-primary">{title}</h3><p className="mt-1 text-xs leading-5 text-text-muted">{text}</p></div></li>
           ))}
         </ol>
