@@ -40,12 +40,16 @@ export default function App() {
                 <Route path="/claim" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/portfolio" element={<Navigate to="/profile?tab=overview" replace />} />
+                <Route path="/activity" element={<Navigate to="/profile?tab=history" replace />} />
+                <Route path="/rewards" element={<Navigate to="/profile?tab=analytics" replace />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/tokens" element={<TokensPage />} />
                 <Route path="/token" element={<TokensPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/network" element={<Navigate to="/analytics" replace />} />
                 <Route path="/history" element={<Navigate to="/profile?tab=history" replace />} />
                 <Route path="/preferences" element={<Navigate to="/profile?tab=settings" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}

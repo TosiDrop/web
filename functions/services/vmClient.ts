@@ -66,10 +66,12 @@ export async function withCache(
   ttl: number,
   fetchFn: () => Promise<unknown>,
   waitUntil?: (promise: Promise<unknown>) => void,
+  cacheVariant?: string,
 ): Promise<Response> {
   const cache = caches.default;
   const cacheUrl = new URL(request.url);
   cacheUrl.searchParams.set('__deployment_network', deploymentNetwork(env));
+  if (cacheVariant) cacheUrl.searchParams.set('__deployment_source', cacheVariant);
   const cacheKey = new Request(cacheUrl.toString());
   const origin = request.headers.get('Origin');
 

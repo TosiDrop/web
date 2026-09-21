@@ -10,6 +10,11 @@ export interface Env {
   VM_API_KEY_MAINNET?: string;
   VM_BASE_URL_PREVIEW?: string;
   VM_API_KEY_PREVIEW?: string;
+  /** Optional deployment-specific Koios endpoints; public defaults are used when unset. */
+  KOIOS_BASE_URL_MAINNET?: string;
+  KOIOS_BASE_URL_PREVIEW?: string;
+  KOIOS_API_KEY_MAINNET?: string;
+  KOIOS_API_KEY_PREVIEW?: string;
   VM_WEB_PROFILES: KVNamespace;
   // D1 is optional so local dev (and PR previews without the binding) can boot.
   // Handlers should feature-detect before using.

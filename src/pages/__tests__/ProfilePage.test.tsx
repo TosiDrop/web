@@ -9,6 +9,8 @@ vi.mock('@/features/favorites/components/FavoritesTab', () => ({ FavoritesTab: (
 vi.mock('@/features/profile/components/RewardBreakdown', () => ({ RewardBreakdown: () => null }));
 vi.mock('@/features/profile/components/PersonalAnalytics', () => ({ PersonalAnalytics: () => null }));
 vi.mock('@/features/profile/components/ProfileForm', () => ({ ProfileForm: () => null }));
+vi.mock('@/features/rewards/components/WalletComposition', () => ({ WalletComposition: () => null }));
+vi.mock('@/features/rewards/components/DelegationCard', () => ({ DelegationCard: () => null }));
 vi.mock('@/features/preferences/components/ThemeToggle', () => ({ ThemeToggle: () => null }));
 vi.mock('@/features/profile/api/profile.queries', () => ({
   useProfile: () => ({ data: undefined, isLoading: false }),
@@ -32,8 +34,8 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('tab', { name: 'Analytics' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('falls back to the first tab for an unknown or missing ?tab=', () => {
+  it('falls back to the wallet overview for an unknown or missing ?tab=', () => {
     renderAt('/profile?tab=nope');
-    expect(screen.getByRole('tab', { name: 'History' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
   });
 });

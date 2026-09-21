@@ -8,6 +8,8 @@ import {
   IconChartLine,
   IconHome2,
   IconCoins,
+  IconHistory,
+  IconWallet,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -21,20 +23,25 @@ const NAV_GROUPS = [
     label: 'Your wallet',
     links: [
       { name: 'Home', href: '/', icon: IconHome2 },
+      { name: 'Portfolio', href: '/profile?tab=overview', icon: IconWallet },
+      { name: 'Activity', href: '/profile?tab=history', icon: IconHistory },
+      { name: 'Rewards', href: '/profile?tab=analytics', icon: IconChartLine },
       { name: 'Claim rewards', href: '/claim', icon: IconGift },
     ],
   },
   {
-    label: 'Explore',
+    label: 'Discover',
     links: [
-      { name: 'Tokens', href: '/tokens', icon: IconCoins },
-      { name: 'Analytics', href: '/analytics', icon: IconChartLine },
-      { name: 'Team', href: '/team', icon: IconUsers },
+      { name: 'Token programs', href: '/tokens', icon: IconCoins },
+      { name: 'Network', href: '/network', icon: IconChartLine },
     ],
   },
   {
     label: 'Build',
-    links: [{ name: 'Projects', href: '/projects', icon: IconRocket }],
+    links: [
+      { name: 'My projects', href: '/projects', icon: IconRocket },
+      { name: 'Team', href: '/team', icon: IconUsers },
+    ],
   },
   {
     label: 'Resources',
@@ -96,8 +103,12 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 </li>
               );
             }
-            const isActive =
-              link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href);
+            const [linkPath, linkQuery] = link.href.split('?');
+            const isActive = link.href === '/'
+              ? location.pathname === '/'
+              : linkQuery
+                ? location.pathname === linkPath && location.search === `?${linkQuery}`
+                : location.pathname.startsWith(linkPath);
             return (
               <li key={link.name}>
                 <Link

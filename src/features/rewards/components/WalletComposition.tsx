@@ -1,150 +1,105 @@
-import { useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
+import { apiClient } from '@/api/client';
 import { useWalletStore } from '@/store/wallet-state';
 
-const MAX_TOKENS = 5;
-const HEX_PAIR_RE = /^(?:[0-9a-fA-F]{2})+$/;
-const CHART_COLORS = 6;
-const decoder = new TextDecoder();
-
-function chartColor(i: number): string {
-  return `var(--color-chart-${(i % CHART_COLORS) + 1})`;
+interface WalletHolding {
+  unit: string;
+  quantity: string;
+  name: string | null;
+  ticker: string | null;
+  decimals: number | null;
+  metadataPending: boolean;
 }
 
-function decodeAssetName(assetName: string): string {
-  if (!HEX_PAIR_RE.test(assetName)) return assetName.slice(0, 8);
-  const pairs = assetName.match(/.{2}/g)!;
-  return decoder.decode(new Uint8Array(pairs.map((b) => parseInt(b, 16)))).slice(0, 8);
+interface WalletSummary {
+  balance: { lovelace: string };
+  holdings: WalletHolding[];
+  metadata: { complete: boolean; returned: number; total: number };
 }
 
-interface Part {
-  label: string;
-  value: number;
-  color: string;
+function formatQuantity(quantity: string, decimals: number | null): string {
+  if (decimals === null) return quantity;
+  const value = Number(quantity) / 10 ** decimals;
+  if (!Number.isFinite(value)) return quantity;
+  return value.toLocaleString(undefined, { maximumFractionDigits: Math.min(decimals, 6) });
 }
 
-function Panel({ children }: { children: ReactNode }) {
+function shortName(holding: WalletHolding): string {
+  return holding.ticker || holding.name || holding.unit.slice(0, 12);
+}
+
+function Panel({ children }: { children: React.ReactNode }) {
   return (
     <Card className="p-5">
-      <h3 className="text-sm font-semibold text-text-secondary">Wallet composition</h3>
+      <h3 className="text-sm font-semibold text-text-secondary">Wallet balance</h3>
       {children}
     </Card>
   );
 }
 
 export function WalletComposition() {
-  const { connected, wallet, stakeAddress } = useWalletStore();
+  const { connected, stakeAddress } = useWalletStore();
   const { data, isLoading, error } = useQuery({
-    queryKey: ['wallet-composition', stakeAddress],
-    queryFn: async () => {
-      const getBalanceMesh = (wallet as unknown as {
-        getBalanceMesh?: () => Promise<Array<{ unit: string; quantity: string }>>;
-      }).getBalanceMesh;
-      if (getBalanceMesh) {
-        const balance = await getBalanceMesh.call(wallet);
-        const ada = balance.find((asset) => asset.unit === 'lovelace');
-        return {
-          lovelace: ada?.quantity ?? '0',
-          assets: balance
-            .filter((asset) => asset.unit !== 'lovelace')
-            .map((asset) => ({
-              assetName: asset.unit.length > 56 ? asset.unit.slice(56) : asset.unit,
-              quantity: asset.quantity,
-            })),
-        };
-      }
-      const [lovelace, assets] = await Promise.all([wallet!.getLovelace(), wallet!.getAssets()]);
-      return { lovelace, assets };
-    },
-    enabled: connected && !!wallet,
+    queryKey: ['wallet-summary', stakeAddress],
+    queryFn: () =>
+      apiClient.get<WalletSummary>(
+        `/api/wallet/summary?staking_address=${encodeURIComponent(stakeAddress!)}`,
+      ),
+    enabled: connected && !!stakeAddress,
     staleTime: 60_000,
   });
-  const lovelace = data?.lovelace;
-  const assets = data?.assets;
 
-  const adaBalance = lovelace ? Number(lovelace) / 1_000_000 : 0;
-  const tokenList = useMemo(() => assets ?? [], [assets]);
-
-  const { parts, total, totalTokens } = useMemo(() => {
-    const result: Part[] = [];
-    if (adaBalance > 0) {
-      result.push({ label: 'ADA', value: adaBalance, color: chartColor(0) });
-    }
-    const tokenSliceValue = adaBalance > 0 ? adaBalance * 0.1 : 1;
-    const visible = tokenList.slice(0, MAX_TOKENS);
-    const remaining = tokenList.length - visible.length;
-
-    visible.forEach((token, i) => {
-      const ticker = token.assetName ? decodeAssetName(token.assetName) : `Token ${i + 1}`;
-      result.push({ label: ticker, value: tokenSliceValue, color: chartColor(i + 1) });
-    });
-
-    if (remaining > 0) {
-      result.push({
-        label: `+${remaining} more`,
-        value: tokenSliceValue,
-        color: chartColor(CHART_COLORS - 1),
-      });
-    }
-
-    const sum = result.reduce((acc, p) => acc + p.value, 0) || 1;
-    return { parts: result, total: sum, totalTokens: tokenList.length };
-  }, [adaBalance, tokenList]);
-
-  if (!connected) {
-    return (
-      <Panel>
-        <p className="mt-3 text-xs text-text-muted">Not connected</p>
-      </Panel>
-    );
+  if (!connected || !stakeAddress) {
+    return <Panel><p className="mt-3 text-xs text-text-muted">Not connected</p></Panel>;
   }
 
-  if (parts.length === 0) {
-    return (
-      <Panel>
-        {isLoading ? (
-          <p className="mt-3 text-xs text-text-muted">Loading wallet balance…</p>
-        ) : error ? (
-          <p className="mt-3 text-xs text-status-error-light">Couldn&apos;t load wallet balance.</p>
-        ) : (
-          <p className="mt-3 text-xs text-text-muted">No assets found</p>
-        )}
-      </Panel>
-    );
+  if (isLoading) {
+    return <Panel><p className="mt-3 text-xs text-text-muted">Loading wallet balance…</p></Panel>;
   }
+
+  if (error || !data) {
+    return <Panel><p className="mt-3 text-xs text-status-error-light">Couldn&apos;t load wallet balance.</p></Panel>;
+  }
+
+  const adaBalance = Number(data.balance.lovelace) / 1_000_000;
+  const visibleHoldings = data.holdings.slice(0, 5);
+  const remaining = data.holdings.length - visibleHoldings.length;
 
   return (
     <Panel>
       <div className="mt-3 flex items-baseline gap-2">
         <span className="text-3xl font-semibold tabular-nums tracking-tight text-text-primary">
-          ₳ {adaBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          ₳ {adaBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         </span>
         <span className="text-xs text-text-muted">
-          {totalTokens} {totalTokens === 1 ? 'asset' : 'assets'}
+          {data.holdings.length} {data.holdings.length === 1 ? 'native asset' : 'native assets'}
         </span>
       </div>
 
-      <div className="my-4 flex h-2 gap-0.5 overflow-hidden rounded-md">
-        {parts.map((p) => (
-          <div
-            key={p.label}
-            style={{ width: `${(p.value / total) * 100}%`, backgroundColor: p.color }}
-          />
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {parts.map((p) => (
-          <div key={p.label} className="flex items-center gap-2.5">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: p.color }} />
-            <span className="min-w-0 flex-1 truncate text-md text-text-secondary">{p.label}</span>
-            <span className="font-mono text-2xs tabular-nums text-text-muted">
-              {Math.round((p.value / total) * 100)}%
+      <div className="mt-5 space-y-2 border-t border-border-subtle pt-4">
+        {visibleHoldings.map((holding) => (
+          <div key={holding.unit} className="flex items-center gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-inset font-mono text-2xs uppercase text-text-secondary">
+              {shortName(holding).slice(0, 3)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">
+              {shortName(holding)}
+              {holding.metadataPending && <span className="ml-1 text-2xs text-text-faint">pending metadata</span>}
+            </span>
+            <span className="font-mono text-xs tabular-nums text-text-muted">
+              {formatQuantity(holding.quantity, holding.decimals)}
             </span>
           </div>
         ))}
+        {remaining > 0 && <p className="pt-1 text-xs text-text-muted">+{remaining} more assets</p>}
       </div>
+
+      {!data.metadata.complete && (
+        <p className="mt-4 text-2xs leading-5 text-text-faint">
+          Some asset metadata is still being indexed. Quantities remain sourced from the wallet.
+        </p>
+      )}
     </Panel>
   );
 }

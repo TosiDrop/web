@@ -1,12 +1,14 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { IconClock, IconBookmark, IconChartLine, IconSettings } from '@tabler/icons-react';
+import { IconClock, IconBookmark, IconChartLine, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
+import { WalletComposition } from '@/features/rewards/components/WalletComposition';
+import { DelegationCard } from '@/features/rewards/components/DelegationCard';
 
 const HistoryList = lazy(async () => {
   const module = await import('@/features/history/components/HistoryList');
@@ -36,11 +38,29 @@ function TabLoading() {
 }
 
 const TABS = [
+  { id: 'overview', name: 'Overview', Icon: IconWallet },
   { id: 'history', name: 'History', Icon: IconClock },
   { id: 'favorites', name: 'Favorites', Icon: IconBookmark },
   { id: 'analytics', name: 'Analytics', Icon: IconChartLine },
   { id: 'settings', name: 'Settings', Icon: IconSettings },
 ];
+
+function OverviewTab() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-text-primary">Wallet overview</h2>
+        <p className="mt-1 text-sm text-text-muted">
+          A clear view of your balance, delegation, and the activity that matters.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+        <WalletComposition />
+        <DelegationCard />
+      </div>
+    </div>
+  );
+}
 
 function HistoryTab() {
   return (
@@ -169,11 +189,11 @@ export default function ProfilePage() {
     <div className="space-y-7">
       <header>
         <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Your profile</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Your wallet</h1>
           <HeroStakeChip />
         </div>
         <p className="mt-2 max-w-md text-sm text-text-muted">
-          Claim history, saved tokens, and your display name.
+          Portfolio context, rewards, activity, saved tokens, and your display name.
         </p>
       </header>
 
@@ -213,6 +233,11 @@ export default function ProfilePage() {
         </div>
 
         <TabPanels className="mt-7">
+          <TabPanel>
+            <Suspense fallback={<TabLoading />}>
+              <OverviewTab />
+            </Suspense>
+          </TabPanel>
           <TabPanel>
             <Suspense fallback={<TabLoading />}>
               <HistoryTab />
