@@ -1,15 +1,15 @@
 import { lazy, Suspense, useState } from 'react';
 import { IconExternalLink, IconShieldCheck } from '@tabler/icons-react';
-import { poolExplorerUrl, usePartnerPools, type TeamPool } from '@/features/team/api/team.queries';
+import { poolExplorerUrl, useParticipatingPools, type TeamPool } from '@/features/team/api/team.queries';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
-import { buttonClassName } from '@/lib/button';
 import { useWalletStore } from '@/store/wallet-state';
+import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 
 const DelegationCard = lazy(async () => {
-  const module = await import('@/features/rewards/components/DelegationCard');
-  return { default: module.DelegationCard };
+  const module = await import('@/features/rewards/components/InlineDelegateAction');
+  return { default: module.InlineDelegateAction };
 });
 
 function PoolLogo({ logo, ticker }: { logo?: string; ticker: string }) {
@@ -34,7 +34,19 @@ function PoolLogo({ logo, ticker }: { logo?: string; ticker: string }) {
   );
 }
 
-function PoolCard({ pool }: { pool: TeamPool }) {
+function PoolCard({
+  pool,
+  currentPoolId,
+  registered,
+  connected,
+  onDelegated,
+}: {
+  pool: TeamPool;
+  currentPoolId: string | null;
+  registered: boolean | null;
+  connected: boolean;
+  onDelegated: () => void;
+}) {
   return (
     <Card as="article" className="flex h-full flex-col transition hover:border-border-strong">
       <div className="flex items-start gap-4 p-5">
@@ -44,10 +56,12 @@ function PoolCard({ pool }: { pool: TeamPool }) {
             <p className="truncate text-sm font-semibold text-text-primary">
               {pool.ticker || 'Unnamed pool'}
             </p>
-            <span className="inline-flex items-center gap-1 rounded-full border border-status-success/25 bg-status-success/10 px-2 py-0.5 text-2xs font-medium text-status-success-light">
-              <IconShieldCheck size={11} stroke={1.8} aria-hidden />
-              Partner
-            </span>
+            {pool.partner && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-status-success/25 bg-status-success/10 px-2 py-0.5 text-2xs font-medium text-status-success-light">
+                <IconShieldCheck size={11} stroke={1.8} aria-hidden />
+                TosiDrop partner
+              </span>
+            )}
           </div>
           <p className="mt-1 truncate text-xs text-text-muted">{pool.name || 'Cardano stake pool'}</p>
         </div>
@@ -58,11 +72,23 @@ function PoolCard({ pool }: { pool: TeamPool }) {
         </p>
         <p className="mt-4 break-all font-mono text-2xs text-text-muted">{pool.poolId}</p>
       </div>
+      {connected && (
+        <div className="flex justify-end border-t border-border-subtle px-4 py-3">
+          <Suspense fallback={<span className="text-2xs text-text-faint">Loading…</span>}>
+            <DelegationCard
+              poolId={pool.poolId}
+              currentPoolId={currentPoolId}
+              registered={registered}
+              onDelegated={onDelegated}
+            />
+          </Suspense>
+        </div>
+      )}
       <a
         href={poolExplorerUrl(pool.poolId)}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${buttonClassName('secondary', 'sm')} m-4 mt-0 justify-center`}
+        className="mx-4 mb-4 mt-0 inline-flex items-center justify-center gap-2 rounded-lg border border-border-default px-3 py-2 text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
       >
         View pool details
         <IconExternalLink size={14} stroke={1.6} aria-hidden />
@@ -92,17 +118,58 @@ function PoolsSkeleton() {
   );
 }
 
-const EXTERNAL_LINK_CLASS = buttonClassName('secondary', 'sm');
+function PoolCards({
+  pools,
+  connected,
+  currentPoolId = null,
+  registered = null,
+  onDelegated = () => undefined,
+}: {
+  pools: TeamPool[];
+  connected: boolean;
+  currentPoolId?: string | null;
+  registered?: boolean | null;
+  onDelegated?: () => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {pools.map((pool) => (
+        <PoolCard
+          key={pool.poolId}
+          pool={pool}
+          currentPoolId={currentPoolId}
+          registered={registered}
+          connected={connected}
+          onDelegated={onDelegated}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ConnectedPoolCards({ pools }: { pools: TeamPool[] }) {
+  const { stakeAddress } = useWalletStore();
+  const { poolId, registered, refetch } = useDelegatedPool(stakeAddress);
+  return (
+    <PoolCards
+      pools={pools}
+      connected
+      currentPoolId={poolId}
+      registered={registered}
+      onDelegated={() => { void refetch(); }}
+    />
+  );
+}
 
 export default function TeamPage() {
-  const { data: pools, isLoading, error, refetch } = usePartnerPools();
+  const { data: pools, isLoading, error, refetch } = useParticipatingPools();
   const connected = useWalletStore((state) => state.connected);
 
   return (
     <div className="space-y-7">
       <header>
         <p className="label-eyebrow">Delegate with confidence</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">Participating pools</h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">Cardano pools</h1>
         <p className="mt-2 max-w-md text-sm text-text-muted">
           Discover the Cardano stake pools participating in TosiDrop token distribution.
         </p>
@@ -120,60 +187,13 @@ export default function TeamPage() {
         </div>
       </Card>
 
-      <section aria-labelledby="my-delegation-heading" className="grid gap-5 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-        <div className="flex flex-col justify-center">
-          <p className="label-eyebrow">Your stake pool</p>
-          <h2 id="my-delegation-heading" className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">Manage delegation</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-text-muted">
-            Review where your wallet is delegated, compare participating pools, and switch when it makes sense for your rewards.
-          </p>
-        </div>
-        {connected ? (
-          <Suspense fallback={<Card className="h-64 animate-pulse" aria-label="Loading delegation" />}>
-            <DelegationCard />
-          </Suspense>
-        ) : (
-          <Card className="flex min-h-64 items-center justify-center p-6 text-center">
-            <p className="max-w-sm text-sm text-text-muted">Connect your wallet to view and manage your current delegation.</p>
-          </Card>
-        )}
-      </section>
-
-      <Card as="section" className="px-6 py-5">
-        <h2 className="text-xl font-semibold tracking-tight text-text-primary">Built by Blink Labs</h2>
-        <p className="mt-2 max-w-xl text-sm text-text-muted">
-          TosiDrop is developed by Blink Labs, building open-source tooling and infrastructure
-          for the Cardano ecosystem.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <a
-            href="https://blinklabs.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={EXTERNAL_LINK_CLASS}
-          >
-            blinklabs.io
-            <IconExternalLink size={14} stroke={1.6} aria-hidden />
-            <span className="sr-only">(opens in new tab)</span>
-          </a>
-          <a
-            href="https://github.com/blinklabs-io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={EXTERNAL_LINK_CLASS}
-          >
-            GitHub
-            <IconExternalLink size={14} stroke={1.6} aria-hidden />
-            <span className="sr-only">(opens in new tab)</span>
-          </a>
-        </div>
-      </Card>
-
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Partner pools</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Participating pools</h2>
           <p className="mt-1 text-sm text-text-muted">
-            These partner pools are eligible for TosiDrop distributions. Use the pool details link to review each operator before delegating in your wallet.
+            Explore the pools tracked by TosiDrop. Partner status marks pools
+            eligible for TosiDrop distributions; every listed pool remains a
+            valid delegation destination.
           </p>
         </div>
 
@@ -194,11 +214,7 @@ export default function TeamPage() {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {pools.map((pool) => (
-              <PoolCard key={pool.poolId} pool={pool} />
-            ))}
-          </div>
+          connected ? <ConnectedPoolCards pools={pools} /> : <PoolCards pools={pools} connected={false} />
         )}
       </section>
     </div>

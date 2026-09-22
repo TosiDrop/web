@@ -20,16 +20,16 @@ const NAV_GROUPS = [
   {
     label: 'Your wallet',
     links: [
-      { name: 'Home', href: '/', icon: IconHome2 },
-      { name: 'Wallet', href: '/profile?tab=overview', icon: IconWallet },
-      { name: 'Claim rewards', href: '/claim', icon: IconGift },
+      { name: 'Dashboard', href: '/', icon: IconHome2 },
+      { name: 'Portfolio', href: '/profile?tab=overview', icon: IconWallet },
+      { name: 'Rewards', href: '/claim', icon: IconGift },
     ],
   },
   {
     label: 'Discover',
     links: [
-      { name: 'Token programs', href: '/tokens', icon: IconCoins },
-      { name: 'Network', href: '/network', icon: IconChartLine },
+      { name: 'Discover', href: '/tokens', icon: IconCoins },
+      { name: 'Analytics', href: '/analytics', icon: IconChartLine },
     ],
   },
   {

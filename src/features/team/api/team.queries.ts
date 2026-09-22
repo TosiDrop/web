@@ -9,6 +9,7 @@ export interface TeamPool {
   name: string;
   logo?: string;
   description?: string | null;
+  partner: boolean;
 }
 
 export function poolExplorerUrl(poolId: string): string {
@@ -42,7 +43,33 @@ export function usePartnerPools() {
           name: pool?.name ?? '',
           logo: pool?.logo || undefined,
           description: pool?.description ?? null,
+          partner: true,
         }));
+    },
+  });
+}
+
+export function useParticipatingPools() {
+  return useQuery<TeamPool[], Error>({
+    queryKey: ['participating-pools', DEPLOYMENT_NETWORK],
+    staleTime: 300_000,
+    queryFn: async () => {
+      const [pools, partnerPoolIds] = await Promise.all([
+        apiClient.get<GetPoolsResponse>('/api/getPools'),
+        apiClient.get<string[]>('/api/getPartnerPools').catch(() => []),
+      ]);
+      const partners = new Set(partnerPoolIds.map(canonicalPoolId));
+      return Object.entries(pools ?? {}).map(([key, pool]) => {
+        const poolId = pool?.id || key;
+        return {
+          poolId,
+          ticker: pool?.ticker ?? '',
+          name: pool?.name ?? '',
+          logo: pool?.logo || undefined,
+          description: pool?.description ?? null,
+          partner: partners.has(canonicalPoolId(key)) || partners.has(canonicalPoolId(poolId)),
+        };
+      });
     },
   });
 }

@@ -47,7 +47,7 @@ describe('usePartnerPools', () => {
     const { result } = renderHook(() => usePartnerPools(), { wrapper });
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data).toEqual([
-      { poolId: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', logo: 'http://l/t', description: null },
+      { poolId: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', logo: 'http://l/t', description: null, partner: true },
     ]);
   });
 });
