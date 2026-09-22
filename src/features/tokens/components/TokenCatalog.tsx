@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { IconExternalLink, IconSearch } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { GradientButton } from '@/components/common/GradientButton';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { StateMessage } from '@/features/profile/components/StateMessage';
 import { useTokenMap } from '@/features/projects/api/projects.queries';
 import { tickerFor, type TokenInfo } from '@/features/history/api/history.queries';
@@ -78,10 +77,10 @@ export function TokenCatalog() {
     return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading tokens">{[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton-shimmer h-56 rounded-2xl" />)}</div>;
   }
   if (error) {
-    return <div className="space-y-3"><FeedbackBanner tone="error" title="Couldn't load tokens" message={error.message} /><GradientButton variant="secondary" size="sm" onClick={() => refetch()}>Try again</GradientButton></div>;
+    return <DataUnavailable title="Token catalog is catching up" message="The latest approved token programs are not available yet." onRetry={() => { void refetch(); }} />;
   }
   if (data?.degraded) {
-    return <StateMessage title="Token catalog unavailable" message="Token distribution programs could not be loaded right now. Try again shortly." />;
+    return <DataUnavailable title="Token catalog unavailable" message="Token distribution programs could not be loaded right now. Try again shortly." onRetry={() => { void refetch(); }} />;
   }
   if (!data?.projects.length) {
     return <StateMessage title="No tokens listed yet" message="Token metadata and approved distribution programs will appear here." />;

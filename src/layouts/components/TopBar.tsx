@@ -98,7 +98,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
           >
             <IconUserCircle size={14} stroke={1.6} />
-            Profile
+            Portfolio
           </Link>
         </MenuItem>
         <MenuItem>
