@@ -114,7 +114,7 @@ export default function HomePage() {
             <h2 id="wallet-overview" className="mt-1 text-xl font-semibold tracking-tight text-text-primary">Your portfolio</h2>
           </div>
         </div>
-        <WalletComposition />
+        <WalletComposition compact />
       </section>
     </div>
   );

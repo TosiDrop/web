@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import {
   Area,
   AreaChart,
@@ -10,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { IconChartLine, IconClock, IconInfoCircle } from '@tabler/icons-react';
+import { IconArrowRight, IconChartLine, IconClock, IconInfoCircle } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { apiClient } from '@/api/client';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
@@ -121,7 +122,7 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
   );
 }
 
-export function WalletComposition() {
+export function WalletComposition({ compact = false }: { compact?: boolean }) {
   const { connected, stakeAddress, wallet } = useWalletStore();
   const { data, isLoading } = useQuery<WalletQueryData>({
     queryKey: ['wallet-summary', stakeAddress],
@@ -182,6 +183,54 @@ export function WalletComposition() {
   ].filter((item) => item.value > 0);
   const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
   const history = summary.valueHistory.points;
+
+  if (compact) {
+    return (
+      <Panel>
+        <header className="flex flex-col gap-3 border-b border-border-subtle/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="label-eyebrow">Portfolio snapshot</p>
+            <h3 className="mt-1 text-lg font-medium tracking-tight text-text-primary">Your wallet, at a glance</h3>
+          </div>
+          <Link to="/profile" className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-light transition hover:text-text-primary">
+            Open portfolio <IconArrowRight size={14} aria-hidden />
+          </Link>
+        </header>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Metric label="Wallet balance" value={`₳ ${formatAda(data.attachedLovelace ?? summary.balance.utxoLovelace)}`} detail={data.attachedLovelace ? 'From connected wallet' : 'Indexed balance while wallet responds'} />
+          <Metric label="Rewards available" value={`₳ ${formatAda(summary.balance.rewardsAvailableLovelace)}`} detail="Available to withdraw" />
+          <Metric label="Priced value" value={formatUsd(totalValueUsd)} detail={summary.market.priced ? `${summary.market.priced} assets priced` : 'Prices are being indexed'} />
+        </div>
+
+        <section className="mt-5 rounded-xl border border-border-subtle bg-surface-inset/25 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="label-eyebrow">Balance over time</p>
+              <p className="mt-1 text-xs text-text-muted">Estimated ADA value of today&apos;s holdings</p>
+            </div>
+            <IconChartLine size={18} stroke={1.6} className="text-accent-light" aria-hidden />
+          </div>
+          {history.length > 1 ? (
+            <div className="mt-3 h-44" aria-label="Portfolio balance over time chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={history}>
+                  <defs><linearGradient id="walletValueFillCompact" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#67E8F9" stopOpacity={0.28} /><stop offset="100%" stopColor="#67E8F9" stopOpacity={0} /></linearGradient></defs>
+                  <XAxis dataKey="observedAt" tickFormatter={(value) => new Date(value * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} axisLine={false} tickLine={false} tick={{ fill: '#6B7895', fontSize: 10 }} minTickGap={24} />
+                  <YAxis hide domain={['auto', 'auto']} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelFormatter={(value) => new Date(Number(value) * 1000).toLocaleDateString()} formatter={(value) => [`₳ ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`, 'Estimated value']} />
+                  <Area type="monotone" dataKey="valueAda" stroke="#67E8F9" strokeWidth={2} fill="url(#walletValueFillCompact)" activeDot={{ r: 4 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : <div className="mt-3 flex h-44 items-center justify-center rounded-lg border border-dashed border-border-subtle px-6 text-center text-xs text-text-faint">Balance history will appear as indexed price snapshots accumulate.</div>}
+          <p className="mt-2 text-2xs text-text-faint">Market history is cached by TosiDrop and does not query DEX providers from this page.</p>
+        </section>
+
+        {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is still syncing. This view will retry automatically.</p>}
+      </Panel>
+    );
+  }
 
   return (
     <Panel>
