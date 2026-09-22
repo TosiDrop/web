@@ -8,7 +8,6 @@ import { useProfile } from '@/features/profile/api/profile.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
-import { DelegationCard } from '@/features/rewards/components/DelegationCard';
 
 const HistoryList = lazy(async () => {
   const module = await import('@/features/history/components/HistoryList');
@@ -54,10 +53,7 @@ function OverviewTab() {
           A clear view of your balance, delegation, and the activity that matters.
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <WalletComposition />
-        <DelegationCard />
-      </div>
+      <WalletComposition />
     </div>
   );
 }

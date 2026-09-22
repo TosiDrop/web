@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
-import { IconArrowRight, IconGift, IconRocket, IconWallet } from '@tabler/icons-react';
+import { IconArrowRight, IconGift, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
-import { DelegationCard } from '@/features/rewards/components/DelegationCard';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
@@ -43,12 +42,6 @@ function PublicHome() {
             <h3 className="mt-5 text-lg font-semibold text-text-primary">I am a Cardano delegator</h3>
             <p className="mt-2 text-sm leading-6 text-text-muted">Connect your wallet to check your claimable tokens, see your current stake pool, and claim rewards in a few guided steps.</p>
             <button type="button" onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime} className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light transition hover:text-white">Check my rewards <IconArrowRight size={16} /></button>
-          </Card>
-          <Card className="p-6 transition hover:border-cream/40">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream/10 text-cream"><IconRocket size={20} /></span>
-            <h3 className="mt-5 text-lg font-semibold text-text-primary">I run a token project or dApp</h3>
-            <p className="mt-2 text-sm leading-6 text-text-muted">Bring your distribution to Cardano users. Set up a project, define eligibility, and make your token program discoverable.</p>
-            <Link to="/projects/new" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cream-light transition hover:text-white">Start a distribution <IconArrowRight size={16} /></Link>
           </Card>
         </div>
       </section>
@@ -133,7 +126,7 @@ export default function HomePage() {
             <h2 id="wallet-overview" className="mt-1 text-xl font-semibold tracking-tight text-text-primary">Your portfolio</h2>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_0.85fr]"><WalletComposition /><DelegationCard /></div>
+        <WalletComposition />
       </section>
     </div>
   );

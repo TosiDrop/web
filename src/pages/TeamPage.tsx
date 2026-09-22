@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { IconExternalLink, IconShieldCheck } from '@tabler/icons-react';
 import { poolExplorerUrl, usePartnerPools, type TeamPool } from '@/features/team/api/team.queries';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
 import { buttonClassName } from '@/lib/button';
+import { useWalletStore } from '@/store/wallet-state';
+
+const DelegationCard = lazy(async () => {
+  const module = await import('@/features/rewards/components/DelegationCard');
+  return { default: module.DelegationCard };
+});
 
 function PoolLogo({ logo, ticker }: { logo?: string; ticker: string }) {
   const [failed, setFailed] = useState(false);
@@ -90,6 +96,7 @@ const EXTERNAL_LINK_CLASS = buttonClassName('secondary', 'sm');
 
 export default function TeamPage() {
   const { data: pools, isLoading, error, refetch } = usePartnerPools();
+  const connected = useWalletStore((state) => state.connected);
 
   return (
     <div className="space-y-7">
@@ -112,6 +119,25 @@ export default function TeamPage() {
           </div>
         </div>
       </Card>
+
+      <section aria-labelledby="my-delegation-heading" className="grid gap-5 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
+        <div className="flex flex-col justify-center">
+          <p className="label-eyebrow">Your stake pool</p>
+          <h2 id="my-delegation-heading" className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">Manage delegation</h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-text-muted">
+            Review where your wallet is delegated, compare participating pools, and switch when it makes sense for your rewards.
+          </p>
+        </div>
+        {connected ? (
+          <Suspense fallback={<Card className="h-64 animate-pulse" aria-label="Loading delegation" />}>
+            <DelegationCard />
+          </Suspense>
+        ) : (
+          <Card className="flex min-h-64 items-center justify-center p-6 text-center">
+            <p className="max-w-sm text-sm text-text-muted">Connect your wallet to view and manage your current delegation.</p>
+          </Card>
+        )}
+      </section>
 
       <Card as="section" className="px-6 py-5">
         <h2 className="text-xl font-semibold tracking-tight text-text-primary">Built by Blink Labs</h2>

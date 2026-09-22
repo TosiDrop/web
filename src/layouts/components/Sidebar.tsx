@@ -4,7 +4,6 @@ import {
   IconGift,
   IconUsers,
   IconFileText,
-  IconRocket,
   IconChartLine,
   IconHome2,
   IconCoins,
@@ -36,7 +35,6 @@ const NAV_GROUPS = [
   {
     label: 'Build',
     links: [
-      { name: 'My projects', href: '/projects', icon: IconRocket },
       { name: 'Team', href: '/team', icon: IconUsers },
     ],
   },
