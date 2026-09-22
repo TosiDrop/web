@@ -43,7 +43,7 @@ function WithdrawalsBar({ processed, failed }: { processed: number; failed: numb
 
 export function PlatformStatsGrid({ stats }: { stats: Stats }) {
   return (
-    <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4">
+    <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 sm:grid-cols-3 xl:grid-cols-6">
       <Metric label="Rewards delivered" value={num(stats.delivered_rewards)} detail="All-time token deliveries" />
       <Metric label="Delegators tracked" value={num(stats.tracked_delegators)} detail={ada(stats.tracked_stake) + ' tracked stake'} />
       <Metric
@@ -76,8 +76,8 @@ export function PlatformStats() {
 
   if (isLoading) {
     return (
-      <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4" aria-busy="true" aria-label="Loading platform statistics">
-        {[0, 1, 2, 3].map((i) => (
+      <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 sm:grid-cols-3 xl:grid-cols-6" aria-busy="true" aria-label="Loading platform statistics">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-surface-raised px-5 py-5">
             <div className="skeleton-shimmer h-2.5 w-20 rounded" />
             <div className="skeleton-shimmer mt-4 h-7 w-24 rounded" />
