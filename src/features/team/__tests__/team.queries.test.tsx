@@ -8,7 +8,7 @@ vi.mock('@/api/client', () => ({
   apiClient: { get: (...a: unknown[]) => getMock(...a) },
 }));
 
-import { normalizePartnerPoolIds, usePartnerPools } from '../api/team.queries';
+import { normalizePartnerPoolIds, usePartnerPools, useParticipatingPools } from '../api/team.queries';
 
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -48,6 +48,30 @@ describe('usePartnerPools', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data).toEqual([
       { poolId: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', logo: 'http://l/t', description: null, partner: true },
+    ]);
+  });
+});
+
+describe('useParticipatingPools', () => {
+  beforeEach(() => {
+    getMock.mockReset();
+  });
+
+  it('excludes project entries from the stake-pool directory', async () => {
+    getMock.mockImplementation((url: string) => {
+      if (url.startsWith('/api/getPools')) {
+        return Promise.resolve({
+          pool1abc: { id: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', enabled: '1', logo: '' },
+          project_kani: { id: 'project_kani', ticker: '', name: 'Unknown pool', enabled: '1', logo: '' },
+        });
+      }
+      return Promise.resolve([]);
+    });
+
+    const { result } = renderHook(() => useParticipatingPools(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data).toEqual([
+      { poolId: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', logo: undefined, description: null, partner: false },
     ]);
   });
 });

@@ -15,6 +15,16 @@ export interface Pool {
 
 export type GetPoolsResponse = Record<string, Pool>;
 
+/** VM attribution IDs are not all stake pools; project distributions use these prefixes. */
+export function isProjectIdentifier(id: string): boolean {
+  const normalized = id.trim().toLowerCase();
+  return normalized.startsWith('project_') || normalized.startsWith('p_');
+}
+
+export function projectIdentifierLabel(id: string): string {
+  return id.replace(/^(?:project_|p_)/i, '') || 'project';
+}
+
 /** The VM returns hex pool keys while configuration uses bech32 pool IDs. */
 export function canonicalPoolId(id: string): string {
   try {

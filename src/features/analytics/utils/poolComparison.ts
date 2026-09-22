@@ -1,7 +1,7 @@
 import type { TokenMap } from '@/features/history/api/history.queries';
 import { decimalsFor, tickerFor } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
-import { canonicalPoolId } from '@/features/rewards/api/pools.queries';
+import { canonicalPoolId, isProjectIdentifier, projectIdentifierLabel } from '@/features/rewards/api/pools.queries';
 import type { Network } from '@/shared/network';
 
 /**
@@ -60,13 +60,12 @@ interface Inputs {
   network?: Network;
 }
 
-function isProjectAttribution(id: string): boolean {
-  return id.startsWith('P_');
-}
-
-function projectName(id: string, network: Network): string {
+function projectName(id: string, network: Network, metadataName?: string): string {
   if (network === 'mainnet' && id === 'P_BTC') return 'TosiDrop';
-  return id.slice(2) || 'Project';
+  if (metadataName && !isProjectIdentifier(metadataName) && metadataName.toLowerCase() !== 'unknown pool') {
+    return metadataName;
+  }
+  return projectIdentifierLabel(id);
 }
 
 export function flattenDistributions(raw: unknown): VmDistribution[] {
@@ -128,18 +127,19 @@ export function buildPoolComparison({
 
   const rows = Object.entries(pools ?? {}).map(([key, pool]): PoolComparisonRow => {
     const poolId = pool?.id || key;
+    const project = isProjectIdentifier(key) || isProjectIdentifier(poolId);
     const delegators = Number(pool?.delegator_count);
     const canonicalIds = partnerPoolIds && [...partnerPoolIds].map(canonicalPoolId);
     const offerings = offeringsByAttribution.get(poolId) ?? offeringsByAttribution.get(key) ?? [];
     return {
-      kind: 'pool',
+      kind: project ? 'project' : 'pool',
       poolId,
-      ticker: pool?.ticker ?? '',
-      name: pool?.name ?? '',
+      ticker: project ? (pool?.ticker || projectIdentifierLabel(poolId).toUpperCase()) : (pool?.ticker ?? ''),
+      name: project ? projectName(poolId, network, pool?.name) : (pool?.name ?? ''),
       logo: pool?.logo || undefined,
-      delegators:
+      delegators: project ? null :
         Number.isFinite(delegators) && pool?.delegator_count !== undefined ? delegators : null,
-      partner: canonicalIds === null ? null : canonicalIds!.includes(canonicalPoolId(poolId)) || canonicalIds!.includes(canonicalPoolId(key)),
+      partner: project ? null : canonicalIds === null ? null : canonicalIds!.includes(canonicalPoolId(poolId)) || canonicalIds!.includes(canonicalPoolId(key)),
       offerings: offerings.sort(
         (a, b) => b.amountPerEpoch - a.amountPerEpoch || a.id.localeCompare(b.id),
       ),
@@ -147,11 +147,14 @@ export function buildPoolComparison({
   });
 
   const knownPoolIds = new Set(
-    Object.entries(pools ?? {}).flatMap(([key, pool]) => [key, pool?.id ?? key].map(canonicalPoolId)),
+    rows.filter((row) => row.kind === 'pool').flatMap((row) => [row.poolId].map(canonicalPoolId)),
+  );
+  const knownProjectIds = new Set(
+    rows.filter((row) => row.kind === 'project').map((row) => canonicalPoolId(row.poolId)),
   );
   const offeringsByCanonicalPool = new Map<string, PoolOffering[]>();
   for (const [attributionId, offerings] of offeringsByAttribution) {
-    if (!isProjectAttribution(attributionId)) {
+    if (!isProjectIdentifier(attributionId)) {
       offeringsByCanonicalPool.set(canonicalPoolId(attributionId), offerings);
     }
   }
@@ -162,11 +165,12 @@ export function buildPoolComparison({
   }
   const activePoolIds = new Set(rows.filter((row) => row.kind === 'pool' && row.offerings.length > 0).map((row) => canonicalPoolId(row.poolId)));
   for (const [attributionId, offerings] of offeringsByAttribution) {
-    if (isProjectAttribution(attributionId)) {
+    if (isProjectIdentifier(attributionId)) {
+      if (knownProjectIds.has(canonicalPoolId(attributionId))) continue;
       rows.push({
         kind: 'project',
         poolId: attributionId,
-        ticker: attributionId.slice(2) || 'PROJECT',
+        ticker: projectIdentifierLabel(attributionId).toUpperCase(),
         name: projectName(attributionId, network),
         delegators: null,
         partner: null,

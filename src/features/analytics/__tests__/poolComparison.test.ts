@@ -139,6 +139,37 @@ describe('buildPoolComparison', () => {
     expect(rows[0]).toMatchObject({ kind: 'pool', poolId: 'TOSI', ticker: 'TOSI' });
   });
 
+  it('treats project-prefixed VM entries as projects, not unknown pools', () => {
+    const rows = buildPoolComparison({
+      pools: {
+        project_kani: { id: 'project_kani', ticker: '', name: 'Unknown pool', enabled: 't', logo: '' },
+        pool1a: pools.pool1a,
+      },
+      distributions: { everyone: [{ ...DIST, pool_id: 'project_kani' }] },
+      partnerPoolIds: new Set(),
+      tokens,
+      network: 'preview',
+    });
+    expect(rows).toContainEqual(expect.objectContaining({
+      kind: 'project', poolId: 'project_kani', ticker: 'KANI', name: 'kani',
+    }));
+    expect(rows).not.toContainEqual(expect.objectContaining({ ticker: 'Unknown pool' }));
+  });
+
+  it('creates a project row for project distributions absent from pool metadata', () => {
+    const rows = buildPoolComparison({
+      pools,
+      distributions: { everyone: [{ ...DIST, pool_id: 'project_anetabtc' }] },
+      partnerPoolIds: new Set(),
+      tokens,
+      network: 'preview',
+    });
+    expect(rows).toContainEqual(expect.objectContaining({
+      kind: 'project', poolId: 'project_anetabtc', ticker: 'ANETABTC', name: 'anetabtc',
+    }));
+    expect(rows).not.toContainEqual(expect.objectContaining({ poolId: 'project_anetabtc', kind: 'pool' }));
+  });
+
   it('joins pool distributions when VM and pool metadata use different ID formats', () => {
     const rows = buildPoolComparison({
       pools: { pool1a: { ...pools.pool1a, id: 'pool1test' } },

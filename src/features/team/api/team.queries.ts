@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
-import { canonicalPoolId, type GetPoolsResponse } from '@/features/rewards/api/pools.queries';
+import { canonicalPoolId, isProjectIdentifier, type GetPoolsResponse } from '@/features/rewards/api/pools.queries';
 
 export interface TeamPool {
   poolId: string;
@@ -35,6 +35,7 @@ export function usePartnerPools() {
       const configured = [...allowed].map(canonicalPoolId);
       return Object.entries(pools ?? {})
         .filter(([key, pool]) => {
+          if (isProjectIdentifier(key) || isProjectIdentifier(pool?.id ?? '')) return false;
           return configured.includes(canonicalPoolId(key)) || configured.includes(canonicalPoolId(pool?.id ?? ''));
         })
         .map(([key, pool]) => ({
@@ -59,17 +60,19 @@ export function useParticipatingPools() {
         apiClient.get<string[]>('/api/getPartnerPools').catch(() => []),
       ]);
       const partners = new Set(partnerPoolIds.map(canonicalPoolId));
-      return Object.entries(pools ?? {}).map(([key, pool]) => {
-        const poolId = pool?.id || key;
-        return {
-          poolId,
-          ticker: pool?.ticker ?? '',
-          name: pool?.name ?? '',
-          logo: pool?.logo || undefined,
-          description: pool?.description ?? null,
-          partner: partners.has(canonicalPoolId(key)) || partners.has(canonicalPoolId(poolId)),
-        };
-      });
+      return Object.entries(pools ?? {})
+        .filter(([key, pool]) => !isProjectIdentifier(key) && !isProjectIdentifier(pool?.id ?? ''))
+        .map(([key, pool]) => {
+          const poolId = pool?.id || key;
+          return {
+            poolId,
+            ticker: pool?.ticker ?? '',
+            name: pool?.name ?? '',
+            logo: pool?.logo || undefined,
+            description: pool?.description ?? null,
+            partner: partners.has(canonicalPoolId(key)) || partners.has(canonicalPoolId(poolId)),
+          };
+        });
     },
   });
 }

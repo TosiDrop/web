@@ -13,7 +13,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { IconAlertCircle, IconChartDots3 } from '@tabler/icons-react';
+import { IconChartDots3 } from '@tabler/icons-react';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { usePersonalAnalytics } from '@/features/profile/hooks/usePersonalAnalytics';
 import { formatTokenAmount as formatReward } from '@/utils/format';
@@ -78,7 +79,7 @@ function Metric({
 
 export function PersonalAnalytics() {
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
-  const { data, isLoading, error } = usePersonalAnalytics(stakeAddress);
+  const { data, isLoading, error, refetch } = usePersonalAnalytics(stakeAddress);
   const [chosenToken, setChosenToken] = useState('');
   // Derived rather than synced through an effect, so the first render with
   // data already shows a series instead of an empty chart.
@@ -105,22 +106,7 @@ export function PersonalAnalytics() {
   if (isLoading) return <LoadingState />;
 
   if (error) {
-    return (
-      <div
-        role="alert"
-        className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200"
-      >
-        <IconAlertCircle
-          size={18}
-          stroke={1.6}
-          className="mt-0.5 shrink-0 text-rose-400"
-        />
-        <div>
-          <p className="font-medium text-white">Couldn't load personal analytics</p>
-          <p className="mt-0.5 text-xs text-slate-400">{error.message}</p>
-        </div>
-      </div>
-    );
+    return <DataUnavailable title="Personal analytics are catching up" message="The indexed reward history is not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />;
   }
 
   if (!data || data.summary.totalClaims === 0) {
