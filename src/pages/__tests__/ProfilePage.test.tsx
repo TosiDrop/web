@@ -34,6 +34,7 @@ describe('ProfilePage', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Everything you own, earned, and saved.' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Review rewards' })).toHaveAttribute('href', '/claim');
     expect(screen.getByText('Portfolio chart content')).toBeInTheDocument();
     expect(await screen.findByText('Reward sources content')).toBeInTheDocument();
     expect(await screen.findByText('Claim history content')).toBeInTheDocument();

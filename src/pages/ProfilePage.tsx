@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconSettings, IconWallet } from '@tabler/icons-react';
+import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconGift, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -179,6 +179,9 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link to="/claim" className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition hover:bg-accent-light">
+              <IconGift size={13} aria-hidden /> Review rewards
+            </Link>
             <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
               Explore analytics <IconArrowRight size={13} aria-hidden />
             </Link>
