@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { IconArrowRight, IconCheck, IconExternalLink, IconLoader2, IconShieldCheck } from '@tabler/icons-react';
+import { IconArrowRight, IconCheck, IconExternalLink, IconInfoCircle, IconLoader2, IconShieldCheck } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -17,6 +17,10 @@ function PoolLogo({ pool }: { pool: TeamPool }) {
     return <img src={pool.logo} alt="" onError={() => setFailed(true)} className="h-9 w-9 rounded-full border border-border-subtle bg-surface-inset object-cover" />;
   }
   return <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-2xs text-text-secondary">{(pool.ticker || 'POOL').slice(0, 4)}</span>;
+}
+
+function poolIdLabel(poolId: string): string {
+  return poolId.length > 24 ? `${poolId.slice(0, 12)}…${poolId.slice(-8)}` : poolId;
 }
 
 export function DelegationCard() {
@@ -71,17 +75,47 @@ export function DelegationCard() {
       {txHash && <div className="flex items-center gap-2 px-5 pt-4 text-xs text-status-success-light"><IconCheck size={15} /> Delegation submitted. It takes effect after the next epoch boundary.</div>}
 
       <div className="space-y-4 px-5 py-4">
-        <div className="rounded-xl border border-border-subtle bg-surface-inset p-3">
-          <p className="label-eyebrow">Current pool</p>
-          {delegationLoading ? <p className="mt-2 text-sm text-text-muted">Checking ledger state…</p> : !delegationKnown ? (
-            <p className="mt-2 text-sm text-text-muted">Delegation status is unavailable. Try checking again before submitting a delegation.</p>
-          ) : currentPool ? (
-            <div className="mt-2 flex items-center gap-3">
-              <PoolLogo pool={currentPool} />
-              <div className="min-w-0 flex-1"><p className="text-sm font-medium text-text-primary">{currentPool.name || currentPool.ticker}</p><p className="font-mono text-2xs text-text-muted">[{currentPool.ticker}]</p></div>
-              <span className="rounded-full bg-status-success/10 px-2 py-1 text-2xs text-status-success-light">Delegated</span>
+        <div className="rounded-xl border border-border-subtle bg-surface-inset p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="label-eyebrow">Your delegation</p>
+              <p className="mt-1 text-xs text-text-muted">Current ledger state</p>
             </div>
-          ) : <p className="mt-2 text-sm text-text-muted">Not delegated to a partner pool.</p>}
+            {delegationKnown && (
+              <span className={currentPool
+                ? 'rounded-full bg-status-success/10 px-2 py-1 text-2xs text-status-success-light'
+                : poolId
+                  ? 'rounded-full bg-cream/10 px-2 py-1 text-2xs text-cream'
+                  : 'rounded-full bg-white/[0.06] px-2 py-1 text-2xs text-text-muted'}>
+                {currentPool ? 'Partner pool' : poolId ? 'Other pool' : 'Not delegated'}
+              </span>
+            )}
+          </div>
+          {delegationLoading ? <p className="mt-4 text-sm text-text-muted">Checking the ledger…</p> : !delegationKnown ? (
+            <p className="mt-4 text-sm text-text-muted">Delegation status is unavailable. Try checking again before submitting a delegation.</p>
+          ) : currentPool ? (
+            <div className="mt-4 flex items-center gap-3">
+              <PoolLogo pool={currentPool} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-text-primary">{currentPool.name || currentPool.ticker}</p>
+                <p className="font-mono text-2xs text-text-muted">[{currentPool.ticker}]</p>
+              </div>
+            </div>
+          ) : poolId ? (
+            <div className="mt-4 flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-sidebar font-mono text-2xs text-text-secondary">POOL</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text-primary">A Cardano stake pool</p>
+                <p className="mt-1 font-mono text-2xs text-text-muted" title={poolId}>{poolIdLabel(poolId)}</p>
+                <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-text-muted">
+                  <IconInfoCircle size={14} className="mt-0.5 shrink-0 text-cream" />
+                  This pool is not currently in TosiDrop&apos;s partner network. Your delegation remains active; switching is optional.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-text-muted">You are not currently delegated to a stake pool.</p>
+          )}
         </div>
 
         {poolsError ? <FeedbackBanner tone="error" title="Couldn’t load partner pools" message={poolsError.message} /> : poolsLoading ? <p className="text-sm text-text-muted">Loading partner pools…</p> : pools && pools.length > 0 ? (
