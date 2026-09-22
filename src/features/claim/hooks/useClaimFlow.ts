@@ -60,7 +60,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
 
   useEffect(() => {
     if (state.step === 'success') {
-      queryClient.invalidateQueries({ queryKey: ['rewards', stakeAddress] });
+      void queryClient.invalidateQueries({ queryKey: ['rewards', stakeAddress] });
     }
   }, [state.step, queryClient, stakeAddress]);
 

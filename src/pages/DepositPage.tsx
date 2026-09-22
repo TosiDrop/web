@@ -58,7 +58,7 @@ export default function DepositPage() {
   });
 
   useEffect(() => {
-    if (!request) navigate('/claim', { replace: true });
+    if (!request) void navigate('/claim', { replace: true });
   }, [request, navigate]);
 
   if (!request) return null;
@@ -80,7 +80,7 @@ export default function DepositPage() {
 
   const handleCancel = () => {
     reset();
-    navigate('/claim');
+    void navigate('/claim');
   };
 
   const isTerminal = status?.kind === 'success' || status?.kind === 'failure';

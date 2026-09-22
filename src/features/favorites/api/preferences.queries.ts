@@ -36,7 +36,7 @@ export function useSavePreferencesMutation() {
   return useMutation<{ success: boolean }, Error, SavePreferencesRequest>({
     mutationFn: (data) => apiClient.post<{ success: boolean }>('/api/tokenPreferences', data),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['preferences', variables.stakeAddress] });
+      void queryClient.invalidateQueries({ queryKey: ['preferences', variables.stakeAddress] });
     },
   });
 }

@@ -131,7 +131,7 @@ export default function ClaimPage() {
       if (resolved === lookupAddress) {
         // Re-checking the same address is the user's retry, so a temporary
         // API blip does not stay cached.
-        refetch();
+        void refetch();
       } else {
         setLookupAddress(resolved);
       }
@@ -148,13 +148,13 @@ export default function ClaimPage() {
         overheadFee: result.overhead_fee,
         withdrawalAddress: result.withdrawal_address,
       });
-      navigate('/deposit');
+      void navigate('/deposit');
     },
   });
 
   const handleClaim = () => {
     if (!stakeAddress || selectedVisible.length === 0 || claimMutation.isPending) return;
-    claimMutation.mutate({ stakeAddress, selected: selectedVisible });
+    void claimMutation.mutateAsync({ stakeAddress, selected: selectedVisible });
   };
 
   const toggleAll = () => {

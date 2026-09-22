@@ -141,7 +141,7 @@ export function HistoryList() {
   useEffect(() => {
     if (data && !invalidated.current) {
       invalidated.current = true;
-      queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
+      void queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
     }
   }, [data, queryClient, stakeAddress]);
 

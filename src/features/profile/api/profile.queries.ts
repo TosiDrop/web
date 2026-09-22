@@ -26,7 +26,7 @@ export function useSaveProfile() {
   return useMutation<SaveProfileResponse, Error, SaveProfileRequest>({
     mutationFn: (data) => apiClient.post<SaveProfileResponse>('/api/profileData', data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['profile', variables.walletId] });
+      void queryClient.invalidateQueries({ queryKey: ['profile', variables.walletId] });
     },
   });
 }

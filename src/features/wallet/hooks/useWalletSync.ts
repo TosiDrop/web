@@ -54,7 +54,7 @@ export function useWalletSync() {
       }
     };
 
-    sync();
+    void sync();
 
     return () => {
       cancelled = true;
