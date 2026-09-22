@@ -93,12 +93,6 @@ function AccountSection() {
                 </dd>
               </div>
             </dl>
-          ) : error ? (
-            <DataUnavailable
-              title="Profile data is unavailable"
-              message="Your wallet is connected, but profile data could not be loaded."
-              onRetry={() => { void refetch(); }}
-            />
           ) : (
             <p className="mt-4 text-sm text-text-muted">Connect a wallet to view account details.</p>
           )}
@@ -116,6 +110,12 @@ function AccountSection() {
               <div className="skeleton-shimmer h-3 w-24 rounded" />
               <div className="skeleton-shimmer h-10 w-full rounded-lg" />
             </div>
+          ) : error ? (
+            <DataUnavailable
+              title="Profile data is unavailable"
+              message="Your wallet is connected, but profile data could not be loaded."
+              onRetry={() => { void refetch(); }}
+            />
           ) : (
             <>
               {profile?.value?.name && (
