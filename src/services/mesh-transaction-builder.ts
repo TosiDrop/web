@@ -1,4 +1,4 @@
-import { Transaction, type IInitiator, type UTxO } from '@meshsdk/core';
+import type { IInitiator, UTxO } from '@meshsdk/core';
 import type {
   TransactionBuilder,
   TransferParams,
@@ -34,6 +34,7 @@ export function createMeshTransactionBuilder(wallet: MeshWalletInitiator): Trans
       if (!toAddress) throw new Error('Missing toAddress');
       if (amount <= 0n) throw new Error('Invalid transfer amount');
 
+      const { Transaction } = await import('@meshsdk/core');
       const tx = new Transaction({ initiator }).sendLovelace(
         toAddress,
         amount.toString(),
@@ -46,6 +47,7 @@ export function createMeshTransactionBuilder(wallet: MeshWalletInitiator): Trans
         throw new Error('Invalid stake pool ID');
       }
 
+      const { Transaction } = await import('@meshsdk/core');
       const tx = new Transaction({ initiator });
       if (!registered) tx.registerStake(rewardAddress);
       tx.delegateStake(rewardAddress, poolId);
