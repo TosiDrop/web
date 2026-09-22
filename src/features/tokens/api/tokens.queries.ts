@@ -3,15 +3,10 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { EMPTY_DISTRIBUTION, type Project } from '@/shared/projects';
 import { tickerFor, type TokenInfo, type TokenMap } from '@/features/history/api/history.queries';
+import { fetchMarketPrices } from '@/features/market/api/market.queries';
+import type { PublicMarketPrice } from '@/features/market/api/market.queries';
 
-export interface PublicMarketPrice {
-  priceUsd: number | null;
-  priceAda: number | null;
-  priceChange24h: number | null;
-  source: string;
-  sourceCount: number;
-  observedAt: number;
-}
+export type { PublicMarketPrice } from '@/features/market/api/market.queries';
 
 export interface PublicTokensResponse {
   projects: Project[];
@@ -130,17 +125,15 @@ export function usePublicTokens() {
           };
         });
       const allProjects = [...projects, ...metadataProjects];
-      const marketResponse = allProjects.length > 0
-        ? await apiClient.get<{ prices?: Record<string, PublicMarketPrice> }>(
-          `/api/market/prices?units=${encodeURIComponent(allProjects.slice(0, 100).map((project) => project.tokenId).join(','))}`,
-        ).catch(() => null)
-        : null;
+      const marketPrices = allProjects.length > 0
+        ? await fetchMarketPrices(allProjects.map((project) => project.tokenId)).catch(() => ({}))
+        : {};
       return {
         projects: allProjects,
         degraded: projectsResponse?.degraded === true && projects.length === 0 && Object.keys(tokenMap).length === 0,
         metadataDegraded: !projectsResponse || projectsResponse.degraded || tokensResult.status === 'rejected' || projectsPayloadMalformed || tokenPayloadMalformed || projects.length !== rawProjects.length || Object.keys(tokenMap).length !== Object.keys(rawTokenMap).length,
         tokens: tokensResult.status === 'fulfilled' ? tokenMap : undefined,
-        marketPrices: marketResponse?.prices,
+        marketPrices,
         scope: 'public' as const,
       };
     },
