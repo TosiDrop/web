@@ -18,14 +18,20 @@ export async function readMarketPrices(
 ): Promise<Map<string, MarketPrice>> {
   if (!env.DB || units.length === 0) return new Map();
   const placeholders = units.map(() => '?').join(', ');
-  const result = await env.DB.prepare(
-    `SELECT unit, price_usd AS priceUsd, price_ada AS priceAda,
-            price_change_24h AS priceChange24h, source, observed_at AS observedAt
-     FROM market_asset_prices
-     WHERE network = ? AND unit IN (${placeholders})`,
-  )
-    .bind(network, ...units)
-    .all<MarketPrice>();
+  let result: D1Result<MarketPrice>;
+  try {
+    result = await env.DB.prepare(
+      `SELECT unit, price_usd AS priceUsd, price_ada AS priceAda,
+              price_change_24h AS priceChange24h, source, observed_at AS observedAt
+       FROM market_asset_prices
+       WHERE network = ? AND unit IN (${placeholders})`,
+    )
+      .bind(network, ...units)
+      .all<MarketPrice>();
+  } catch (error) {
+    console.error('market price read error:', error);
+    return new Map();
+  }
   const grouped = new Map<string, MarketPrice[]>();
   for (const row of result.results) {
     const list = grouped.get(row.unit) ?? [];
@@ -68,12 +74,18 @@ export async function readValueHistory(
   const start = Math.floor(Date.now() / 1000) - days * 86_400;
   const units = ['lovelace', ...holdings.map((holding) => holding.unit)];
   const placeholders = units.map(() => '?').join(', ');
-  const result = await env.DB.prepare(
-    `SELECT unit, observed_at AS observedAt, price_ada AS priceAda, source
-     FROM market_asset_price_history
-     WHERE network = ? AND observed_at >= ? AND unit IN (${placeholders})
-     ORDER BY observed_at ASC`,
-  ).bind(network, start, ...units).all<{ unit: string; observedAt: number; priceAda: number | null; source: string }>();
+  let result: D1Result<{ unit: string; observedAt: number; priceAda: number | null; source: string }>;
+  try {
+    result = await env.DB.prepare(
+      `SELECT unit, observed_at AS observedAt, price_ada AS priceAda, source
+       FROM market_asset_price_history
+       WHERE network = ? AND observed_at >= ? AND unit IN (${placeholders})
+       ORDER BY observed_at ASC`,
+    ).bind(network, start, ...units).all<{ unit: string; observedAt: number; priceAda: number | null; source: string }>();
+  } catch (error) {
+    console.error('market value history read error:', error);
+    return [];
+  }
 
   const buckets = new Map<number, Map<string, Map<string, number>>>();
   for (const row of result.results) {
