@@ -13,11 +13,11 @@ import { networkLabel } from '@/shared/network';
 import { CopyButton } from '@/components/common/CopyButton';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/': 'Home',
+  '/': 'Overview',
   '/claim': 'Claim rewards',
   '/profile': 'Portfolio',
-  '/tokens': 'Tokens',
-  '/token': 'Tokens',
+  '/tokens': 'Discover',
+  '/token': 'Discover',
   '/team': 'Pools',
   '/analytics': 'Analytics',
   '/deposit': 'Deposit',

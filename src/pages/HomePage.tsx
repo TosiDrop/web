@@ -98,7 +98,7 @@ export default function HomePage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="label-eyebrow">Home</p>
+          <p className="label-eyebrow">Overview</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet at a glance</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">Balance, delegation, and rewards in one place. Your wallet is the source of truth for what you own.</p>
         </div>
