@@ -20,9 +20,9 @@ const NAV_GROUPS = [
   {
     label: 'Your wallet',
     links: [
-      { name: 'Dashboard', href: '/', icon: IconHome2 },
+      { name: 'Overview', href: '/', icon: IconHome2 },
       { name: 'Portfolio', href: '/profile', icon: IconWallet },
-      { name: 'Rewards', href: '/claim', icon: IconGift },
+      { name: 'Claim rewards', href: '/claim', icon: IconGift },
     ],
   },
   {
@@ -33,9 +33,9 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Build',
+    label: 'Participate',
     links: [
-      { name: 'Team', href: '/team', icon: IconUsers },
+      { name: 'Pools', href: '/team', icon: IconUsers },
     ],
   },
   {

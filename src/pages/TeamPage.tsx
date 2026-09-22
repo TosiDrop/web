@@ -178,8 +178,8 @@ export default function TeamPage() {
   return (
     <div className="space-y-7">
       <header>
-        <p className="label-eyebrow">Delegate with confidence</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">Cardano pools</h1>
+        <p className="label-eyebrow">Participate in the network</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">Participating pools</h1>
         <p className="mt-2 max-w-md text-sm text-text-muted">
           Discover the Cardano stake pools participating in TosiDrop token distribution.
         </p>
@@ -192,7 +192,7 @@ export default function TeamPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Participating pools</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-text-primary">Pool directory</h2>
           <p className="mt-1 text-sm text-text-muted">
             Explore the pools tracked by TosiDrop. Partner status marks pools
             eligible for TosiDrop distributions; every listed pool remains a

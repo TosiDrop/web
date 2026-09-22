@@ -27,7 +27,7 @@ describe('TeamPage', () => {
 
     render(<TeamPage />);
 
-    expect(screen.getByRole('heading', { name: 'Cardano pools' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Participating pools' })).toBeInTheDocument();
     expect(screen.getByText(/1 ADA pool fee/)).toBeInTheDocument();
     expect(screen.getByText('A community-operated pool.')).toBeInTheDocument();
     expect(screen.getByText('TosiDrop partner')).toBeInTheDocument();
