@@ -100,7 +100,7 @@ export default function HomePage() {
         <div>
           <p className="label-eyebrow">Overview</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet at a glance</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">Balance, delegation, and rewards in one place. Your wallet is the source of truth for what you own.</p>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">Balance, rewards, and portfolio context in one place. Your wallet is the source of truth for what you own.</p>
         </div>
         <Link to="/claim" className="hidden items-center gap-2 text-sm font-medium text-accent-light transition hover:text-text-primary sm:inline-flex">
           Claim rewards <IconArrowRight size={16} />
