@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState } from 'react';
-import { IconExternalLink, IconShieldCheck } from '@tabler/icons-react';
+import { lazy, Suspense, useMemo, useState } from 'react';
+import { IconExternalLink, IconSearch, IconShieldCheck } from '@tabler/icons-react';
 import { poolExplorerUrl, useParticipatingPools, type TeamPool } from '@/features/team/api/team.queries';
 import { Card } from '@/components/common/Card';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -174,6 +174,18 @@ export default function TeamPage() {
   const connected = useWalletStore((state) => state.connected);
   const networkId = useWalletStore((state) => state.networkId);
   const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
+  const [query, setQuery] = useState('');
+  const [partnerOnly, setPartnerOnly] = useState(false);
+  const filteredPools = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return (pools ?? []).filter((pool) => {
+      if (partnerOnly && !pool.partner) return false;
+      if (!normalizedQuery) return true;
+      return [pool.ticker, pool.name, pool.poolId, pool.description ?? '']
+        .some((value) => value.toLowerCase().includes(normalizedQuery));
+    });
+  }, [partnerOnly, pools, query]);
+  const partnerCount = pools?.filter((pool) => pool.partner).length ?? 0;
 
   return (
     <div className="space-y-7">
@@ -191,14 +203,50 @@ export default function TeamPage() {
       </p>
 
       <section className="space-y-4">
-        <div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-tight text-text-primary">Pool directory</h2>
-          <p className="mt-1 text-sm text-text-muted">
-            Explore the pools tracked by TosiDrop. Partner status marks pools
-            eligible for TosiDrop distributions; every listed pool remains a
-            valid delegation destination.
-          </p>
+            <p className="mt-1 text-sm text-text-muted">
+              Explore the pools tracked by TosiDrop. Partner status marks pools
+              eligible for TosiDrop distributions; every listed pool remains a
+              valid delegation destination.
+            </p>
+          </div>
+          {!isLoading && !error && pools && pools.length > 0 && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="relative block sm:w-56">
+                <span className="sr-only">Search participating pools</span>
+                <IconSearch size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" aria-hidden />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search pools"
+                  className="h-9 w-full rounded-lg border border-border-default bg-surface-inset pl-9 pr-3 text-xs text-text-primary placeholder:text-text-faint focus:border-accent/60 focus:outline-none"
+                />
+              </label>
+              <button
+                type="button"
+                aria-pressed={partnerOnly}
+                onClick={() => setPartnerOnly((value) => !value)}
+                className={`h-9 rounded-lg border px-3 text-xs font-medium transition ${partnerOnly
+                  ? 'border-status-success/40 bg-status-success/10 text-status-success-light'
+                  : 'border-border-default text-text-muted hover:border-accent/40 hover:text-text-primary'}`}
+              >
+                Partners only
+              </button>
+            </div>
+          )}
         </div>
+
+        {!isLoading && !error && pools && pools.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-text-faint">
+            <span aria-label={`${filteredPools.length} of ${pools.length} pools shown`}>
+              <strong className="font-medium text-text-secondary">{filteredPools.length}</strong> of {pools.length} pools shown
+            </span>
+            <span><strong className="font-medium text-status-success-light">{partnerCount}</strong> partner {partnerCount === 1 ? 'pool' : 'pools'}</span>
+          </div>
+        )}
 
         {isLoading ? (
           <PoolsSkeleton />
@@ -211,8 +259,15 @@ export default function TeamPage() {
               No partner pools are listed right now — check back soon.
             </p>
           </Card>
+        ) : filteredPools.length === 0 ? (
+          <Card variant="inset" className="px-6 py-16 text-center">
+            <p className="text-sm font-semibold text-text-primary">No matching pools</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">
+              Try a different search or show all participating pools.
+            </p>
+          </Card>
         ) : (
-          connected ? <ConnectedPoolCards pools={pools} networkMatches={networkMatches} /> : <PoolCards pools={pools} connected={false} networkMatches />
+          connected ? <ConnectedPoolCards pools={filteredPools} networkMatches={networkMatches} /> : <PoolCards pools={filteredPools} connected={false} networkMatches />
         )}
       </section>
     </div>

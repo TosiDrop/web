@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const poolsMock = vi.fn();
@@ -35,5 +35,29 @@ describe('TeamPage', () => {
       'href', 'https://cexplorer.io/pool/pool1abc%2Funsafe',
     );
     expect(screen.queryByRole('button', { name: /delegate/i })).not.toBeInTheDocument();
+  });
+
+  it('filters the participating directory without changing the route', () => {
+    poolsMock.mockReturnValue({
+      data: [
+        { poolId: 'pool1abc', ticker: 'TOSI', name: 'Tosi Pool', logo: '', partner: true, description: null },
+        { poolId: 'pool1xyz', ticker: 'APEX', name: 'Apex Pool', logo: '', partner: false, description: null },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    render(<TeamPage />);
+
+    expect(screen.getByLabelText('2 of 2 pools shown')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search participating pools' }), {
+      target: { value: 'apex' },
+    });
+    expect(screen.getByLabelText('1 of 2 pools shown')).toBeInTheDocument();
+    expect(screen.getAllByText('APEX')).not.toHaveLength(0);
+    expect(screen.queryByText('TOSI')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Partners only' }));
+    expect(screen.getByText('No matching pools')).toBeInTheDocument();
   });
 });
