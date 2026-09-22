@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconUserCircle, IconClock, IconWallet, IconShieldCheck } from '@tabler/icons-react';
+import { IconMenu2, IconChevronDown, IconLogout, IconUserCircle, IconWallet, IconShieldCheck } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
@@ -114,15 +114,6 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
           >
             <IconUserCircle size={14} stroke={1.6} />
             Portfolio
-          </Link>
-        </MenuItem>
-        <MenuItem>
-          <Link
-            to="/profile#activity"
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
-          >
-            <IconClock size={14} stroke={1.6} />
-            Wallet history
           </Link>
         </MenuItem>
         <MenuItem>
