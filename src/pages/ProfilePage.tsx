@@ -189,29 +189,31 @@ export default function ProfilePage() {
         <WalletComposition />
       </section>
 
-      <section id="rewards" aria-labelledby="rewards-title">
-        <SectionHeading
-          icon={IconChartLine}
-          eyebrow="Rewards provenance"
-          title="Where your rewards come from"
-          description="Trace eligible distributions back to their source pools and reward rules."
-        />
-        <Suspense fallback={<SectionLoading label="reward sources" />}>
-          <RewardBreakdown />
-        </Suspense>
-      </section>
+      <div className="grid items-start gap-10 xl:grid-cols-2">
+        <section id="rewards" aria-labelledby="rewards-title">
+          <SectionHeading
+            icon={IconChartLine}
+            eyebrow="Rewards provenance"
+            title="Where your rewards come from"
+            description="Trace eligible distributions back to their source pools and reward rules."
+          />
+          <Suspense fallback={<SectionLoading label="reward sources" />}>
+            <RewardBreakdown />
+          </Suspense>
+        </section>
 
-      <section id="activity" aria-labelledby="activity-title">
-        <SectionHeading
-          icon={IconClock}
-          eyebrow="Activity"
-          title="Your claim history"
-          description="A chronological record of tokens delivered to this stake address."
-        />
-        <Suspense fallback={<SectionLoading label="claim history" />}>
-          <HistoryList />
-        </Suspense>
-      </section>
+        <section id="activity" aria-labelledby="activity-title">
+          <SectionHeading
+            icon={IconClock}
+            eyebrow="Activity"
+            title="Your claim history"
+            description="A chronological record of tokens delivered to this stake address."
+          />
+          <Suspense fallback={<SectionLoading label="claim history" />}>
+            <HistoryList />
+          </Suspense>
+        </section>
+      </div>
 
       <section id="saved-assets" aria-labelledby="saved-assets-title">
         <SectionHeading
