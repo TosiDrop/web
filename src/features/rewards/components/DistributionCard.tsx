@@ -106,15 +106,20 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
           </span>
           {hasMarketPrice && (
             <>
-              <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
-                <span className="text-2xs text-text-muted">Est. claim value</span>
-                <span className="font-mono text-xs tabular-nums text-text-secondary">
-                  {formatEstimatedUsd(estimatedUsd ?? Number.NaN)}
+              {estimatedUsd !== null && (
+                <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
+                  <span className="text-2xs text-text-muted">Est. claim value</span>
+                  <span className="font-mono text-xs tabular-nums text-text-secondary">{formatEstimatedUsd(estimatedUsd)}</span>
                 </span>
-              </span>
-              <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
-                {formatEstimatedAda(estimatedAda ?? Number.NaN)} · {formatMarketPrice(marketPrice?.priceUsd, 'USD')} / token
-              </span>
+              )}
+              {(estimatedAda !== null || estimatedUsd !== null) && (
+                <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
+                  {estimatedAda !== null && `${formatEstimatedAda(estimatedAda)} · `}
+                  {marketPrice?.priceUsd !== null && marketPrice?.priceUsd !== undefined
+                    ? `${formatMarketPrice(marketPrice.priceUsd, 'USD')} / token`
+                    : `${formatMarketPrice(marketPrice?.priceAda, 'ADA')} / token`}
+                </span>
+              )}
             </>
           )}
         </span>

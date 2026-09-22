@@ -45,10 +45,11 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
         {estimate.pricedCount > 0 ? (
           <>
             <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-text-primary">
-              {formatEstimatedUsd(estimate.usd)}
+              {estimate.usd !== null ? formatEstimatedUsd(estimate.usd) : formatEstimatedAda(estimate.ada ?? 0)}
             </p>
             <p className="mt-1 font-mono text-xs tabular-nums text-text-muted">
-              {formatEstimatedAda(estimate.ada)} · {estimate.pricedCount} of {estimate.totalCount} priced
+              {estimate.usd !== null && estimate.ada !== null ? `${formatEstimatedAda(estimate.ada)} · ` : ''}
+              {estimate.pricedCount} of {estimate.totalCount} priced
             </p>
           </>
         ) : (

@@ -70,7 +70,7 @@ function PoolCard({
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col border-t border-border-subtle px-5 py-4">
-        <p className="min-h-10 text-sm leading-5 text-text-secondary">
+        <p className="min-h-10 break-words text-sm leading-5 text-text-secondary [overflow-wrap:anywhere]">
           {pool.description || 'A participating pool eligible for TosiDrop distribution programs.'}
         </p>
         <p className="mt-4 break-all font-mono text-2xs text-text-muted">{pool.poolId}</p>
@@ -92,7 +92,7 @@ function PoolCard({
         href={poolExplorerUrl(pool.poolId)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mx-4 mb-4 mt-0 inline-flex min-w-0 items-center justify-center gap-2 break-words rounded-lg border border-border-default px-3 py-2 text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
+        className="mx-4 mb-4 mt-0 inline-flex min-w-0 items-center justify-center gap-2 break-all rounded-lg border border-border-default px-3 py-2 text-center text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
       >
         View pool details
         <IconExternalLink size={14} stroke={1.6} aria-hidden />

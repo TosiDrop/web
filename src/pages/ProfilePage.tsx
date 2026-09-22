@@ -1,10 +1,11 @@
-import { lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useProfile } from '@/features/profile/api/profile.queries';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
@@ -62,7 +63,7 @@ function AccountSection() {
   const connected = useWalletStore((state) => state.connected);
   const walletName = useWalletStore((state) => state.walletName);
   const networkId = useWalletStore((state) => state.networkId);
-  const { data: profile, isLoading } = useProfile(stakeAddress);
+  const { data: profile, isLoading, error, refetch } = useProfile(stakeAddress);
 
   return (
     <section id="account" aria-labelledby="account-title">
@@ -92,6 +93,12 @@ function AccountSection() {
                 </dd>
               </div>
             </dl>
+          ) : error ? (
+            <DataUnavailable
+              title="Profile data is unavailable"
+              message="Your wallet is connected, but profile data could not be loaded."
+              onRetry={() => { void refetch(); }}
+            />
           ) : (
             <p className="mt-4 text-sm text-text-muted">Connect a wallet to view account details.</p>
           )}
@@ -148,6 +155,16 @@ function ConnectPortfolioPrompt() {
 
 export default function ProfilePage() {
   const connected = useWalletStore((state) => state.connected);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return undefined;
+    const targetId = decodeURIComponent(location.hash.slice(1));
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [connected, location.hash]);
 
   return (
     <div className="space-y-12">

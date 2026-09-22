@@ -22,7 +22,7 @@ export function isProjectIdentifier(id: string): boolean {
 }
 
 export function projectIdentifierLabel(id: string): string {
-  return id.replace(/^(?:project_|p_)/i, '') || 'project';
+  return id.trim().replace(/^(?:project_|p_)/i, '') || 'project';
 }
 
 /** The VM returns hex pool keys while configuration uses bech32 pool IDs. */
