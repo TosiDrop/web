@@ -18,7 +18,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/profile': 'Portfolio',
   '/tokens': 'Tokens',
   '/token': 'Tokens',
-  '/projects': 'Manage tokens',
   '/team': 'Pools',
   '/analytics': 'Analytics',
   '/deposit': 'Deposit',
