@@ -188,17 +188,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-        {connected && <nav aria-label="Portfolio sections" className="relative mt-7 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/[0.08] pt-4 text-xs text-text-muted">
-          {[
-            ['portfolio-visuals', 'Portfolio'],
-            ['rewards', 'Rewards'],
-            ['activity', 'Activity'],
-            ['saved-assets', 'Saved assets'],
-            ['account', 'Account'],
-          ].map(([id, label]) => (
-            <a key={id} href={`#${id}`} className="transition hover:text-text-primary">{label}</a>
-          ))}
-        </nav>}
       </header>
 
       {connected ? <>
