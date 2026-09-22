@@ -120,17 +120,31 @@ export class KoiosClient {
   }
 
   async post<T>(endpoint: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(`${this.config.baseUrl}/${endpoint.replace(/^\/+/, '')}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!response.ok) throw new Error(`Koios ${endpoint} failed (${response.status})`);
-    return validatePayload(endpoint, await response.json()) as T;
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      let response: Response;
+      try {
+        response = await fetch(`${this.config.baseUrl}/${endpoint.replace(/^\/+/, '')}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}),
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(15_000),
+        });
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+        continue;
+      }
+      if (response.ok) return validatePayload(endpoint, await response.json()) as T;
+      const error = new Error(`Koios ${endpoint} failed (${response.status})`);
+      if (response.status < 500 && response.status !== 408 && response.status !== 429) throw error;
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+    }
+    throw lastError instanceof Error ? lastError : new Error(`Koios ${endpoint} failed`);
   }
 
   accountInfo(stakeAddress: string) {

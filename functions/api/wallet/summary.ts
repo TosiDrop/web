@@ -53,15 +53,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   try {
     const koios = new KoiosClient(env);
-    const [accounts, assets, rewards] = await Promise.all([
+    const [accountResult, assetsResult, rewardsResult] = await Promise.allSettled([
       koios.accountInfo(stakeAddress),
       koios.accountAssets(stakeAddress),
       koios.accountRewards(stakeAddress),
     ]);
+    const accounts = accountResult.status === 'fulfilled' ? accountResult.value : [];
+    const assets = assetsResult.status === 'fulfilled' ? assetsResult.value : [];
+    const rewards = rewardsResult.status === 'fulfilled' ? rewardsResult.value : [];
+    const degraded = accountResult.status === 'rejected' ||
+      assetsResult.status === 'rejected' ||
+      rewardsResult.status === 'rejected';
     const account = accounts[0] ?? {};
     const usableAssets = assets.filter((asset) => unitFor(asset));
     const units = usableAssets.map((asset) => unitFor(asset)!);
-    const metadata = units.length ? await koios.assetInfo(units.slice(0, MAX_METADATA_ASSETS)) : [];
+    let metadata: KoiosAssetInfo[] = [];
+    if (units.length) {
+      try {
+        metadata = await koios.assetInfo(units.slice(0, MAX_METADATA_ASSETS));
+      } catch (error) {
+        console.error('wallet metadata error:', error);
+      }
+    }
     const metadataMap = metadataByUnit(metadata);
     const pricedAssets = usableAssets.slice(0, MAX_PRICED_ASSETS);
     const marketByUnit = await readMarketPrices(
@@ -112,6 +125,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       network,
       stakeAddress,
       observedAt,
+      degraded,
       balance: {
         accountLovelace: account.total_balance ?? '0',
         utxoLovelace: account.utxo ?? '0',

@@ -39,6 +39,7 @@ interface WalletHolding {
 }
 
 interface WalletSummary {
+  degraded: boolean;
   balance: {
     accountLovelace: string;
     utxoLovelace: string;
@@ -58,7 +59,8 @@ interface WalletSummary {
 
 interface WalletQueryData {
   summary: WalletSummary;
-  attachedLovelace: string;
+  attachedLovelace: string | null;
+  degraded: boolean;
 }
 
 function formatUnits(raw: string, decimals: number, maxDecimals = 2): string {
@@ -121,27 +123,54 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
 
 export function WalletComposition() {
   const { connected, stakeAddress, wallet } = useWalletStore();
-  const { data, isLoading, error } = useQuery<WalletQueryData>({
+  const { data, isLoading } = useQuery<WalletQueryData>({
     queryKey: ['wallet-summary', stakeAddress],
     queryFn: async () => {
-      const [summary, attachedLovelace] = await Promise.all([
+      const [summaryResult, walletResult] = await Promise.allSettled([
         apiClient.get<WalletSummary>(
           `/api/wallet/summary?staking_address=${encodeURIComponent(stakeAddress!)}`,
         ),
         readAttachedLovelace(wallet),
       ]);
-      return { summary, attachedLovelace };
+      const attachedLovelace = walletResult.status === 'fulfilled' ? walletResult.value : null;
+      if (summaryResult.status === 'fulfilled') {
+        return {
+          summary: summaryResult.value,
+          attachedLovelace,
+          degraded: summaryResult.value.degraded,
+        };
+      }
+      return {
+        summary: {
+          balance: {
+            accountLovelace: attachedLovelace ?? '0',
+            utxoLovelace: attachedLovelace ?? '0',
+            rewardsAvailableLovelace: '0',
+            adaPriceUsd: null,
+            adaPriceChange24h: null,
+          },
+          holdings: [],
+          metadata: { complete: false, returned: 0, total: 0 },
+          market: { configured: false, priced: 0, requested: 0 },
+          valueHistory: { points: [], basis: 'current-holdings', rangeDays: 30 },
+          degraded: true,
+        },
+        attachedLovelace,
+        degraded: true,
+      };
     },
     enabled: connected && !!stakeAddress && !!wallet,
     staleTime: 60_000,
+    refetchInterval: 30_000,
+    retry: 5,
   });
 
   if (!connected || !stakeAddress) return <Panel><p className="text-xs text-text-muted">Not connected</p></Panel>;
   if (isLoading) return <Panel><p className="text-xs text-text-muted">Loading wallet portfolio…</p></Panel>;
-  if (error || !data) return <Panel><p className="text-xs text-status-error-light">Couldn&apos;t load wallet portfolio.</p></Panel>;
+  if (!data) return <Panel><p className="text-xs text-text-muted">Waiting for wallet data…</p></Panel>;
 
   const { summary } = data;
-  const attachedAda = Number(data.attachedLovelace) / 1_000_000;
+  const attachedAda = Number(data.attachedLovelace ?? summary.balance.utxoLovelace) / 1_000_000;
   const adaValueUsd = summary.balance.adaPriceUsd === null ? null : attachedAda * summary.balance.adaPriceUsd;
   const pricedHoldings = summary.holdings.filter((holding) => holding.valueUsd !== null);
   const totalValueUsd = adaValueUsd === null && pricedHoldings.length === 0
@@ -162,10 +191,11 @@ export function WalletComposition() {
       </header>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Metric label="Wallet balance" value={`₳ ${formatAda(data.attachedLovelace)}`} detail="From connected wallet" />
+        <Metric label="Wallet balance" value={`₳ ${formatAda(data.attachedLovelace ?? summary.balance.utxoLovelace)}`} detail={data.attachedLovelace ? 'From connected wallet' : 'Indexed balance while wallet responds'} />
         <Metric label="Rewards available" value={`₳ ${formatAda(summary.balance.rewardsAvailableLovelace)}`} detail="Available to withdraw" />
         <Metric label="Priced value" value={formatUsd(totalValueUsd)} detail={summary.market.priced ? `${summary.market.priced} assets priced` : 'Prices are being indexed'} />
       </div>
+      {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is still syncing. This view will retry automatically.</p>}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="min-w-0 rounded-xl border border-border-subtle bg-surface-inset/25 p-4">
