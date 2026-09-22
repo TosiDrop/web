@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { IconBookmark, IconChartLine, IconClock, IconSettings, IconWallet } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -157,12 +158,17 @@ export default function ProfilePage() {
             <p className="label-eyebrow text-accent-light">Portfolio workspace</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Everything you own, earned, and saved.</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary">
-              One connected view of your holdings, balance history, rewards, activity, and preferences. Analytics lives alongside the portfolio rather than behind another menu.
+              One connected view of your holdings, balance history, rewards, activity, and preferences. Use Analytics when you want the wider network context.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.08] px-3 py-1.5 text-xs text-accent-light">
-            <IconChartLine size={15} stroke={1.7} aria-hidden />
-            {connected ? 'Live wallet context' : 'Connect to personalize'}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
+              Explore analytics <IconArrowRight size={13} aria-hidden />
+            </Link>
+            <div className="flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.08] px-3 py-1.5 text-xs text-accent-light">
+              <IconChartLine size={15} stroke={1.7} aria-hidden />
+              {connected ? 'Live wallet context' : 'Connect to personalize'}
+            </div>
           </div>
         </div>
         {connected && <nav aria-label="Portfolio sections" className="relative mt-7 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/[0.08] pt-4 text-xs text-text-muted">
