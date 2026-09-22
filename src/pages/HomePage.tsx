@@ -1,9 +1,6 @@
-import { Link } from 'react-router-dom';
-import { IconArrowRight, IconGift, IconWallet } from '@tabler/icons-react';
-import { Card } from '@/components/common/Card';
+import { Link, Navigate } from 'react-router-dom';
+import { IconArrowRight, IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
-import { WalletComposition } from '@/features/rewards/components/WalletComposition';
-import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
@@ -46,76 +43,8 @@ function PublicHome() {
   );
 }
 
-function ClaimPrompt() {
-  const stakeAddress = useWalletStore((state) => state.stakeAddress);
-  const connected = useWalletStore((state) => state.connected);
-  const { data: rewards, isLoading, error } = useRewards(stakeAddress);
-
-  if (!connected || !stakeAddress) {
-    return (
-      <Card className="border-cream/20 bg-cream/[0.06] p-5">
-        <p className="label-eyebrow">Next step</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-          <div><h2 className="text-lg font-semibold text-text-primary">Connect to check your rewards</h2><p className="mt-1 text-sm text-text-muted">Your home will show claimable distributions as soon as your wallet is connected.</p></div>
-          <Link to="/claim" className="inline-flex items-center gap-2 text-sm font-medium text-accent-light">Open claim flow <IconArrowRight size={16} /></Link>
-        </div>
-      </Card>
-    );
-  }
-
-  if (isLoading) return <Card className="h-28 animate-pulse" aria-label="Checking claimable rewards" />;
-  if (error) return <Card className="p-5"><p className="text-sm text-status-error-light">Claimable rewards are temporarily unavailable.</p><Link to="/claim" className="mt-2 inline-flex items-center gap-2 text-xs text-accent-light">Try the claim flow <IconArrowRight size={14} /></Link></Card>;
-
-  const count = rewards?.length ?? 0;
-  return (
-    <Card className={`overflow-hidden ${count > 0 ? 'border-accent/40 bg-accent/[0.06]' : ''}`}>
-      <div className="flex flex-wrap items-end justify-between gap-6 p-6 sm:p-7">
-        <div>
-          <div className="flex items-center gap-2 text-accent-light">
-            <IconGift size={16} aria-hidden />
-            <p className="label-eyebrow text-accent-light">Rewards pulse</p>
-          </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
-            {count > 0 ? `${count} reward${count === 1 ? '' : 's'} ready` : 'You’re all caught up'}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm leading-6 text-text-muted">
-            {count > 0 ? 'Review your eligible distributions and choose what to claim.' : 'New distributions appear here as soon as they become available.'}
-          </p>
-        </div>
-        <Link to="/claim" className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-accent-contrast transition hover:bg-accent-light">
-          {count > 0 ? 'Review rewards' : 'Open claim flow'} <IconArrowRight size={16} />
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
 export default function HomePage() {
   const connected = useWalletStore((state) => state.connected);
   if (!connected) return <PublicHome />;
-
-  return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <p className="label-eyebrow">Overview</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet at a glance</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">Balance, rewards, and portfolio context in one place. Your wallet is the source of truth for what you own.</p>
-        </div>
-        <Link to="/claim" className="hidden items-center gap-2 text-sm font-medium text-accent-light transition hover:text-text-primary sm:inline-flex">
-          Claim rewards <IconArrowRight size={16} />
-        </Link>
-      </header>
-      <ClaimPrompt />
-      <section aria-labelledby="wallet-overview" className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="label-eyebrow">Live wallet data</p>
-            <h2 id="wallet-overview" className="mt-1 text-xl font-semibold tracking-tight text-text-primary">Your portfolio</h2>
-          </div>
-        </div>
-        <WalletComposition compact />
-      </section>
-    </div>
-  );
+  return <Navigate to="/profile" replace />;
 }

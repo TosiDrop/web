@@ -5,7 +5,6 @@ import {
   IconUsers,
   IconFileText,
   IconChartLine,
-  IconHome2,
   IconCoins,
   IconWallet,
   IconExternalLink,
@@ -20,7 +19,6 @@ const NAV_GROUPS = [
   {
     label: 'Your wallet',
     links: [
-      { name: 'Overview', href: '/', icon: IconHome2 },
       { name: 'Portfolio', href: '/profile', icon: IconWallet },
       { name: 'Claim rewards', href: '/claim', icon: IconGift },
     ],
