@@ -40,9 +40,9 @@ export default function App() {
                 <Route path="/claim" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/portfolio" element={<Navigate to="/profile?tab=overview" replace />} />
-                <Route path="/activity" element={<Navigate to="/profile?tab=history" replace />} />
-                <Route path="/rewards" element={<Navigate to="/profile?tab=analytics" replace />} />
+                <Route path="/portfolio" element={<Navigate to="/profile" replace />} />
+                <Route path="/activity" element={<Navigate to="/profile#activity" replace />} />
+                <Route path="/rewards" element={<Navigate to="/profile#rewards" replace />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/tokens" element={<TokensPage />} />
                 <Route path="/token" element={<TokensPage />} />
@@ -50,8 +50,8 @@ export default function App() {
                 <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/network" element={<Navigate to="/analytics" replace />} />
-                <Route path="/history" element={<Navigate to="/profile?tab=history" replace />} />
-                <Route path="/preferences" element={<Navigate to="/profile?tab=settings" replace />} />
+                <Route path="/history" element={<Navigate to="/profile#activity" replace />} />
+                <Route path="/preferences" element={<Navigate to="/profile#account" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

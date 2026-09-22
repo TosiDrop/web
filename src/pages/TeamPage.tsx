@@ -6,6 +6,8 @@ import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { networkFromId } from '@/shared/network';
 
 const DelegationCard = lazy(async () => {
   const module = await import('@/features/rewards/components/InlineDelegateAction');
@@ -39,12 +41,14 @@ function PoolCard({
   currentPoolId,
   registered,
   connected,
+  networkMatches,
   onDelegated,
 }: {
   pool: TeamPool;
   currentPoolId: string | null;
   registered: boolean | null;
   connected: boolean;
+  networkMatches: boolean;
   onDelegated: () => void;
 }) {
   return (
@@ -79,6 +83,7 @@ function PoolCard({
               poolId={pool.poolId}
               currentPoolId={currentPoolId}
               registered={registered}
+              networkMatches={networkMatches}
               onDelegated={onDelegated}
             />
           </Suspense>
@@ -121,12 +126,14 @@ function PoolsSkeleton() {
 function PoolCards({
   pools,
   connected,
+  networkMatches,
   currentPoolId = null,
   registered = null,
   onDelegated = () => undefined,
 }: {
   pools: TeamPool[];
   connected: boolean;
+  networkMatches: boolean;
   currentPoolId?: string | null;
   registered?: boolean | null;
   onDelegated?: () => void;
@@ -140,6 +147,7 @@ function PoolCards({
           currentPoolId={currentPoolId}
           registered={registered}
           connected={connected}
+          networkMatches={networkMatches}
           onDelegated={onDelegated}
         />
       ))}
@@ -147,13 +155,14 @@ function PoolCards({
   );
 }
 
-function ConnectedPoolCards({ pools }: { pools: TeamPool[] }) {
+function ConnectedPoolCards({ pools, networkMatches }: { pools: TeamPool[]; networkMatches: boolean }) {
   const { stakeAddress } = useWalletStore();
   const { poolId, registered, refetch } = useDelegatedPool(stakeAddress);
   return (
     <PoolCards
       pools={pools}
       connected
+      networkMatches={networkMatches}
       currentPoolId={poolId}
       registered={registered}
       onDelegated={() => { void refetch(); }}
@@ -164,6 +173,8 @@ function ConnectedPoolCards({ pools }: { pools: TeamPool[] }) {
 export default function TeamPage() {
   const { data: pools, isLoading, error, refetch } = useParticipatingPools();
   const connected = useWalletStore((state) => state.connected);
+  const networkId = useWalletStore((state) => state.networkId);
+  const networkMatches = !connected || networkFromId(networkId) === DEPLOYMENT_NETWORK;
 
   return (
     <div className="space-y-7">
@@ -214,7 +225,7 @@ export default function TeamPage() {
             </p>
           </Card>
         ) : (
-          connected ? <ConnectedPoolCards pools={pools} /> : <PoolCards pools={pools} connected={false} />
+          connected ? <ConnectedPoolCards pools={pools} networkMatches={networkMatches} /> : <PoolCards pools={pools} connected={false} networkMatches />
         )}
       </section>
     </div>

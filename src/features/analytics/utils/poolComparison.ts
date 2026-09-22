@@ -185,7 +185,7 @@ export function buildPoolComparison({
     }
   }
 
-  return rows.filter((row) => row.offerings.length > 0).sort(
+  return rows.sort(
     (a, b) =>
       Number(b.partner ?? false) - Number(a.partner ?? false) ||
       (b.delegators ?? -1) - (a.delegators ?? -1) ||

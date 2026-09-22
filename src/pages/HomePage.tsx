@@ -21,7 +21,7 @@ function PublicHome() {
             Claim the tokens you earned.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-text-secondary">
-            TosiDrop connects Cardano delegators with token rewards from community projects and dApps. Connect your wallet to see what is waiting for you, or explore how to distribute tokens to your own community.
+            TosiDrop connects Cardano delegators with token rewards from community projects and dApps. Connect your wallet to see what is waiting for you.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <GradientButton onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime}>
@@ -31,18 +31,6 @@ function PublicHome() {
               See how claiming works <IconArrowRight size={16} />
             </Link>
           </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="audiences" className="space-y-4">
-        <div><p className="label-eyebrow">Choose your path</p><h2 id="audiences" className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">A home for Cardano rewards</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">Whether you are here to receive tokens or distribute them, TosiDrop gives you a clear next step.</p></div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-6 transition hover:border-accent/40">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent-light"><IconWallet size={20} /></span>
-            <h3 className="mt-5 text-lg font-semibold text-text-primary">I am a Cardano delegator</h3>
-            <p className="mt-2 text-sm leading-6 text-text-muted">Connect your wallet to check your claimable tokens, see your current stake pool, and claim rewards in a few guided steps.</p>
-            <button type="button" onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime} className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light transition hover:text-white">Check my rewards <IconArrowRight size={16} /></button>
-          </Card>
         </div>
       </section>
 

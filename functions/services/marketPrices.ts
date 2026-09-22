@@ -107,15 +107,13 @@ export async function readValueHistory(
 
   return [...buckets].map(([observedAt, byUnit]) => {
     let valueAda = adaBalance;
-    let priced = false;
+    let complete = true;
     for (const holding of holdings) {
       const prices = byUnit.get(holding.unit);
       const price = prices ? median([...prices.values()]) : null;
-      if (price !== null) {
-        valueAda += holding.amount * price;
-        priced = true;
-      }
+      if (price === null) complete = false;
+      else valueAda += holding.amount * price;
     }
-    return { observedAt, valueAda: priced ? valueAda : adaBalance };
+    return { observedAt, valueAda: complete ? valueAda : 0 };
   }).filter((point) => point.valueAda > 0);
 }

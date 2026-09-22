@@ -15,7 +15,7 @@ import { CopyButton } from '@/components/common/CopyButton';
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Home',
   '/claim': 'Claim rewards',
-  '/profile': 'Profile',
+  '/profile': 'Portfolio',
   '/tokens': 'Tokens',
   '/token': 'Tokens',
   '/projects': 'Manage tokens',
@@ -103,7 +103,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
         </MenuItem>
         <MenuItem>
           <Link
-            to="/profile?tab=history"
+            to="/profile#activity"
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-text-secondary transition data-[focus]:bg-surface-inset data-[focus]:text-text-primary"
           >
             <IconClock size={14} stroke={1.6} />

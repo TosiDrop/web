@@ -21,7 +21,7 @@ const NAV_GROUPS = [
     label: 'Your wallet',
     links: [
       { name: 'Dashboard', href: '/', icon: IconHome2 },
-      { name: 'Portfolio', href: '/profile?tab=overview', icon: IconWallet },
+      { name: 'Portfolio', href: '/profile', icon: IconWallet },
       { name: 'Rewards', href: '/claim', icon: IconGift },
     ],
   },

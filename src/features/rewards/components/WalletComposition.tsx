@@ -177,8 +177,8 @@ export function WalletComposition() {
     ? null
     : (adaValueUsd ?? 0) + pricedHoldings.reduce((total, holding) => total + (holding.valueUsd ?? 0), 0);
   const allocation = [
-    { name: 'ADA', value: adaValueUsd ?? 0 },
-    ...pricedHoldings.map((holding) => ({ name: shortName(holding), value: holding.valueUsd ?? 0 })),
+    { id: 'lovelace', name: 'ADA', value: adaValueUsd ?? 0 },
+    ...pricedHoldings.map((holding) => ({ id: holding.unit, name: shortName(holding), value: holding.valueUsd ?? 0 })),
   ].filter((item) => item.value > 0);
   const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
   const history = summary.valueHistory.points;
@@ -219,8 +219,8 @@ export function WalletComposition() {
         <section className="rounded-xl border border-border-subtle bg-surface-inset/25 p-4">
           <p className="label-eyebrow">Allocation</p>
           {allocationTotal > 0 ? <>
-            <div className="relative mx-auto mt-3 h-40 w-40"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={allocation} dataKey="value" nameKey="name" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none">{allocation.map((item, index) => <Cell key={item.name} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [formatUsd(Number(value)), 'Value']} /></PieChart></ResponsiveContainer><div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"><span className="font-mono text-sm text-text-primary">{formatUsd(totalValueUsd)}</span><span className="text-2xs text-text-faint">priced</span></div></div>
-            <ul className="mt-3 space-y-2">{allocation.slice(0, 5).map((item, index) => <li key={item.name} className="flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} /><span className="min-w-0 flex-1 truncate text-text-secondary">{item.name}</span><span className="font-mono text-2xs text-text-muted">{Math.round(item.value / allocationTotal * 100)}%</span></li>)}</ul>
+            <div className="relative mx-auto mt-3 h-40 w-40"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={allocation} dataKey="value" nameKey="name" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none">{allocation.map((item, index) => <Cell key={item.id} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [formatUsd(Number(value)), 'Value']} /></PieChart></ResponsiveContainer><div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"><span className="font-mono text-sm text-text-primary">{formatUsd(totalValueUsd)}</span><span className="text-2xs text-text-faint">priced</span></div></div>
+            <ul className="mt-3 space-y-2">{allocation.slice(0, 5).map((item, index) => <li key={item.id} className="flex items-center gap-2 text-xs"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} /><span className="min-w-0 flex-1 truncate text-text-secondary">{item.name}</span><span className="font-mono text-2xs text-text-muted">{Math.round(item.value / allocationTotal * 100)}%</span></li>)}</ul>
           </> : <div className="mt-3 flex min-h-40 items-center justify-center text-center text-xs text-text-faint"><span><IconInfoCircle size={16} className="mx-auto mb-2 text-text-muted" />Allocation appears after cached prices are available.</span></div>}
         </section>
       </div>

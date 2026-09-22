@@ -6,6 +6,7 @@ interface InlineDelegateActionProps {
   poolId: string;
   currentPoolId: string | null;
   registered: boolean | null;
+  networkMatches: boolean;
   onDelegated: () => void;
 }
 
@@ -13,6 +14,7 @@ export function InlineDelegateAction({
   poolId,
   currentPoolId,
   registered,
+  networkMatches,
   onDelegated,
 }: InlineDelegateActionProps) {
   const { delegate, isPending, error } = useDelegateToPool();
@@ -28,7 +30,7 @@ export function InlineDelegateAction({
   }
 
   async function handleDelegate() {
-    if (registered === null || isPending) return;
+    if (!networkMatches || registered === null || isPending) return;
     try {
       await delegate(poolId, registered);
       onDelegated();
@@ -42,12 +44,13 @@ export function InlineDelegateAction({
       <button
         type="button"
         onClick={handleDelegate}
-        disabled={registered === null || isPending}
+        disabled={!networkMatches || registered === null || isPending}
         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-accent-contrast transition hover:bg-accent-light disabled:cursor-wait disabled:opacity-60"
       >
         {isPending ? <IconLoader2 size={14} className="animate-spin" /> : <IconArrowRight size={14} />}
-        {registered === null ? 'Checking…' : currentPoolId ? 'Switch' : 'Delegate'}
+        {!networkMatches ? 'Wrong network' : registered === null ? 'Checking…' : currentPoolId ? 'Switch' : 'Delegate'}
       </button>
+      {!networkMatches && <span className="max-w-40 text-right text-2xs text-status-error-light">Switch networks before delegating.</span>}
       {error && <span className="max-w-32 text-right text-2xs text-status-error-light">Transaction failed</span>}
     </div>
   );
