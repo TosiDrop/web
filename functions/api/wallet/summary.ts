@@ -14,6 +14,7 @@ import {
 import { persistWalletSnapshot } from '../../services/walletSnapshots';
 import { readMarketPrices, readValueHistory } from '../../services/marketPrices';
 import { stakeAddressError } from '../../../src/shared/stakeAddress';
+import { decimalAmountToNumber } from '../../../src/shared/amounts';
 
 const MAX_METADATA_ASSETS = 100;
 const MAX_PRICED_ASSETS = 25;
@@ -105,7 +106,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         priceChange24h: marketByUnit.get(unit)?.priceChange24h ?? null,
         valueUsd: price === null || decimals === null
           ? null
-          : Number(asset.quantity ?? 0) / 10 ** decimals * price,
+          : decimalAmountToNumber(asset.quantity ?? '0', decimals) * price,
         pricePending: price === null,
       };
     });
@@ -118,7 +119,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         const amount = Number(holding.quantity) / 10 ** decimals;
         return Number.isFinite(amount) ? [{ unit: holding.unit, amount }] : [];
       }),
-      Number(account.utxo ?? account.total_balance ?? 0) / 1_000_000,
+      decimalAmountToNumber(account.utxo ?? account.total_balance ?? '0', 6),
     );
     const observedAt = Math.floor(Date.now() / 1000);
     const payload = {
@@ -134,7 +135,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         adaPriceChange24h,
         accountValueUsd: adaPriceUsd === null
           ? null
-          : Number(account.total_balance ?? 0) / 1_000_000 * adaPriceUsd,
+          : decimalAmountToNumber(account.total_balance ?? '0', 6) * adaPriceUsd,
       },
       delegation: {
         poolId: account.delegated_pool ?? null,

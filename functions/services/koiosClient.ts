@@ -97,6 +97,30 @@ function validatePayload(endpoint: string, payload: unknown): unknown {
       }
     }
   }
+  if (endpoint === 'asset_info') {
+    for (const row of payload) {
+      if (typeof row.asset_policy !== 'string' || typeof row.asset_name !== 'string') {
+        throw new Error('Koios asset_info returned an incomplete asset row');
+      }
+      if ('decimals' in row && row.decimals !== null && typeof row.decimals !== 'number') {
+        throw new Error('Koios asset_info returned an invalid decimals field');
+      }
+    }
+  }
+  if (endpoint === 'asset_nft_address') {
+    for (const row of payload) {
+      if (typeof row.payment_address !== 'string') {
+        throw new Error('Koios asset_nft_address returned an incomplete address row');
+      }
+    }
+  }
+  if (endpoint === 'address_info') {
+    for (const row of payload) {
+      if (!('stake_address' in row) || (row.stake_address !== null && typeof row.stake_address !== 'string')) {
+        throw new Error('Koios address_info returned an incomplete address row');
+      }
+    }
+  }
   if (endpoint === 'account_info') {
     for (const row of payload) {
       for (const field of ['total_balance', 'utxo', 'rewards_available']) {

@@ -51,8 +51,8 @@ function PoolCard({
   onDelegated: () => void;
 }) {
   return (
-    <Card as="article" className="flex h-full flex-col transition hover:border-border-strong">
-      <div className="flex items-start gap-4 p-5">
+    <Card as="article" className="flex min-w-0 h-full flex-col overflow-hidden transition hover:border-border-strong">
+      <div className="flex min-w-0 items-start gap-4 p-5">
         <PoolLogo logo={pool.logo} ticker={pool.ticker || pool.name} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -69,7 +69,7 @@ function PoolCard({
           <p className="mt-1 truncate text-xs text-text-muted">{pool.name || 'Cardano stake pool'}</p>
         </div>
       </div>
-      <div className="flex flex-1 flex-col border-t border-border-subtle px-5 py-4">
+      <div className="flex min-w-0 flex-1 flex-col border-t border-border-subtle px-5 py-4">
         <p className="min-h-10 text-sm leading-5 text-text-secondary">
           {pool.description || 'A participating pool eligible for TosiDrop distribution programs.'}
         </p>
@@ -77,7 +77,7 @@ function PoolCard({
       </div>
       {connected && (
         <div className="flex justify-end border-t border-border-subtle px-4 py-3">
-          <Suspense fallback={<span className="text-2xs text-text-faint">Loading…</span>}>
+          <Suspense fallback={<span role="status" aria-label="Loading delegation" className="text-2xs text-text-faint">Loading…</span>}>
             <DelegationCard
               poolId={pool.poolId}
               currentPoolId={currentPoolId}
@@ -92,7 +92,7 @@ function PoolCard({
         href={poolExplorerUrl(pool.poolId)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mx-4 mb-4 mt-0 inline-flex items-center justify-center gap-2 rounded-lg border border-border-default px-3 py-2 text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
+        className="mx-4 mb-4 mt-0 inline-flex min-w-0 items-center justify-center gap-2 break-words rounded-lg border border-border-default px-3 py-2 text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
       >
         View pool details
         <IconExternalLink size={14} stroke={1.6} aria-hidden />
@@ -138,7 +138,7 @@ function PoolCards({
   onDelegated?: () => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {pools.map((pool) => (
         <PoolCard
           key={pool.poolId}

@@ -64,4 +64,13 @@ describe('KoiosClient', () => {
 
     await expect(client.accountAssets('stake_test1example')).rejects.toThrow('incomplete asset row');
   });
+
+  it('rejects incomplete asset metadata rows', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([{ asset_policy: 'policy' }]), { status: 200 }),
+    );
+    const client = new KoiosClient({ VITE_NETWORK: 'preview' });
+
+    await expect(client.assetInfo(['policyname'])).rejects.toThrow('asset_info returned an incomplete asset row');
+  });
 });

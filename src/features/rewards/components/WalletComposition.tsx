@@ -15,6 +15,7 @@ import { IconArrowRight, IconChartLine, IconClock, IconInfoCircle } from '@table
 import { Card } from '@/components/common/Card';
 import { apiClient } from '@/api/client';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
+import { decimalAmountToNumber } from '@/shared/amounts';
 
 const COLORS = ['#67E8F9', '#A78BFA', '#34D399', '#FBBF24', '#F472B6', '#FB7185'];
 const TOOLTIP_STYLE = {
@@ -171,7 +172,7 @@ export function WalletComposition({ compact = false }: { compact?: boolean }) {
   if (!data) return <Panel><p className="text-xs text-text-muted">Waiting for wallet data…</p></Panel>;
 
   const { summary } = data;
-  const attachedAda = Number(data.attachedLovelace ?? summary.balance.utxoLovelace) / 1_000_000;
+  const attachedAda = decimalAmountToNumber(data.attachedLovelace ?? summary.balance.utxoLovelace, 6);
   const adaValueUsd = summary.balance.adaPriceUsd === null ? null : attachedAda * summary.balance.adaPriceUsd;
   const pricedHoldings = summary.holdings.filter((holding) => holding.valueUsd !== null);
   const totalValueUsd = adaValueUsd === null && pricedHoldings.length === 0

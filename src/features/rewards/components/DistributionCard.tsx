@@ -38,6 +38,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
     : token.amount * marketPrice.priceAda;
   const hasImage = !img.failed && !!img.src;
   const actionsActive = !!(favorite?.active || dislike?.active);
+  const hasMarketPrice = estimatedUsd !== null || estimatedAda !== null;
 
   return (
     <Card
@@ -103,22 +104,26 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
           <span className="mt-2 block font-mono text-2xs uppercase tracking-wider text-text-muted">
             {token.ticker}
           </span>
-          <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
-            <span className="text-2xs text-text-muted">Est. claim value</span>
-            <span className="font-mono text-xs tabular-nums text-text-secondary">
-              {formatEstimatedUsd(estimatedUsd ?? Number.NaN)}
-            </span>
-          </span>
-          <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
-            {formatEstimatedAda(estimatedAda ?? Number.NaN)} · {formatMarketPrice(marketPrice?.priceUsd, 'USD')} / token
-          </span>
+          {hasMarketPrice && (
+            <>
+              <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
+                <span className="text-2xs text-text-muted">Est. claim value</span>
+                <span className="font-mono text-xs tabular-nums text-text-secondary">
+                  {formatEstimatedUsd(estimatedUsd ?? Number.NaN)}
+                </span>
+              </span>
+              <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
+                {formatEstimatedAda(estimatedAda ?? Number.NaN)} · {formatMarketPrice(marketPrice?.priceUsd, 'USD')} / token
+              </span>
+            </>
+          )}
         </span>
       </button>
 
       {(favorite || dislike) && (
         <div
           className={cn(
-            'absolute bottom-2 right-2 z-10 flex items-center transition',
+            'flex min-h-8 items-center justify-end px-3 pb-2 transition',
             actionsActive
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100',
