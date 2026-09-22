@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { IconMenu2, IconChevronDown, IconLogout, IconUserCircle, IconClock, IconWallet } from '@tabler/icons-react';
+import { IconMenu2, IconChevronDown, IconLogout, IconUserCircle, IconClock, IconWallet, IconShieldCheck } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
@@ -11,6 +11,8 @@ import { getNetworkLabel } from '@/utils/format';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkLabel } from '@/shared/network';
 import { CopyButton } from '@/components/common/CopyButton';
+import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
+import { truncateHash } from '@/utils/format';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
@@ -49,6 +51,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
   const disconnect = useWalletStore((s) => s.disconnect);
   const walletName = useWalletStore((s) => s.walletName);
   const accountName = displayName?.trim() || walletName || 'Wallet';
+  const { poolId, isLoading: delegationLoading, error: delegationError } = useDelegatedPool(stakeAddress);
 
   return (
     <Menu>
@@ -90,6 +93,19 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
             />
           </div>
         </div>
+        <Link
+          to="/team"
+          className="mx-2 flex items-center gap-2 rounded-lg bg-surface-inset/60 px-2.5 py-2 transition hover:bg-surface-inset"
+        >
+          <IconShieldCheck size={14} stroke={1.7} className="shrink-0 text-accent-light" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-2xs uppercase tracking-wider text-text-faint">Current delegation</span>
+            <span className="mt-0.5 block truncate font-mono text-2xs text-text-secondary">
+              {delegationLoading ? 'Checking…' : delegationError ? 'Temporarily unavailable' : poolId ? truncateHash(poolId, 10, 6) : 'Not delegated'}
+            </span>
+          </span>
+          <span className="shrink-0 text-2xs font-medium text-accent-light">Change</span>
+        </Link>
         <div className="my-1 h-px bg-border-subtle" />
         <MenuItem>
           <Link
