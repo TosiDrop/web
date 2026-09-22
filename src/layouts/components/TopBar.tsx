@@ -13,23 +13,11 @@ import { networkLabel } from '@/shared/network';
 import { CopyButton } from '@/components/common/CopyButton';
 import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 import { truncateHash } from '@/utils/format';
-
-const PAGE_TITLES: Record<string, string> = {
-  '/': 'Overview',
-  '/claim': 'Claim rewards',
-  '/profile': 'Portfolio',
-  '/tokens': 'Discover',
-  '/token': 'Discover',
-  '/team': 'Pools',
-  '/analytics': 'Analytics',
-  '/deposit': 'Deposit',
-};
+import { pageTitle } from '@/layouts/navigation';
 
 function usePageTitle() {
   const { pathname } = useLocation();
-  if (pathname === '/') return PAGE_TITLES['/'];
-  const match = Object.keys(PAGE_TITLES).find((k) => k !== '/' && pathname.startsWith(k));
-  return match ? PAGE_TITLES[match] : '';
+  return pageTitle(pathname);
 }
 
 /** Deterministic two-tone identicon so the same address always looks the same. */
