@@ -2,8 +2,7 @@ import { lazy, Suspense, useState } from 'react';
 import { IconExternalLink, IconShieldCheck } from '@tabler/icons-react';
 import { poolExplorerUrl, useParticipatingPools, type TeamPool } from '@/features/team/api/team.queries';
 import { Card } from '@/components/common/Card';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { GradientButton } from '@/components/common/GradientButton';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
@@ -186,17 +185,10 @@ export default function TeamPage() {
         </p>
       </header>
 
-      <Card as="section" className="border-accent/20 bg-gradient-to-br from-accent/10 via-surface-raised to-surface-raised px-6 py-5" aria-labelledby="pool-benefit-heading">
-        <div className="flex items-start gap-3">
-          <IconShieldCheck size={21} stroke={1.7} className="mt-0.5 shrink-0 text-status-success-light" aria-hidden />
-          <div>
-            <h2 id="pool-benefit-heading" className="text-lg font-semibold text-text-primary">Why choose a partner pool?</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-              Partner pools are configured to participate in TosiDrop distributions. Claims from a non-partner pool may include a 1 ADA pool fee; the final amount is always confirmed in the claim flow.
-            </p>
-          </div>
-        </div>
-      </Card>
+      <p className="flex items-start gap-2 text-xs leading-5 text-text-muted">
+        <IconShieldCheck size={15} stroke={1.7} className="mt-0.5 shrink-0 text-status-success-light" aria-hidden />
+        Partner pools are marked for distribution eligibility. Claims from other pools may include a 1 ADA pool fee; the final amount is confirmed during claiming.
+      </p>
 
       <section className="space-y-4">
         <div>
@@ -211,12 +203,7 @@ export default function TeamPage() {
         {isLoading ? (
           <PoolsSkeleton />
         ) : error ? (
-          <div className="space-y-3">
-            <FeedbackBanner tone="error" title="Couldn't load pools" message={error.message} />
-            <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
-              Try again
-            </GradientButton>
-          </div>
+          <DataUnavailable title="Pool index is catching up" message="The latest participating-pool snapshot is not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />
         ) : !pools || pools.length === 0 ? (
           <Card variant="inset" className="px-6 py-16 text-center">
             <p className="text-sm font-semibold text-text-primary">No pools listed</p>

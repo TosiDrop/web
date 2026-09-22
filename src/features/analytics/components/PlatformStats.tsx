@@ -1,5 +1,5 @@
-import { IconAlertCircle } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { usePlatformStats, type PlatformStats as Stats } from '@/features/analytics/hooks/usePlatformStats';
 import { shortUptime } from '@/features/analytics/utils/uptime';
 
@@ -72,7 +72,7 @@ export function PlatformStatsGrid({ stats }: { stats: Stats }) {
 }
 
 export function PlatformStats() {
-  const { data, isLoading, error } = usePlatformStats();
+  const { data, isLoading, error, refetch } = usePlatformStats();
 
   if (isLoading) {
     return (
@@ -87,12 +87,7 @@ export function PlatformStats() {
     );
   }
   if (error || !data) {
-    return (
-      <div role="alert" className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
-        <IconAlertCircle size={18} className="mt-0.5 shrink-0" />
-        {error?.message ?? 'Platform statistics are unavailable.'}
-      </div>
-    );
+    return <DataUnavailable title="Network metrics are catching up" message="The latest indexed counters are not available yet. Your wallet data is unaffected." onRetry={() => { void refetch(); }} />;
   }
   return <PlatformStatsGrid stats={data} />;
 }

@@ -37,6 +37,7 @@ describe('PlatformStats', () => {
   it('shows an error state', () => {
     hookMock.mockReturnValue({ data: undefined, isLoading: false, error: new Error('boom') });
     render(<PlatformStats />);
-    expect(screen.getByRole('alert')).toHaveTextContent('boom');
+    expect(screen.getByRole('alert')).toHaveTextContent('Network metrics are catching up');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('boom');
   });
 });

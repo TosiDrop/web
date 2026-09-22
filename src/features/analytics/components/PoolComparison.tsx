@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { IconAlertCircle, IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
+import { IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { usePoolData } from '@/features/analytics/hooks/usePoolData';
 import { describeEligibility, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
@@ -117,7 +118,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
 }
 
 export function PoolComparison() {
-  const { data, isLoading, error } = usePoolData();
+  const { data, isLoading, error, refetch } = usePoolData();
   const [query, setQuery] = useState('');
   const allRows = useMemo(() => data?.rows ?? [], [data]);
   const rows = useMemo(() => {
@@ -139,12 +140,7 @@ export function PoolComparison() {
     );
   }
   if (error) {
-    return (
-      <div role="alert" className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
-        <IconAlertCircle size={18} className="mt-0.5 shrink-0" />
-        {error.message}
-      </div>
-    );
+    return <DataUnavailable title="Pool index is catching up" message="The latest participating-pool snapshot is not available yet. We will keep this view retryable." onRetry={() => { void refetch(); }} />;
   }
 
   return (
