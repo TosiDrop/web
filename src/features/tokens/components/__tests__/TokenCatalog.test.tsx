@@ -22,11 +22,20 @@ describe('TokenCatalog', () => {
   afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
   it('renders approved tokens and filters by ticker', () => {
-    publicTokensMock.mockReturnValue({ data: { projects: [TOKEN], degraded: false, scope: 'public' }, isLoading: false, error: null });
+    publicTokensMock.mockReturnValue({ data: {
+      projects: [TOKEN],
+      degraded: false,
+      scope: 'public',
+      marketPrices: {
+        [TOKEN.tokenId]: { priceUsd: 1.25, priceAda: 0.5, priceChange24h: 4.2, source: 'provider-a, provider-b', sourceCount: 2, observedAt: 100 },
+      },
+    }, isLoading: false, error: null });
     render(<TokenCatalog />);
 
     expect(screen.getByRole('heading', { name: 'Tosi Rewards' })).toBeInTheDocument();
     expect(screen.getByText(/100 TOSI \/ epoch/)).toBeInTheDocument();
+    expect(screen.getByText('$1.25')).toBeInTheDocument();
+    expect(screen.getByText('+4.20%')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Visit token website/ })).toHaveAttribute('href', TOKEN.website);
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Search tokens' }), { target: { value: 'missing' } });

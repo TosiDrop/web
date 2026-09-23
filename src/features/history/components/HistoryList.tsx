@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IconArrowsSort, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useDeliveredRewards, type DeliveredReward } from '@/features/history/api/history.queries';
@@ -141,7 +141,7 @@ export function HistoryList() {
   useEffect(() => {
     if (data && !invalidated.current) {
       invalidated.current = true;
-      queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
+      void queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
     }
   }, [data, queryClient, stakeAddress]);
 
@@ -157,14 +157,7 @@ export function HistoryList() {
     !!history.data && !history.data.degraded && history.data.total > 0;
 
   if (error && !serverMode) {
-    return (
-      <div className="space-y-3">
-        <FeedbackBanner tone="error" title="Couldn't load claim history" message={error.message} />
-        <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
-          Try again
-        </GradientButton>
-      </div>
-    );
+    return <DataUnavailable title="Claim history is catching up" message="The indexed claim archive is not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />;
   }
 
   if (!serverMode && (!data || data.length === 0)) {

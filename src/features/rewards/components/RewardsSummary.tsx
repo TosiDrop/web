@@ -2,9 +2,12 @@ import { Card } from '@/components/common/Card';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useEstimateFees } from '@/features/rewards/api/fees.queries';
 import { formatAda } from '@/utils/format';
+import { formatEstimatedAda, formatEstimatedUsd } from '@/features/market/format';
+import type { ClaimValueEstimate } from '@/features/claim/utils/claimValue';
 
 interface RewardsSummaryProps {
   tokenCount: number;
+  estimate: ClaimValueEstimate;
 }
 
 function FeeRow({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -19,12 +22,16 @@ function FeeRow({ label, value, hint }: { label: string; value: string; hint?: s
   );
 }
 
-export function RewardsSummary({ tokenCount }: RewardsSummaryProps) {
+export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
   const { data, isLoading, error } = useEstimateFees(tokenCount);
 
   if (tokenCount === 0) {
     return (
       <Card className="p-5">
+        <div className="border-b border-border-subtle pb-4">
+          <p className="label-eyebrow">Estimated market value</p>
+          <p className="mt-2 text-sm text-text-muted">Select tokens to see an indexed estimate.</p>
+        </div>
         <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
         <p className="mt-3 text-xs text-text-muted">Select tokens to see the deposit required.</p>
       </Card>
@@ -33,6 +40,23 @@ export function RewardsSummary({ tokenCount }: RewardsSummaryProps) {
 
   return (
     <Card className="p-5">
+      <div className="border-b border-border-subtle pb-4">
+        <p className="label-eyebrow">Estimated market value</p>
+        {estimate.pricedCount > 0 ? (
+          <>
+            <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-text-primary">
+              {estimate.usd !== null ? formatEstimatedUsd(estimate.usd) : formatEstimatedAda(estimate.ada ?? 0)}
+            </p>
+            <p className="mt-1 font-mono text-xs tabular-nums text-text-muted">
+              {estimate.usd !== null && estimate.ada !== null ? `${formatEstimatedAda(estimate.ada)} · ` : ''}
+              {estimate.pricedCount} of {estimate.totalCount} priced
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-text-muted">No indexed prices available yet.</p>
+        )}
+        <p className="mt-2 text-2xs leading-snug text-text-faint">Display-only estimate from the market index; it does not change the claim deposit.</p>
+      </div>
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
         <span className="font-mono text-2xs tabular-nums text-text-muted">

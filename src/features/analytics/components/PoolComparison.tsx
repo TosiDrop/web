@@ -1,10 +1,20 @@
 import { Fragment, useMemo, useState } from 'react';
-import { IconAlertCircle, IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { usePoolData } from '@/features/analytics/hooks/usePoolData';
 import { describeEligibility, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { maximumFractionDigits: n >= 100 ? 0 : n >= 1 ? 2 : 4 });
+
+const CHART_TOOLTIP = {
+  background: 'rgba(15, 21, 36, 0.96)',
+  border: '1px solid rgba(56, 78, 128, 0.45)',
+  borderRadius: 10,
+  color: '#E5E7EB',
+  fontSize: 11,
+};
 
 function PoolCell({ row }: { row: PoolComparisonRow }) {
   const [failed, setFailed] = useState(false);
@@ -108,7 +118,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
 }
 
 export function PoolComparison() {
-  const { data, isLoading, error } = usePoolData();
+  const { data, isLoading, error, refetch } = usePoolData();
   const [query, setQuery] = useState('');
   const allRows = useMemo(() => data?.rows ?? [], [data]);
   const rows = useMemo(() => {
@@ -130,12 +140,7 @@ export function PoolComparison() {
     );
   }
   if (error) {
-    return (
-      <div role="alert" className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
-        <IconAlertCircle size={18} className="mt-0.5 shrink-0" />
-        {error.message}
-      </div>
-    );
+    return <DataUnavailable title="Pool index is catching up" message="The latest participating-pool snapshot is not available yet. We will keep this view retryable." onRetry={() => { void refetch(); }} />;
   }
 
   return (
@@ -157,7 +162,38 @@ export function PoolComparison() {
         </p>
       )}
       {rows.length ? (
-        <PoolComparisonTable rows={rows} />
+        <>
+          {rows.some((row) => row.kind === 'pool' && row.delegators !== null) && (
+            <section className="card-premium overflow-hidden" aria-labelledby="delegator-distribution">
+              <div className="border-b border-border-subtle/60 px-5 py-4">
+                <p className="label-eyebrow">Network shape</p>
+                <h3 id="delegator-distribution" className="mt-1 text-base font-medium text-text-primary">
+                  Delegators across tracked pools
+                </h3>
+              </div>
+              <div className="h-64 px-2 pb-4 pt-5 sm:px-5" aria-label="Delegator distribution chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={rows
+                      .filter((row) => row.kind === 'pool' && row.delegators !== null)
+                      .sort((a, b) => (b.delegators ?? 0) - (a.delegators ?? 0))
+                      .slice(0, 10)
+                      .map((row) => ({ name: row.ticker || row.name || 'Pool', delegators: row.delegators }))}
+                    layout="vertical"
+                    margin={{ left: 8, right: 18 }}
+                  >
+                    <CartesianGrid stroke="rgba(56,78,128,0.22)" horizontal={false} />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#6B7895', fontSize: 10 }} />
+                    <YAxis type="category" dataKey="name" width={64} axisLine={false} tickLine={false} tick={{ fill: '#AAB5CE', fontSize: 10 }} />
+                    <Tooltip contentStyle={CHART_TOOLTIP} formatter={(value) => [Number(value).toLocaleString(), 'Delegators']} />
+                    <Bar dataKey="delegators" fill="#67E8F9" radius={[0, 5, 5, 0]} maxBarSize={18} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+          <PoolComparisonTable rows={rows} />
+        </>
       ) : (
         <p className="card-premium px-6 py-10 text-center text-sm text-slate-400">
           {allRows.length ? 'No pools match that filter.' : 'No pools are registered on this network yet.'}

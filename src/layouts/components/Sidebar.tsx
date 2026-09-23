@@ -1,13 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
-  IconGift,
-  IconUsers,
-  IconFileText,
-  IconRocket,
-  IconChartLine,
-  IconHome2,
-  IconCoins,
   IconExternalLink,
   IconX,
 } from '@tabler/icons-react';
@@ -15,32 +8,7 @@ import { cn } from '@/lib/utils';
 import { useMobileMenu } from '@/layouts/MobileMenuContext';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
-
-const NAV_GROUPS = [
-  {
-    label: 'Your wallet',
-    links: [
-      { name: 'Home', href: '/', icon: IconHome2 },
-      { name: 'Claim rewards', href: '/claim', icon: IconGift },
-    ],
-  },
-  {
-    label: 'Explore',
-    links: [
-      { name: 'Tokens', href: '/tokens', icon: IconCoins },
-      { name: 'Analytics', href: '/analytics', icon: IconChartLine },
-      { name: 'Team', href: '/team', icon: IconUsers },
-    ],
-  },
-  {
-    label: 'Build',
-    links: [{ name: 'Projects', href: '/projects', icon: IconRocket }],
-  },
-  {
-    label: 'Resources',
-    links: [{ name: 'Docs', href: 'https://docs.tosidrop.me/', icon: IconFileText, external: true }],
-  },
-];
+import { NAV_GROUPS } from '@/layouts/navigation';
 
 const SOCIAL_LINKS = [
   { label: 'Discord', href: 'https://discord.gg/tosidrop', icon: DiscordIcon },
@@ -96,8 +64,12 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 </li>
               );
             }
-            const isActive =
-              link.href === '/' ? location.pathname === '/' : location.pathname.startsWith(link.href);
+            const [linkPath, linkQuery] = link.href.split('?');
+            const requiredTab = new URLSearchParams(linkQuery).get('tab');
+            const currentTab = new URLSearchParams(location.search).get('tab');
+            const isActive = requiredTab
+              ? location.pathname === linkPath && currentTab === requiredTab
+              : location.pathname.startsWith(linkPath);
             return (
               <li key={link.name}>
                 <Link

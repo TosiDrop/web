@@ -169,7 +169,7 @@ export default function OnboardingPage() {
     try {
       await submit(normalized);
       pushToast({ tone: 'success', title: 'Token submitted', message: 'We will review it shortly.' });
-      navigate('/projects');
+      void navigate('/projects');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Submission failed');
     }

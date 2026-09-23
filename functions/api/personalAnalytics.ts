@@ -264,7 +264,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     );
   } catch (error) {
     console.error('personalAnalytics history aggregate error:', error);
-    return errorResponse('Failed to fetch personal analytics', 500, origin);
+    return jsonResponse(EMPTY_ANALYTICS, 200, origin);
   }
 };
 

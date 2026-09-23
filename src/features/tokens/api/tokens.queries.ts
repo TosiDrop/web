@@ -3,6 +3,10 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { EMPTY_DISTRIBUTION, type Project } from '@/shared/projects';
 import { tickerFor, type TokenInfo, type TokenMap } from '@/features/history/api/history.queries';
+import { fetchMarketPrices } from '@/features/market/api/market.queries';
+import type { PublicMarketPrice } from '@/features/market/api/market.queries';
+
+export type { PublicMarketPrice } from '@/features/market/api/market.queries';
 
 export interface PublicTokensResponse {
   projects: Project[];
@@ -10,6 +14,7 @@ export interface PublicTokensResponse {
   /** True when either the project registry or VM metadata had to be omitted. */
   metadataDegraded?: boolean;
   tokens?: TokenMap;
+  marketPrices?: Record<string, PublicMarketPrice>;
   scope: 'public';
 }
 
@@ -119,11 +124,16 @@ export function usePublicTokens() {
             approvedAt: null,
           };
         });
+      const allProjects = [...projects, ...metadataProjects];
+      const marketPrices = allProjects.length > 0
+        ? await fetchMarketPrices(allProjects.map((project) => project.tokenId)).catch(() => ({}))
+        : {};
       return {
-        projects: [...projects, ...metadataProjects],
+        projects: allProjects,
         degraded: projectsResponse?.degraded === true && projects.length === 0 && Object.keys(tokenMap).length === 0,
         metadataDegraded: !projectsResponse || projectsResponse.degraded || tokensResult.status === 'rejected' || projectsPayloadMalformed || tokenPayloadMalformed || projects.length !== rawProjects.length || Object.keys(tokenMap).length !== Object.keys(rawTokenMap).length,
         tokens: tokensResult.status === 'fulfilled' ? tokenMap : undefined,
+        marketPrices,
         scope: 'public' as const,
       };
     },

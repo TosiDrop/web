@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { GradientButton } from '@/components/common/GradientButton';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { useRewardBreakdown, type BreakdownGroup } from '@/features/profile/hooks/useRewardBreakdown';
 import type { BreakdownEntry } from '@/features/profile/utils/normalizeBreakdown';
@@ -110,14 +109,7 @@ export function RewardBreakdown() {
   }
 
   if (error) {
-    return (
-      <div className="space-y-3">
-        <FeedbackBanner tone="error" title="Couldn't load the breakdown" message={error.message} />
-        <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
-          Try again
-        </GradientButton>
-      </div>
-    );
+    return <DataUnavailable title="Reward sources are catching up" message="The indexed reward breakdown is not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />;
   }
 
   if (!data || data.length === 0) {

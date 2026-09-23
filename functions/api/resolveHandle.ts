@@ -1,11 +1,8 @@
 import type { Env } from '../types/env';
-import { deploymentNetwork, jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { jsonResponse, errorResponse, optionsResponse } from '../services/vmClient';
+import { KoiosClient } from '../services/koiosClient';
 
 const ADA_HANDLE_POLICY_ID = 'f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a';
-const KOIOS_BASES = {
-  mainnet: 'https://api.koios.rest/api/v1',
-  preview: 'https://preview.koios.rest/api/v1',
-} as const;
 
 // CIP-68 asset name prefixes used by ADA Handle.
 // Most active handles live on label 222 (user NFT). Legacy pre-CIP-68 handles
@@ -19,14 +16,11 @@ function textToHex(text: string): string {
     .join('');
 }
 
-async function lookupHolder(koiosBase: string, assetName: string): Promise<string | null> {
-  const res = await fetch(`${koiosBase}/asset_nft_address`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ _asset_policy: ADA_HANDLE_POLICY_ID, _asset_name: assetName }),
+async function lookupHolder(koios: KoiosClient, assetName: string): Promise<string | null> {
+  const data = await koios.post<Array<{ payment_address?: string }>>('asset_nft_address', {
+    _asset_policy: ADA_HANDLE_POLICY_ID,
+    _asset_name: assetName,
   });
-  if (!res.ok) return null;
-  const data = (await res.json()) as Array<{ payment_address?: string }>;
   return data[0]?.payment_address ?? null;
 }
 
@@ -45,7 +39,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return errorResponse('Invalid handle format', 400, origin);
   }
   const hexName = textToHex(name.toLowerCase());
-  const koiosBase = KOIOS_BASES[deploymentNetwork(env)];
+  const koios = new KoiosClient(env);
 
   try {
     const candidates = [
@@ -56,7 +50,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     let paymentAddress: string | null = null;
     for (const assetName of candidates) {
-      paymentAddress = await lookupHolder(koiosBase, assetName);
+      paymentAddress = await lookupHolder(koios, assetName);
       if (paymentAddress) break;
     }
 
@@ -64,17 +58,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return errorResponse(`Handle "$${name}" not found`, 404, origin);
     }
 
-    const addrRes = await fetch(`${koiosBase}/address_info`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ _addresses: [paymentAddress] }),
-    });
-
-    if (!addrRes.ok) {
-      return errorResponse(`Address lookup failed (${addrRes.status})`, 502, origin);
+    let addrData: Array<{ stake_address: string | null }>;
+    try {
+      addrData = await koios.post('address_info', { _addresses: [paymentAddress] });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Address lookup failed';
+      return errorResponse(message, 502, origin);
     }
-
-    const addrData = (await addrRes.json()) as Array<{ stake_address: string | null }>;
     const stakeAddress = addrData[0]?.stake_address;
 
     if (!stakeAddress) {
@@ -84,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return jsonResponse({ handle: `$${name}`, stakeAddress }, 200, origin);
   } catch (error) {
     console.error('resolveHandle error:', error);
-    return errorResponse('Failed to resolve handle', 500, origin);
+    return errorResponse('Failed to resolve handle', 502, origin);
   }
 };
 

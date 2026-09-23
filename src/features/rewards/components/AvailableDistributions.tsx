@@ -8,13 +8,15 @@ import { partitionPreferences } from '@/features/favorites/utils/partitionPrefer
 import { limitSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
 import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
+import type { PublicMarketPrice } from '@/features/market/api/market.queries';
 
 interface AvailableDistributionsProps {
   tokens: ClaimableToken[];
   maxAssets: number;
+  marketPrices?: Record<string, PublicMarketPrice>;
 }
 
-export function AvailableDistributions({ tokens, maxAssets }: AvailableDistributionsProps) {
+export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }: AvailableDistributionsProps) {
   const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
 
@@ -75,6 +77,7 @@ export function AvailableDistributions({ tokens, maxAssets }: AvailableDistribut
           ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
           : undefined
       }
+      marketPrice={marketPrices[token.assetId]}
     />
   );
 

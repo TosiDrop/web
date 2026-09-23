@@ -10,9 +10,7 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const DepositPage = lazy(() => import('@/pages/DepositPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const TeamPage = lazy(() => import('@/pages/TeamPage'));
-const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'));
 const TokensPage = lazy(() => import('@/pages/TokensPage'));
-const OnboardingPage = lazy(() => import('@/pages/OnboardingPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const ApiTesterPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/ApiTesterPage'))
@@ -40,14 +38,16 @@ export default function App() {
                 <Route path="/claim" element={<ClaimPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/portfolio" element={<Navigate to="/profile" replace />} />
+                <Route path="/activity" element={<Navigate to="/profile#activity" replace />} />
+                <Route path="/rewards" element={<Navigate to="/profile#rewards" replace />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/tokens" element={<TokensPage />} />
                 <Route path="/token" element={<TokensPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/projects/new" element={<OnboardingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/history" element={<Navigate to="/profile?tab=history" replace />} />
-                <Route path="/preferences" element={<Navigate to="/profile?tab=settings" replace />} />
+                <Route path="/network" element={<Navigate to="/analytics" replace />} />
+                <Route path="/history" element={<Navigate to="/profile#activity" replace />} />
+                <Route path="/preferences" element={<Navigate to="/profile#account" replace />} />
                 {ApiTesterPage && <Route path="/api-tester" element={<ApiTesterPage />} />}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

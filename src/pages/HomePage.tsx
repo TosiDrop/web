@@ -1,10 +1,6 @@
-import { Link } from 'react-router-dom';
-import { IconArrowRight, IconGift, IconRocket, IconWallet } from '@tabler/icons-react';
-import { Card } from '@/components/common/Card';
+import { Link, Navigate } from 'react-router-dom';
+import { IconArrowRight, IconWallet } from '@tabler/icons-react';
 import { GradientButton } from '@/components/common/GradientButton';
-import { WalletComposition } from '@/features/rewards/components/WalletComposition';
-import { DelegationCard } from '@/features/rewards/components/DelegationCard';
-import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
@@ -22,7 +18,7 @@ function PublicHome() {
             Claim the tokens you earned.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-text-secondary">
-            TosiDrop connects Cardano delegators with token rewards from community projects and dApps. Connect your wallet to see what is waiting for you, or explore how to distribute tokens to your own community.
+            TosiDrop connects Cardano delegators with token rewards from community projects and dApps. Connect your wallet to see what is waiting for you.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <GradientButton onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime}>
@@ -32,24 +28,6 @@ function PublicHome() {
               See how claiming works <IconArrowRight size={16} />
             </Link>
           </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="audiences" className="space-y-4">
-        <div><p className="label-eyebrow">Choose your path</p><h2 id="audiences" className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">A home for Cardano rewards</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">Whether you are here to receive tokens or distribute them, TosiDrop gives you a clear next step.</p></div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-6 transition hover:border-accent/40">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent-light"><IconWallet size={20} /></span>
-            <h3 className="mt-5 text-lg font-semibold text-text-primary">I am a Cardano delegator</h3>
-            <p className="mt-2 text-sm leading-6 text-text-muted">Connect your wallet to check your claimable tokens, see your current stake pool, and claim rewards in a few guided steps.</p>
-            <button type="button" onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime} className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light transition hover:text-white">Check my rewards <IconArrowRight size={16} /></button>
-          </Card>
-          <Card className="p-6 transition hover:border-cream/40">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream/10 text-cream"><IconRocket size={20} /></span>
-            <h3 className="mt-5 text-lg font-semibold text-text-primary">I run a token project or dApp</h3>
-            <p className="mt-2 text-sm leading-6 text-text-muted">Bring your distribution to Cardano users. Set up a project, define eligibility, and make your token program discoverable.</p>
-            <Link to="/projects/new" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cream-light transition hover:text-white">Start a distribution <IconArrowRight size={16} /></Link>
-          </Card>
         </div>
       </section>
 
@@ -65,76 +43,8 @@ function PublicHome() {
   );
 }
 
-function ClaimPrompt() {
-  const stakeAddress = useWalletStore((state) => state.stakeAddress);
-  const connected = useWalletStore((state) => state.connected);
-  const { data: rewards, isLoading, error } = useRewards(stakeAddress);
-
-  if (!connected || !stakeAddress) {
-    return (
-      <Card className="border-cream/20 bg-cream/[0.06] p-5">
-        <p className="label-eyebrow">Next step</p>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-          <div><h2 className="text-lg font-semibold text-text-primary">Connect to check your rewards</h2><p className="mt-1 text-sm text-text-muted">Your home will show claimable distributions as soon as your wallet is connected.</p></div>
-          <Link to="/claim" className="inline-flex items-center gap-2 text-sm font-medium text-accent-light">Open claim flow <IconArrowRight size={16} /></Link>
-        </div>
-      </Card>
-    );
-  }
-
-  if (isLoading) return <Card className="h-28 animate-pulse" aria-label="Checking claimable rewards" />;
-  if (error) return <Card className="p-5"><p className="text-sm text-status-error-light">Claimable rewards are temporarily unavailable.</p><Link to="/claim" className="mt-2 inline-flex items-center gap-2 text-xs text-accent-light">Try the claim flow <IconArrowRight size={14} /></Link></Card>;
-
-  const count = rewards?.length ?? 0;
-  return (
-    <Card className={`overflow-hidden ${count > 0 ? 'border-accent/40 bg-accent/[0.06]' : ''}`}>
-      <div className="flex flex-wrap items-end justify-between gap-6 p-6 sm:p-7">
-        <div>
-          <div className="flex items-center gap-2 text-accent-light">
-            <IconGift size={16} aria-hidden />
-            <p className="label-eyebrow text-accent-light">Rewards pulse</p>
-          </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
-            {count > 0 ? `${count} reward${count === 1 ? '' : 's'} ready` : 'You’re all caught up'}
-          </h2>
-          <p className="mt-2 max-w-lg text-sm leading-6 text-text-muted">
-            {count > 0 ? 'Review your eligible distributions and choose what to claim.' : 'New distributions appear here as soon as they become available.'}
-          </p>
-        </div>
-        <Link to="/claim" className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-accent-contrast transition hover:bg-accent-light">
-          {count > 0 ? 'Review rewards' : 'Open claim flow'} <IconArrowRight size={16} />
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
 export default function HomePage() {
   const connected = useWalletStore((state) => state.connected);
   if (!connected) return <PublicHome />;
-
-  return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <p className="label-eyebrow">Home</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet at a glance</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">Balance, delegation, and rewards in one place. Your wallet is the source of truth for what you own.</p>
-        </div>
-        <Link to="/claim" className="hidden items-center gap-2 text-sm font-medium text-accent-light transition hover:text-text-primary sm:inline-flex">
-          Claim rewards <IconArrowRight size={16} />
-        </Link>
-      </header>
-      <ClaimPrompt />
-      <section aria-labelledby="wallet-overview" className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="label-eyebrow">Live wallet data</p>
-            <h2 id="wallet-overview" className="mt-1 text-xl font-semibold tracking-tight text-text-primary">Your portfolio</h2>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_0.85fr]"><WalletComposition /><DelegationCard /></div>
-      </section>
-    </div>
-  );
+  return <Navigate to="/profile" replace />;
 }

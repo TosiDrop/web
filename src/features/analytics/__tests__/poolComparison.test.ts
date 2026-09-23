@@ -38,14 +38,14 @@ describe('buildPoolComparison', () => {
   };
   const tokens = { 'pol.6d544f5349': { ticker: 'mTOSI', decimals: '3' } };
 
-  it('joins offerings and partner pools, excluding pools without active distributions', () => {
+  it('joins offerings while retaining every participating pool', () => {
     const rows = buildPoolComparison({
       pools,
       distributions: { everyone: [DIST, { ...DIST, id: '9', enabled: 'f' }] },
       partnerPoolIds: new Set(['pool1a']),
       tokens,
     });
-    expect(rows.map((r) => r.ticker)).toEqual(['AAA']);
+    expect(rows.map((r) => r.ticker)).toEqual(['AAA', 'BBB']);
     expect(rows[0]).toMatchObject({
       delegators: 12,
       partner: true,
@@ -66,14 +66,17 @@ describe('buildPoolComparison', () => {
     });
   });
 
-  it('excludes pools whose distributions are all disabled', () => {
+  it('retains pools when their distributions are all disabled', () => {
     const rows = buildPoolComparison({
       pools,
       distributions: { everyone: [{ ...DIST, enabled: 'f' }] },
       partnerPoolIds: new Set(),
       tokens,
     });
-    expect(rows).toEqual([]);
+    expect(rows.map((row) => [row.poolId, row.offerings])).toEqual([
+      ['pool1b', []],
+      ['pool1a', []],
+    ]);
   });
 
   it('keeps two rules for the same token distinct instead of merging them', () => {
@@ -98,7 +101,7 @@ describe('buildPoolComparison', () => {
       partnerPoolIds: null,
       tokens: null,
     });
-    expect(rows[0]).toMatchObject({ poolId: 'pool1a', partner: null });
+    expect(rows.find((row) => row.poolId === 'pool1a')).toMatchObject({ poolId: 'pool1a', partner: null });
   });
 
   it('falls back gracefully on malformed data', () => {
@@ -108,7 +111,8 @@ describe('buildPoolComparison', () => {
       partnerPoolIds: new Set(),
       tokens: undefined,
     });
-    expect(rows).toEqual([]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ poolId: 'x', ticker: 'X', offerings: [] });
   });
 
   it('keeps projects separate from pools and applies the mainnet TosiDrop identity', () => {
@@ -133,6 +137,37 @@ describe('buildPoolComparison', () => {
       network: 'preview',
     });
     expect(rows[0]).toMatchObject({ kind: 'pool', poolId: 'TOSI', ticker: 'TOSI' });
+  });
+
+  it('treats project-prefixed VM entries as projects, not unknown pools', () => {
+    const rows = buildPoolComparison({
+      pools: {
+        project_kani: { id: 'project_kani', ticker: '', name: 'Unknown pool', enabled: 't', logo: '' },
+        pool1a: pools.pool1a,
+      },
+      distributions: { everyone: [{ ...DIST, pool_id: 'project_kani' }] },
+      partnerPoolIds: new Set(),
+      tokens,
+      network: 'preview',
+    });
+    expect(rows).toContainEqual(expect.objectContaining({
+      kind: 'project', poolId: 'project_kani', ticker: 'KANI', name: 'kani',
+    }));
+    expect(rows).not.toContainEqual(expect.objectContaining({ ticker: 'Unknown pool' }));
+  });
+
+  it('creates a project row for project distributions absent from pool metadata', () => {
+    const rows = buildPoolComparison({
+      pools,
+      distributions: { everyone: [{ ...DIST, pool_id: 'project_anetabtc' }] },
+      partnerPoolIds: new Set(),
+      tokens,
+      network: 'preview',
+    });
+    expect(rows).toContainEqual(expect.objectContaining({
+      kind: 'project', poolId: 'project_anetabtc', ticker: 'ANETABTC', name: 'anetabtc',
+    }));
+    expect(rows).not.toContainEqual(expect.objectContaining({ poolId: 'project_anetabtc', kind: 'pool' }));
   });
 
   it('joins pool distributions when VM and pool metadata use different ID formats', () => {

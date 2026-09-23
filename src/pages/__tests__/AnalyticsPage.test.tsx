@@ -22,7 +22,7 @@ const ROW = {
 describe('AnalyticsPage', () => {
   afterEach(cleanup);
 
-  it('renders public sections and links to personal analytics', () => {
+  it('renders first-class analytics sections', () => {
     poolsMock.mockReturnValue({
       data: {
         rows: [ROW, { ...ROW, poolId: 'pool1b', ticker: 'APEX', name: 'Apex', partner: false, offerings: [] }],
@@ -33,11 +33,10 @@ describe('AnalyticsPage', () => {
     });
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
-    expect(screen.getByRole('heading', { name: 'Public analytics' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Pool comparison' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Platform statistics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Analytics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pool performance' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Platform pulse' })).toBeInTheDocument();
     expect(screen.getByLabelText('Loading platform statistics')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open personal analytics' })).toHaveAttribute('href', '/profile?tab=analytics');
 
     expect(screen.getAllByRole('row')).toHaveLength(4);
     expect(screen.getByText('mTOSI')).toBeInTheDocument();

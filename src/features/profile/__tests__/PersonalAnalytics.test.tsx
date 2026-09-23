@@ -111,8 +111,8 @@ describe('PersonalAnalytics', () => {
 
     render(<PersonalAnalytics />);
 
-    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load personal analytics");
-    expect(screen.getByText('analytics unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Personal analytics are catching up');
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('shows an empty state instead of zero-filled charts', () => {

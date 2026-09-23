@@ -13,6 +13,8 @@ import { getCustomRewards } from '@/features/claim/api/customRewards';
 import { limitSelection, toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
+import { useMarketPrices } from '@/features/market/api/market.queries';
+import { estimateClaimValue } from '@/features/claim/utils/claimValue';
 
 import { GlobalClaimCard } from '@/features/rewards/components/GlobalClaimCard';
 import { ClaimWelcome } from '@/features/rewards/components/ClaimWelcome';
@@ -91,6 +93,16 @@ export default function ClaimPage() {
     : 25;
   const selectableAssetIds = useMemo(() => visibleAssetIds.slice(0, maxAssets), [visibleAssetIds, maxAssets]);
   const selectedVisible = limitSelection(visibleSelection(selectedAssetIds, selectableAssetIds), maxAssets);
+  const rewardAssetIds = useMemo(() => (rewards ?? []).map((reward) => reward.assetId), [rewards]);
+  const { data: marketPrices = {} } = useMarketPrices(rewardAssetIds);
+  const selectedRewards = useMemo(
+    () => (rewards ?? []).filter((reward) => selectedVisible.includes(reward.assetId)),
+    [rewards, selectedVisible],
+  );
+  const claimEstimate = useMemo(
+    () => estimateClaimValue(selectedRewards, marketPrices),
+    [selectedRewards, marketPrices],
+  );
   const total = selectableAssetIds.length;
   const allSelected = total > 0 && selectedVisible.length === total;
 
@@ -119,7 +131,7 @@ export default function ClaimPage() {
       if (resolved === lookupAddress) {
         // Re-checking the same address is the user's retry, so a temporary
         // API blip does not stay cached.
-        refetch();
+        void refetch();
       } else {
         setLookupAddress(resolved);
       }
@@ -136,13 +148,13 @@ export default function ClaimPage() {
         overheadFee: result.overhead_fee,
         withdrawalAddress: result.withdrawal_address,
       });
-      navigate('/deposit');
+      void navigate('/deposit');
     },
   });
 
   const handleClaim = () => {
     if (!stakeAddress || selectedVisible.length === 0 || claimMutation.isPending) return;
-    claimMutation.mutate({ stakeAddress, selected: selectedVisible });
+    void claimMutation.mutateAsync({ stakeAddress, selected: selectedVisible });
   };
 
   const toggleAll = () => {
@@ -212,14 +224,14 @@ export default function ClaimPage() {
             {loading ? (
               <LoadingTokens />
             ) : hasRewards ? (
-              <AvailableDistributions tokens={rewards ?? []} maxAssets={maxAssets} />
+              <AvailableDistributions tokens={rewards ?? []} maxAssets={maxAssets} marketPrices={marketPrices} />
             ) : (
               !error && <NoRewardsState />
             )}
           </div>
 
           <div className="space-y-5">
-            <RewardsSummary tokenCount={selectedVisible.length} />
+            <RewardsSummary tokenCount={selectedVisible.length} estimate={claimEstimate} />
           </div>
         </div>
       )}

@@ -1,6 +1,5 @@
 import { Card } from '@/components/common/Card';
-import { FeedbackBanner } from '@/components/common/FeedbackBanner';
-import { GradientButton } from '@/components/common/GradientButton';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { usePreferencesQuery } from '@/features/favorites/api/preferences.queries';
 import { tokenImageSrc } from '@/shared/tokenImage';
@@ -87,12 +86,7 @@ export function FavoritesTab() {
       {!connected ? (
         <EmptyState title="Not connected" message="Connect a wallet to manage your saved tokens." />
       ) : loadError ? (
-        <div className="space-y-3">
-          <FeedbackBanner tone="error" title="Couldn't load saved tokens" message={loadError.message} />
-          <GradientButton variant="secondary" size="sm" onClick={() => refetch()}>
-            Try again
-          </GradientButton>
-        </div>
+        <DataUnavailable title="Saved assets are catching up" message="Your saved token preferences are not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />
       ) : (
         <>
           <FavoritesSaveBar />

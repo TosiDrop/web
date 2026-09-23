@@ -6,6 +6,8 @@ import { tokenImageSrc } from '@/shared/tokenImage';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { FavoriteStarButton } from '@/features/favorites/components/FavoriteStarButton';
 import { DislikeButton } from '@/features/favorites/components/DislikeButton';
+import type { PublicMarketPrice } from '@/features/market/api/market.queries';
+import { formatEstimatedAda, formatEstimatedUsd, formatMarketPrice } from '@/features/market/format';
 
 interface DistributionCardProps {
   token: ClaimableToken;
@@ -13,6 +15,7 @@ interface DistributionCardProps {
   onToggle: () => void;
   favorite?: { active: boolean; onToggle: () => void };
   dislike?: { active: boolean; onToggle: () => void };
+  marketPrice?: PublicMarketPrice;
 }
 
 // Deterministic chart color so each token's fallback tile reads distinctly.
@@ -22,13 +25,20 @@ function colorFor(seed: string): string {
   return `var(--color-chart-${(h % 6) + 1})`;
 }
 
-export function DistributionCard({ token, selected, onToggle, favorite, dislike }: DistributionCardProps) {
+export function DistributionCard({ token, selected, onToggle, favorite, dislike, marketPrice }: DistributionCardProps) {
   const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
   });
+  const estimatedUsd = marketPrice?.priceUsd === null || marketPrice?.priceUsd === undefined
+    ? null
+    : token.amount * marketPrice.priceUsd;
+  const estimatedAda = marketPrice?.priceAda === null || marketPrice?.priceAda === undefined
+    ? null
+    : token.amount * marketPrice.priceAda;
   const hasImage = !img.failed && !!img.src;
   const actionsActive = !!(favorite?.active || dislike?.active);
+  const hasMarketPrice = estimatedUsd !== null || estimatedAda !== null;
 
   return (
     <Card
@@ -94,13 +104,31 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike 
           <span className="mt-2 block font-mono text-2xs uppercase tracking-wider text-text-muted">
             {token.ticker}
           </span>
+          {hasMarketPrice && (
+            <>
+              {estimatedUsd !== null && (
+                <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
+                  <span className="text-2xs text-text-muted">Est. claim value</span>
+                  <span className="font-mono text-xs tabular-nums text-text-secondary">{formatEstimatedUsd(estimatedUsd)}</span>
+                </span>
+              )}
+              {(estimatedAda !== null || estimatedUsd !== null) && (
+                <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
+                  {estimatedAda !== null && `${formatEstimatedAda(estimatedAda)} · `}
+                  {marketPrice?.priceUsd !== null && marketPrice?.priceUsd !== undefined
+                    ? `${formatMarketPrice(marketPrice.priceUsd, 'USD')} / token`
+                    : `${formatMarketPrice(marketPrice?.priceAda, 'ADA')} / token`}
+                </span>
+              )}
+            </>
+          )}
         </span>
       </button>
 
       {(favorite || dislike) && (
         <div
           className={cn(
-            'absolute bottom-2 right-2 z-10 flex items-center transition',
+            'flex min-h-8 items-center justify-end px-3 pb-2 transition',
             actionsActive
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100',
