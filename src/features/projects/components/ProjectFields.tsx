@@ -32,7 +32,7 @@ export function ProjectDetailsFields({ value, onChange }: DetailsProps) {
           placeholder="e.g. TosiDrop"
         />
       </Field>
-      <Field label="Description" hint="Shown to delegators browsing reward programs.">
+      <Field label="Description" hint="Shown to delegators. Markdown formatting and links are supported; HTML is ignored.">
         <textarea
           className={`${INPUT_CLASS} min-h-[88px] resize-y`}
           value={value.description}

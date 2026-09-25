@@ -10,6 +10,8 @@ import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
+import { useRewards } from '@/features/rewards/api/rewards.queries';
+import { rewardSnapshot } from '@/features/rewards/utils/rewardAlerts';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
 
 const HistoryList = lazy(async () => {
@@ -155,6 +157,9 @@ function ConnectPortfolioPrompt() {
 
 export default function ProfilePage() {
   const connected = useWalletStore((state) => state.connected);
+  const stakeAddress = useWalletStore((state) => state.stakeAddress);
+  const { data: claimableRewards } = useRewards(connected ? stakeAddress : null);
+  const rewardTokenCount = claimableRewards ? rewardSnapshot(claimableRewards).length : 0;
   const location = useLocation();
 
   useEffect(() => {
@@ -167,40 +172,38 @@ export default function ProfilePage() {
   }, [connected, location.hash]);
 
   return (
-    <div className="space-y-12">
-      <header className="relative overflow-hidden rounded-3xl border border-border-default bg-[radial-gradient(circle_at_85%_0%,rgba(103,232,249,0.14),transparent_32%),linear-gradient(135deg,rgba(27,39,67,0.8),rgba(16,23,40,0.92))] px-6 py-8 sm:px-9 sm:py-10">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative flex flex-wrap items-end justify-between gap-6">
+    <div className="space-y-10">
+      <header className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="label-eyebrow text-accent-light">Portfolio workspace</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Everything you own, earned, and saved.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary">
-              One connected view of your holdings, balance history, rewards, activity, and preferences. Use Analytics when you want the wider network context.
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+              Holdings, claim activity, and saved tokens for your connected wallet.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link to="/claim" className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition hover:bg-accent-light">
-              <IconGift size={13} aria-hidden /> Review rewards
+              <IconGift size={13} aria-hidden /> Claim tokens
             </Link>
             <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
               Explore analytics <IconArrowRight size={13} aria-hidden />
             </Link>
-            <div className="flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.08] px-3 py-1.5 text-xs text-accent-light">
-              <IconChartLine size={15} stroke={1.7} aria-hidden />
-              {connected ? 'Live wallet context' : 'Connect to personalize'}
-            </div>
+            <Link to="/profile#saved-assets" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
+              <IconBookmark size={13} aria-hidden /> Saved tokens
+            </Link>
           </div>
-        </div>
       </header>
 
       {connected ? <>
-      <section id="portfolio-visuals" aria-labelledby="portfolio-title">
-        <SectionHeading
-          icon={IconWallet}
-          eyebrow="Portfolio"
-          title="Your holdings in motion"
-          description="Balance history, allocation, cached prices, and the assets behind your portfolio value."
-        />
+      {rewardTokenCount > 0 && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/[0.08] px-4 py-3">
+          <p className="flex items-center gap-2 text-sm text-text-primary">
+            <IconGift size={18} stroke={1.7} className="text-accent-light" aria-hidden />
+            {rewardTokenCount} reward token{rewardTokenCount === 1 ? '' : 's'} ready to claim
+          </p>
+          <Link to="/claim" className="text-sm font-medium text-accent-light hover:underline">Review rewards</Link>
+        </div>
+      )}
+      <section id="portfolio-visuals" aria-label="Wallet at a glance">
         <WalletComposition />
       </section>
 

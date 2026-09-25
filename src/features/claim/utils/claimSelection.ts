@@ -14,3 +14,11 @@ export function toggleAllSelection(allSelected: boolean, visibleAssetIds: string
 export function limitSelection(selectedAssetIds: string[], maxAssets: number): string[] {
   return selectedAssetIds.slice(0, Math.max(0, maxAssets));
 }
+
+export function nextClaimBatch(visibleAssetIds: string[], selectedAssetIds: string[], maxAssets: number): string[] {
+  if (maxAssets <= 0 || visibleAssetIds.length === 0) return [];
+  if (selectedAssetIds.length === 0) return visibleAssetIds.slice(0, maxAssets);
+  const lastIndex = Math.max(...selectedAssetIds.map((id) => visibleAssetIds.indexOf(id)));
+  const nextStart = lastIndex + 1 >= visibleAssetIds.length ? 0 : lastIndex + 1;
+  return visibleAssetIds.slice(nextStart, nextStart + maxAssets);
+}

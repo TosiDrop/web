@@ -9,6 +9,9 @@ vi.mock('@/features/favorites/components/FavoritesTab', () => ({ FavoritesTab: (
 vi.mock('@/features/profile/components/RewardBreakdown', () => ({ RewardBreakdown: () => <div>Reward sources content</div> }));
 vi.mock('@/features/profile/components/ProfileForm', () => ({ ProfileForm: () => <div>Profile form content</div> }));
 vi.mock('@/features/rewards/components/WalletComposition', () => ({ WalletComposition: () => <div>Portfolio chart content</div> }));
+vi.mock('@/features/rewards/api/rewards.queries', () => ({
+  useRewards: () => ({ data: [{ assetId: 'token1', amount: 1 }, { assetId: 'token1', amount: 2 }, { assetId: 'token2', amount: 3 }] }),
+}));
 vi.mock('@/features/profile/api/profile.queries', () => ({
   useProfile: () => profileMock(),
 }));
@@ -33,7 +36,8 @@ describe('ProfilePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Everything you own, earned, and saved.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your wallet' })).toBeInTheDocument();
+    expect(screen.getByText('2 reward tokens ready to claim').closest('[role="status"]')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Review rewards' })).toHaveAttribute('href', '/claim');
     expect(screen.getByText('Portfolio chart content')).toBeInTheDocument();
     expect(await screen.findByText('Reward sources content')).toBeInTheDocument();

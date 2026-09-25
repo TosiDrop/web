@@ -1,4 +1,5 @@
 import { Card } from '@/components/common/Card';
+import { Link } from 'react-router-dom';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { usePreferencesQuery } from '@/features/favorites/api/preferences.queries';
@@ -20,9 +21,9 @@ function TokenRow({ token, control }: { token: TokenRef; control: React.ReactNod
           <img src={img.src} alt="" className="h-8 w-8 rounded-full" onError={img.onError} />
         )}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">
+      <Link to={`/tokens/${encodeURIComponent(token.assetId)}`} className="min-w-0 flex-1 break-words text-sm font-medium text-text-primary hover:text-accent-light [overflow-wrap:anywhere]">
         {token.ticker || token.assetId}
-      </span>
+      </Link>
       {control}
     </li>
   );
@@ -71,6 +72,7 @@ export function FavoritesTab() {
     toggleFavorite,
     toggleDislike,
     isLoading,
+    hasLocalDraft,
   } = usePreferences();
   const { error: loadError, refetch } = usePreferencesQuery(stakeAddress);
 
@@ -85,10 +87,11 @@ export function FavoritesTab() {
 
       {!connected ? (
         <EmptyState title="Not connected" message="Connect a wallet to manage your saved tokens." />
-      ) : loadError ? (
+      ) : loadError && !hasLocalDraft ? (
         <DataUnavailable title="Saved assets are catching up" message="Your saved token preferences are not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />
       ) : (
         <>
+          {loadError && <p role="status" className="rounded-lg border border-border-default px-4 py-3 text-xs text-text-muted">Showing changes saved in this browser. Save them to your wallet profile when the preferences service returns.</p>}
           <FavoritesSaveBar />
           {isLoading ? (
             <SkeletonRows />

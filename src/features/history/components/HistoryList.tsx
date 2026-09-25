@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { IconArrowsSort, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { IconArrowsSort, IconChevronLeft, IconChevronRight, IconDownload } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -9,6 +10,7 @@ import { useDeliveredRewards, type DeliveredReward } from '@/features/history/ap
 import { tokenImageSrc } from '@/shared/tokenImage';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { useWithdrawalHistory, type HistoryOrder } from '@/features/history/hooks/useWithdrawalHistory';
+import { exportHistoryCsv } from '@/features/history/utils/exportHistory';
 
 const PAGE_SIZE = 12;
 
@@ -64,7 +66,7 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
     <li className="flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
       <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text-primary">{row.ticker}</p>
+        <Link to={`/tokens/${encodeURIComponent(row.token)}`} className="break-words text-sm font-medium text-text-primary hover:text-accent-light [overflow-wrap:anywhere]">{row.ticker}</Link>
         <p className="mt-0.5 flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
           {row.epoch !== null && <span className="tabular-nums">Epoch {row.epoch}</span>}
           {row.epoch !== null && row.deliveredOn && <span className="text-text-faint">·</span>}
@@ -79,8 +81,15 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
         <p className="font-mono text-sm tabular-nums text-status-success-light">
           +{formatAmount(row.amount)}
         </p>
-        <p className="mt-0.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
-          {row.ticker}
+        <p
+          className="mt-0.5 text-2xs text-text-muted"
+          title={row.receiptPriceObservedAt
+            ? `Indexed ${new Date(row.receiptPriceObservedAt * 1000).toLocaleString()} · ${row.receiptPriceSource ?? 'source unknown'}`
+            : undefined}
+        >
+          {row.receiptPriceUsd === null || row.receiptPriceUsd === undefined || row.decimalsKnown === false
+            ? 'Receipt value unavailable'
+            : `≈${(row.amount * row.receiptPriceUsd).toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })} at delivery`}
         </p>
       </div>
     </li>
@@ -128,6 +137,8 @@ export function HistoryList() {
   const [showAll, setShowAll] = useState(false);
   const [page, setPage] = useState(1);
   const [order, setOrder] = useState<HistoryOrder>('desc');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const history = useWithdrawalHistory(stakeAddress, page, order);
 
   // First visit: the delivered-rewards fetch also syncs D1 server-side, so
@@ -175,6 +186,18 @@ export function HistoryList() {
   const clientHasMore = !serverMode && !!data && data.length > rows.length;
   const count = serverMode ? history.data!.total : data!.length;
 
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportHistoryCsv(stakeAddress);
+    } catch (cause) {
+      setExportError(cause instanceof Error ? cause.message : 'Could not export claim history.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card as="section" className="overflow-hidden">
       <header className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
@@ -184,6 +207,12 @@ export function HistoryList() {
             {count}
           </span>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        {serverMode && (
+          <GradientButton variant="ghost" size="sm" disabled={exporting} onClick={() => { void handleExport(); }}>
+            <IconDownload size={14} stroke={1.6} aria-hidden /> {exporting ? 'Exporting…' : 'Export CSV'}
+          </GradientButton>
+        )}
         {serverMode ? (
           <GradientButton
             variant="ghost"
@@ -199,7 +228,13 @@ export function HistoryList() {
         ) : (
           <p className="text-2xs text-text-muted">Most recent first</p>
         )}
+        </div>
       </header>
+
+      {exportError && <p role="alert" className="border-b border-border-subtle px-5 py-2 text-xs text-status-error-light">{exportError}</p>}
+      <p className="border-b border-border-subtle px-5 py-2 text-2xs text-text-muted">
+        Receipt estimates use the latest indexed USD price from the preceding 24 hours. Missing price history stays blank in CSV.
+      </p>
 
       <ul className="divide-y divide-border-subtle">
         {rows.map((row) => (
