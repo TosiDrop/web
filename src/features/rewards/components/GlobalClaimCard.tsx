@@ -127,7 +127,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
         )}
       </form>
 
-      {connected && stakeAddress && (
+      {connected && stakeAddress && (manualInput.trim().toLowerCase() !== stakeAddress.toLowerCase() || activeAddress?.toLowerCase() !== stakeAddress.toLowerCase()) && (
         <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-text-secondary">{displayName ?? walletName ?? 'Connected wallet'}</p>
@@ -139,7 +139,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
         </div>
       )}
 
-      {activeAddress && !isLoading && (
+      {activeAddress && !isLoading && activeAddress.toLowerCase() !== stakeAddress?.toLowerCase() && (
         <p className="mt-3 text-xs text-text-muted">
           Showing rewards for{' '}
           <span className="font-mono text-text-secondary">{truncateHash(activeAddress, 12, 6)}</span>

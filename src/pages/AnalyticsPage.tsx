@@ -1,5 +1,6 @@
 import { PoolComparison } from '@/features/analytics/components/PoolComparison';
 import { PlatformStats } from '@/features/analytics/components/PlatformStats';
+import { PlatformAudience } from '@/features/analytics/components/PlatformAudience';
 import { PersonalAnalytics } from '@/features/profile/components/PersonalAnalytics';
 import { useWalletStore } from '@/store/wallet-state';
 
@@ -15,12 +16,11 @@ export default function AnalyticsPage() {
             Analytics
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-            Explore the movement behind TosiDrop: your rewards, network health,
-            participating pools, and distribution activity.
+            Explore your claim history, platform usage, network activity, and participating pools.
           </p>
         </div>
         <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-3 py-1.5 text-2xs font-medium uppercase tracking-[0.14em] text-accent-light">
-          Live indexed data
+          Indexed snapshots
         </span>
       </header>
 
@@ -42,9 +42,17 @@ export default function AnalyticsPage() {
           <h2 id="platform-stats" className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">
             Platform pulse
           </h2>
-          <p className="mt-1 text-sm text-text-muted">Live counters from the reward distributor.</p>
+          <p className="mt-1 text-sm text-text-muted">Latest counters from the reward distributor.</p>
         </div>
         <PlatformStats />
+      </section>
+
+      <section className="space-y-5" aria-labelledby="platform-usage">
+        <div>
+          <h2 id="platform-usage" className="text-2xl font-semibold tracking-tight text-text-primary">Platform usage</h2>
+          <p className="mt-1 text-sm text-text-muted">Delivered claims observed in the synced wallet archive.</p>
+        </div>
+        <PlatformAudience />
       </section>
 
       <section className="space-y-5" aria-labelledby="pool-comparison">

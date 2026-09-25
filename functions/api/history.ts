@@ -19,6 +19,19 @@ interface WithdrawalRow {
   delivered_on: string;
   delivered_at: number | null;
   withdrawal_request: string | null;
+  receipt_price_usd?: number | null;
+  receipt_price_observed_at?: number | null;
+  receipt_price_source?: string | null;
+}
+
+const RECEIPT_PRICE_FILTER =
+  'p.network = w.network AND p.unit = w.token AND w.delivered_at IS NOT NULL ' +
+  'AND p.observed_at <= w.delivered_at AND p.observed_at >= w.delivered_at - 86400 ' +
+  'AND p.price_usd IS NOT NULL';
+
+function receiptPriceColumn(column: string, alias: string): string {
+  return `(SELECT p.${column} FROM market_asset_price_history p WHERE ${RECEIPT_PRICE_FILTER} ` +
+    `ORDER BY p.observed_at DESC, p.source ASC LIMIT 1) AS ${alias}`;
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -84,21 +97,29 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const dir = order === 'asc' ? 'ASC' : 'DESC';
 
   try {
-    const [{ results }, count] = await Promise.all([
-      env.DB.prepare(
-        'SELECT reward_id, token, amount, epoch, delivered_on, delivered_at, withdrawal_request ' +
-          `FROM withdrawals WHERE ${whereSql} ` +
-          `ORDER BY (delivered_at IS NULL) ASC, delivered_at ${dir} ` +
-          'LIMIT ? OFFSET ?',
-      )
-        .bind(...binds, limit + 1, (page - 1) * limit)
-        .all<WithdrawalRow>(),
-      env.DB.prepare(`SELECT COUNT(*) AS total FROM withdrawals WHERE ${whereSql}`)
-        .bind(...binds)
-        .first<{ total: number }>(),
-    ]);
+    const loadRows = (withPrices: boolean) => env.DB.prepare(
+      'SELECT w.reward_id, w.token, w.amount, w.epoch, w.delivered_on, w.delivered_at, w.withdrawal_request' +
+        (withPrices ? ', ' + [
+          receiptPriceColumn('price_usd', 'receipt_price_usd'),
+          receiptPriceColumn('observed_at', 'receipt_price_observed_at'),
+          receiptPriceColumn('source', 'receipt_price_source'),
+        ].join(', ') : '') +
+        ` FROM withdrawals w WHERE ${whereSql} ` +
+        `ORDER BY (w.delivered_at IS NULL) ASC, w.delivered_at ${dir} ` +
+        'LIMIT ? OFFSET ?',
+    ).bind(...binds, limit + 1, (page - 1) * limit).all<WithdrawalRow>();
+    let rowsResult: D1Result<WithdrawalRow>;
+    try {
+      rowsResult = await loadRows(true);
+    } catch (error) {
+      if (!String(error).includes('no such table: market_asset_price_history')) throw error;
+      rowsResult = await loadRows(false);
+    }
+    const count = await env.DB.prepare(`SELECT COUNT(*) AS total FROM withdrawals WHERE ${whereSql}`)
+      .bind(...binds)
+      .first<{ total: number }>();
 
-    const rows = results ?? [];
+    const rows = rowsResult.results ?? [];
     const hasMore = rows.length > limit;
     const items = rows.slice(0, limit).map((r) => ({
       rewardId: r.reward_id,
@@ -108,6 +129,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       deliveredOn: r.delivered_on,
       deliveredAt: r.delivered_at,
       withdrawalRequest: r.withdrawal_request,
+      receiptPriceUsd: r.receipt_price_usd ?? null,
+      receiptPriceObservedAt: r.receipt_price_observed_at ?? null,
+      receiptPriceSource: r.receipt_price_source ?? null,
     }));
 
     return jsonResponse(

@@ -57,12 +57,7 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
         )}
         <p className="mt-2 text-2xs leading-snug text-text-faint">Display-only estimate from the market index; it does not change the claim deposit.</p>
       </div>
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
-        <span className="font-mono text-2xs tabular-nums text-text-muted">
-          {tokenCount} {tokenCount === 1 ? 'token' : 'tokens'}
-        </span>
-      </div>
+      <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
 
       {isLoading && (
         <div className="mt-3 space-y-2" role="status" aria-label="Loading fee estimate">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useClaimStore } from '@/store/claim-state';
@@ -46,6 +47,7 @@ export default function DepositPage() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const request = useClaimStore((s) => s.request);
   const reset = useClaimStore((s) => s.reset);
+  const queryClient = useQueryClient();
 
   const [txHash, setTxHash] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -60,6 +62,14 @@ export default function DepositPage() {
   useEffect(() => {
     if (!request) void navigate('/claim', { replace: true });
   }, [request, navigate]);
+
+  useEffect(() => {
+    if (status?.kind !== 'success' || !stakeAddress) return;
+    void queryClient.invalidateQueries({ queryKey: ['rewards', stakeAddress] });
+    void queryClient.invalidateQueries({ queryKey: ['delivered-rewards', stakeAddress] });
+    void queryClient.invalidateQueries({ queryKey: ['history', stakeAddress] });
+    void queryClient.invalidateQueries({ queryKey: ['personal-analytics', stakeAddress] });
+  }, [status?.kind, stakeAddress, queryClient]);
 
   if (!request) return null;
   const { requestId, deposit, overheadFee, withdrawalAddress } = request;
@@ -172,11 +182,14 @@ export default function DepositPage() {
           <GradientButton variant="secondary" onClick={() => void refetchStatus()}>Check status again</GradientButton>
         </div>
       ) : (
-        <FeedbackBanner
-          tone={statusCopy.tone}
-          title={statusCopy.title}
-          message={status?.kind === 'failure' && status.reason ? status.reason : statusCopy.message}
-        />
+        <div className="space-y-2">
+          <FeedbackBanner
+            tone={statusCopy.tone}
+            title={statusCopy.title}
+            message={status?.kind === 'failure' && status.reason ? status.reason : statusCopy.message}
+          />
+          {!isTerminal && <p className="text-xs text-text-muted">Checking claim status every 15 seconds while this page is open.</p>}
+        </div>
       )}
 
       {(txHash || txExplorerUrl) && (

@@ -13,12 +13,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { IconChartDots3 } from '@tabler/icons-react';
+import { IconChartDots3, IconDownload } from '@tabler/icons-react';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { usePersonalAnalytics } from '@/features/profile/hooks/usePersonalAnalytics';
 import { formatTokenAmount as formatReward } from '@/utils/format';
 import { StateMessage } from './StateMessage';
+import { downloadCsv } from '@/utils/csv';
+import { personalAnalyticsCsvRows } from '@/features/profile/utils/exportPersonalAnalytics';
 
 const TOKEN_COLORS = ['#22D3EE', '#A78BFA', '#34D399', '#FBBF24', '#F472B6'];
 
@@ -93,6 +95,9 @@ export function PersonalAnalytics() {
     [data],
   );
   const feesKnown = !!data && !data.feesUnavailable && data.summary.totalFeesAda !== null;
+  const averageClaimFee = feesKnown && data.feeCoverage.completeClaims > 0
+    ? data.summary.totalFeesAda! / data.feeCoverage.completeClaims
+    : null;
 
   if (!stakeAddress) {
     return (
@@ -124,6 +129,16 @@ export function PersonalAnalytics() {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-text-muted">Your delivered claims and rewards from the indexed archive.</p>
+        <button
+          type="button"
+          onClick={() => downloadCsv(`tosidrop-personal-analytics-${new Date().toISOString().slice(0, 10)}.csv`, personalAnalyticsCsvRows(data))}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+        >
+          <IconDownload size={14} aria-hidden /> Export CSV
+        </button>
+      </div>
       <section
         className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4"
         aria-label="Claim summary"
@@ -144,8 +159,13 @@ export function PersonalAnalytics() {
               : 'Unavailable'
           }
         />
-        <Metric label="Active since" value={activeSince ?? '—'} />
+        <Metric
+          label="Average cost per claim"
+          value={averageClaimFee === null ? '—' : `${formatReward(averageClaimFee)} ADA`}
+          detail={averageClaimFee === null ? 'Unavailable' : `Based on ${data.feeCoverage.completeClaims} complete fee records`}
+        />
       </section>
+      {activeSince && <p className="text-xs text-text-muted">Claim history since {activeSince}</p>}
 
       <section className="card-premium overflow-hidden">
         <header className="flex flex-col gap-4 border-b border-border-subtle/60 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
