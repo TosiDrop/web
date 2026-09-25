@@ -3,12 +3,13 @@ import { apiClient } from '@/api/client';
 import {
   tickerFor,
   decimalsFor,
+  hasKnownDecimals,
   parseDeliveredOn,
   type TokenMap,
   type DeliveredReward,
 } from '@/features/history/api/history.queries';
 
-interface HistoryItem {
+export interface HistoryItem {
   rewardId: string;
   token: string;
   amount: string;
@@ -16,9 +17,12 @@ interface HistoryItem {
   deliveredOn: string;
   deliveredAt: number | null;
   withdrawalRequest: string | null;
+  receiptPriceUsd?: number | null;
+  receiptPriceObservedAt?: number | null;
+  receiptPriceSource?: string | null;
 }
 
-interface HistoryResponse {
+export interface HistoryResponse {
   items: HistoryItem[];
   page: number;
   limit: number;
@@ -48,6 +52,7 @@ export function useWithdrawalHistory(
     queryKey: ['history', stakeAddress, page, order],
     enabled: !!stakeAddress,
     staleTime: 60_000,
+    refetchInterval: 60_000,
     queryFn: async () => {
       if (!stakeAddress) throw new Error('stakeAddress is required');
       const [history, tokens] = await Promise.all([
@@ -65,11 +70,15 @@ export function useWithdrawalHistory(
           token: item.token,
           ticker: tickerFor(item.token, info),
           decimals,
+          decimalsKnown: hasKnownDecimals(item.token, info),
           amount: Number(item.amount) / Math.pow(10, decimals),
           deliveredOn: parseDeliveredOn(item.deliveredOn),
           deliveredOnRaw: item.deliveredOn,
           epoch: item.epoch,
           logo: info?.logo,
+          receiptPriceUsd: item.receiptPriceUsd ?? null,
+          receiptPriceObservedAt: item.receiptPriceObservedAt ?? null,
+          receiptPriceSource: item.receiptPriceSource ?? null,
         };
       });
 

@@ -31,6 +31,10 @@ export interface DeliveredReward {
   deliveredOnRaw: string;
   epoch: number | null;
   logo?: string;
+  decimalsKnown?: boolean;
+  receiptPriceUsd?: number | null;
+  receiptPriceObservedAt?: number | null;
+  receiptPriceSource?: string | null;
 }
 
 function hexToUtf8(hex: string): string {
@@ -57,6 +61,14 @@ export function decimalsFor(token: string, info?: TokenInfo): number {
   return Number(info?.decimals ?? 0) || 0;
 }
 
+export function hasKnownDecimals(token: string, info?: TokenInfo): boolean {
+  if (token === 'lovelace') return true;
+  if (info?.decimals === undefined || info.decimals === null) return false;
+  if (typeof info.decimals === 'string' && info.decimals.trim() === '') return false;
+  const decimals = Number(info.decimals);
+  return Number.isInteger(decimals) && decimals >= 0 && decimals <= 18;
+}
+
 export function parseDeliveredOn(raw: string): Date | null {
   const asNumber = Number(raw);
   if (!Number.isNaN(asNumber) && asNumber > 1_000_000_000 && asNumber < 10_000_000_000) {
@@ -71,6 +83,7 @@ export function useDeliveredRewards(stakeAddress: string | null) {
     queryKey: ['delivered-rewards', stakeAddress],
     enabled: !!stakeAddress,
     staleTime: 60_000,
+    refetchInterval: 300_000,
     queryFn: async () => {
       if (!stakeAddress) throw new Error('stakeAddress is required');
 
