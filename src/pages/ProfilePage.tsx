@@ -11,6 +11,7 @@ import { useOnboardingStore } from '@/store/onboarding-state';
 import { truncateHash, getNetworkLabel } from '@/utils/format';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
+import { rewardSnapshot } from '@/features/rewards/utils/rewardAlerts';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
 
 const HistoryList = lazy(async () => {
@@ -158,6 +159,7 @@ export default function ProfilePage() {
   const connected = useWalletStore((state) => state.connected);
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
   const { data: claimableRewards } = useRewards(connected ? stakeAddress : null);
+  const rewardTokenCount = claimableRewards ? rewardSnapshot(claimableRewards).length : 0;
   const location = useLocation();
 
   useEffect(() => {
@@ -192,11 +194,11 @@ export default function ProfilePage() {
       </header>
 
       {connected ? <>
-      {claimableRewards && claimableRewards.length > 0 && (
+      {rewardTokenCount > 0 && (
         <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/[0.08] px-4 py-3">
           <p className="flex items-center gap-2 text-sm text-text-primary">
             <IconGift size={18} stroke={1.7} className="text-accent-light" aria-hidden />
-            {claimableRewards.length} reward token{claimableRewards.length === 1 ? '' : 's'} ready to claim
+            {rewardTokenCount} reward token{rewardTokenCount === 1 ? '' : 's'} ready to claim
           </p>
           <Link to="/claim" className="text-sm font-medium text-accent-light hover:underline">Review rewards</Link>
         </div>
