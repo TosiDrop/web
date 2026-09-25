@@ -10,7 +10,7 @@ vi.mock('@/features/profile/components/RewardBreakdown', () => ({ RewardBreakdow
 vi.mock('@/features/profile/components/ProfileForm', () => ({ ProfileForm: () => <div>Profile form content</div> }));
 vi.mock('@/features/rewards/components/WalletComposition', () => ({ WalletComposition: () => <div>Portfolio chart content</div> }));
 vi.mock('@/features/rewards/api/rewards.queries', () => ({
-  useRewards: () => ({ data: [{ assetId: 'token1' }, { assetId: 'token2' }] }),
+  useRewards: () => ({ data: [{ assetId: 'token1', amount: 1 }, { assetId: 'token1', amount: 2 }, { assetId: 'token2', amount: 3 }] }),
 }));
 vi.mock('@/features/profile/api/profile.queries', () => ({
   useProfile: () => profileMock(),
