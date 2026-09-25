@@ -14,6 +14,8 @@ import { CopyButton } from '@/components/common/CopyButton';
 import { useDelegatedPool } from '@/features/rewards/hooks/useDelegatedPool';
 import { truncateHash } from '@/utils/format';
 import { pageTitle } from '@/layouts/navigation';
+import { RewardAlertsButton } from '@/features/rewards/components/RewardAlertsButton';
+import { networkFromId } from '@/shared/network';
 
 function usePageTitle() {
   const { pathname } = useLocation();
@@ -48,7 +50,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
         className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-white/[0.03] pl-2 pr-3 transition hover:bg-white/[0.06] data-[open]:bg-white/[0.06]"
       >
         <Identicon seed={stakeAddress} />
-        <span className="max-w-[9rem] truncate text-xs font-medium text-text-secondary group-hover:text-text-primary">
+        <span className="hidden max-w-[9rem] truncate text-xs font-medium text-text-secondary group-hover:text-text-primary sm:inline">
           {accountName}
         </span>
         <IconChevronDown
@@ -129,7 +131,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface-base/70 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between px-4 lg:px-9">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={openMobileMenu}
@@ -138,19 +140,22 @@ export function TopBar() {
           >
             <IconMenu2 size={20} stroke={1.5} />
           </button>
-          <p className="text-sm font-medium text-text-muted">{title}</p>
+          <p className="truncate text-sm font-medium text-text-muted">{title}</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-border-subtle bg-surface-inset px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-text-muted">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden rounded-full border border-border-subtle bg-surface-inset px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-text-muted sm:inline-flex">
             {networkLabel(DEPLOYMENT_NETWORK)}
           </span>
           {connected && stakeAddress ? (
-            <AccountMenu
-              stakeAddress={stakeAddress}
-              networkId={networkId}
-              displayName={profile?.value.name}
-            />
+            <>
+              {networkFromId(networkId) === DEPLOYMENT_NETWORK && <RewardAlertsButton stakeAddress={stakeAddress} />}
+              <AccountMenu
+                stakeAddress={stakeAddress}
+                networkId={networkId}
+                displayName={profile?.value.name}
+              />
+            </>
           ) : (
             <GradientButton
               variant="secondary"
