@@ -33,6 +33,8 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe('usePreferences', () => {
   beforeEach(() => {
+    localStorage.clear();
+    walletState.stakeAddress = 'stake1' + 'u'.repeat(40);
     getMock.mockReset();
     postMock.mockReset();
     signMock.mockReset();
@@ -120,5 +122,46 @@ describe('usePreferences', () => {
     });
     expect(result.current.error).toBe('user declined');
     expect(result.current.isDirty).toBe(true);
+  });
+
+  it('keeps an unsaved favorite for the same wallet after a reload', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    const first = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(first.result.current.isLoading).toBe(false));
+    act(() => first.result.current.toggleFavorite({ assetId: 'a2', ticker: 'B', logo: '' }));
+    first.unmount();
+    act(() => usePreferencesDraft.setState({ draft: null, owner: null }));
+
+    const second = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(second.result.current.isFavorite('a2')).toBe(true));
+    expect(second.result.current.isDirty).toBe(true);
+    expect(second.result.current.hasLocalDraft).toBe(true);
+  });
+
+  it('removes the local draft after a successful save', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    signMock.mockResolvedValue({ signature: 's', key: 'k', message: 'm' });
+    postMock.mockResolvedValue({ success: true });
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.toggleFavorite({ assetId: 'a2', ticker: 'B', logo: '' }));
+    expect(localStorage.length).toBeGreaterThan(0);
+    await act(async () => { await result.current.persist(); });
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('keeps local favorites scoped to their wallet when switching accounts', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    const { result, rerender } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.toggleFavorite({ assetId: 'a2', ticker: 'B', logo: '' }));
+
+    walletState.stakeAddress = 'stake1' + 'v'.repeat(40);
+    rerender();
+    await waitFor(() => expect(result.current.isFavorite('a2')).toBe(false));
+
+    walletState.stakeAddress = 'stake1' + 'u'.repeat(40);
+    rerender();
+    await waitFor(() => expect(result.current.isFavorite('a2')).toBe(true));
   });
 });

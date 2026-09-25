@@ -72,6 +72,7 @@ export function FavoritesTab() {
     toggleFavorite,
     toggleDislike,
     isLoading,
+    hasLocalDraft,
   } = usePreferences();
   const { error: loadError, refetch } = usePreferencesQuery(stakeAddress);
 
@@ -86,10 +87,11 @@ export function FavoritesTab() {
 
       {!connected ? (
         <EmptyState title="Not connected" message="Connect a wallet to manage your saved tokens." />
-      ) : loadError ? (
+      ) : loadError && !hasLocalDraft ? (
         <DataUnavailable title="Saved assets are catching up" message="Your saved token preferences are not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />
       ) : (
         <>
+          {loadError && <p role="status" className="rounded-lg border border-border-default px-4 py-3 text-xs text-text-muted">Showing changes saved in this browser. Save them to your wallet profile when the preferences service returns.</p>}
           <FavoritesSaveBar />
           {isLoading ? (
             <SkeletonRows />
