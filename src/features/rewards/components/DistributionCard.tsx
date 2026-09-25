@@ -1,4 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
 import type { ClaimableToken } from '@/shared/rewards';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/common/Card';
@@ -12,6 +13,7 @@ import { formatEstimatedAda, formatEstimatedUsd, formatMarketPrice } from '@/fea
 interface DistributionCardProps {
   token: ClaimableToken;
   selected: boolean;
+  selectionDisabled?: boolean;
   onToggle: () => void;
   favorite?: { active: boolean; onToggle: () => void };
   dislike?: { active: boolean; onToggle: () => void };
@@ -25,7 +27,7 @@ function colorFor(seed: string): string {
   return `var(--color-chart-${(h % 6) + 1})`;
 }
 
-export function DistributionCard({ token, selected, onToggle, favorite, dislike, marketPrice }: DistributionCardProps) {
+export function DistributionCard({ token, selected, selectionDisabled = false, onToggle, favorite, dislike, marketPrice }: DistributionCardProps) {
   const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   const formattedAmount = token.amount.toLocaleString(undefined, {
     maximumFractionDigits: token.decimals,
@@ -50,8 +52,10 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
       <button
         type="button"
         onClick={onToggle}
+        disabled={selectionDisabled}
+        title={selectionDisabled ? 'Claim limit reached; clear a selection or choose the next batch' : undefined}
         aria-pressed={selected}
-        className="flex w-full flex-col rounded-2xl p-4 text-left"
+        className="flex w-full flex-col rounded-2xl p-4 text-left disabled:cursor-not-allowed disabled:opacity-60"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -71,7 +75,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
               )}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-text-primary">
+              <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">
                 {token.ticker}
               </span>
               {token.premium ? (
@@ -98,7 +102,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
         </div>
 
         <span className="mt-5 block">
-          <span className="block truncate text-2xl font-semibold leading-none tabular-nums tracking-tight text-text-primary">
+          <span className="block break-words text-2xl font-semibold leading-none tabular-nums tracking-tight text-text-primary [overflow-wrap:anywhere]">
             {formattedAmount}
           </span>
           <span className="mt-2 block font-mono text-2xs uppercase tracking-wider text-text-muted">
@@ -125,6 +129,10 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
         </span>
       </button>
 
+      <div className="flex min-h-10 items-center justify-between gap-2 px-3 pb-2">
+        <Link to={`/tokens/${encodeURIComponent(token.assetId)}`} className="rounded-lg px-2 py-2 text-xs text-accent-light hover:underline">
+          Token details
+        </Link>
       {(favorite || dislike) && (
         <div
           className={cn(
@@ -146,6 +154,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
           )}
         </div>
       )}
+      </div>
     </Card>
   );
 }

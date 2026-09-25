@@ -80,6 +80,7 @@ describe('GET /api/wallet/summary', () => {
       rewards: { totalLovelace: '99' },
       holdings: [{ unit: 'policyname', quantity: '2500', ticker: 'EX', decimals: 2 }],
       metadata: { returned: 1, total: 1, complete: true },
+      sources: { account: true, assets: true, rewards: true },
     });
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(fetchMock.mock.calls.every(([url, init]) =>
@@ -87,5 +88,31 @@ describe('GET /api/wallet/summary', () => {
       (init as RequestInit).headers &&
       ((init as RequestInit).headers as Record<string, string>).Authorization === 'Bearer secret-test-key',
     )).toBe(true);
+  });
+
+  it('marks missing Koios account data unknown instead of presenting zero balance', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/account_info')) return new Response('down', { status: 503 });
+      return new Response('[]');
+    });
+    const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
+    const body = await response.json() as Record<string, unknown>;
+    expect(body).toMatchObject({
+      degraded: true,
+      sources: { account: false, assets: true, rewards: true },
+      balance: { accountLovelace: null, utxoLovelace: null, rewardsAvailableLovelace: null },
+    });
+  });
+
+  it('keeps assets whose Cardano asset name is empty', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/account_assets')) return new Response(JSON.stringify([
+        { asset_policy: 'policy', asset_name: '', quantity: '1' },
+      ]));
+      return new Response('[]');
+    });
+    const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
+    const body = await response.json() as { holdings: Array<{ unit: string }> };
+    expect(body.holdings).toEqual([expect.objectContaining({ unit: 'policy' })]);
   });
 });

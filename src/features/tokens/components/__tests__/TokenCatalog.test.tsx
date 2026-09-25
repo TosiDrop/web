@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { TokenCatalog } from '../TokenCatalog';
 
 const publicTokensMock = vi.fn();
@@ -30,7 +31,7 @@ describe('TokenCatalog', () => {
         [TOKEN.tokenId]: { priceUsd: 1.25, priceAda: 0.5, priceChange24h: 4.2, source: 'provider-a, provider-b', sourceCount: 2, observedAt: 100 },
       },
     }, isLoading: false, error: null });
-    render(<TokenCatalog />);
+    render(<MemoryRouter><TokenCatalog /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Tosi Rewards' })).toBeInTheDocument();
     expect(screen.getByText(/100 TOSI \/ epoch/)).toBeInTheDocument();

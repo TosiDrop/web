@@ -25,6 +25,7 @@ export function usePreferencesQuery(stakeAddress: string | null) {
       const data = await apiClient.get<PreferencesResponse>(
         `/api/tokenPreferences?stakeAddress=${encodeURIComponent(stakeAddress)}`,
       );
+      if (data.degraded) throw new Error('Saved tokens are unavailable while the preferences database is offline.');
       return { favorites: data.favorites ?? [], dislikes: data.dislikes ?? [] };
     },
     enabled: !!stakeAddress,
@@ -33,9 +34,19 @@ export function usePreferencesQuery(stakeAddress: string | null) {
 
 export function useSavePreferencesMutation() {
   const queryClient = useQueryClient();
-  return useMutation<{ success: boolean }, Error, SavePreferencesRequest>({
-    mutationFn: (data) => apiClient.post<{ success: boolean }>('/api/tokenPreferences', data),
+  return useMutation<{ success: boolean; degraded?: boolean }, Error, SavePreferencesRequest>({
+    mutationFn: async (data) => {
+      const result = await apiClient.post<{ success: boolean; degraded?: boolean }>('/api/tokenPreferences', data);
+      if (result.degraded || !result.success) {
+        throw new Error('Saved tokens are unavailable while the preferences database is offline.');
+      }
+      return result;
+    },
     onSuccess: (_result, variables) => {
+      queryClient.setQueryData<TokenPreferences>(['preferences', variables.stakeAddress], {
+        favorites: variables.favorites,
+        dislikes: variables.dislikes,
+      });
       void queryClient.invalidateQueries({ queryKey: ['preferences', variables.stakeAddress] });
     },
   });
