@@ -11,11 +11,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { IconChartLine, IconClock, IconInfoCircle } from '@tabler/icons-react';
+import { IconChartLine, IconClock, IconDownload, IconInfoCircle } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { apiClient } from '@/api/client';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
 import { decimalAmountToNumber } from '@/shared/amounts';
+import { downloadCsv } from '@/utils/csv';
+import { walletHoldingsCsvRows } from '../utils/exportWalletHoldings';
 
 const COLORS = ['#67E8F9', '#A78BFA', '#34D399', '#FBBF24', '#F472B6', '#FB7185'];
 const TOOLTIP_STYLE = {
@@ -245,7 +248,23 @@ export function WalletComposition() {
       </div>
 
       <section className="mt-5 border-t border-border-subtle/60 pt-4">
-        <div className="mb-3 flex items-center justify-between gap-3"><div><p className="label-eyebrow">Holdings</p><p className="mt-1 text-xs text-text-muted">Quantity, market price, and share of priced portfolio</p></div><span className="text-2xs text-text-faint">{summary.holdings.length} assets</span></div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div><p className="label-eyebrow">Holdings</p><p className="mt-1 text-xs text-text-muted">Quantity, market price, and share of priced portfolio · {summary.holdings.length} assets</p></div>
+          <button
+            type="button"
+            onClick={() => downloadCsv(`tosidrop-wallet-holdings-${new Date().toISOString().slice(0, 10)}.csv`, walletHoldingsCsvRows({
+              network: DEPLOYMENT_NETWORK,
+              stakeAddress,
+              exportedAt: new Date().toISOString(),
+              walletLovelace,
+              adaPriceUsd: summary.balance.adaPriceUsd,
+              holdings: summary.holdings,
+            }))}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+          >
+            <IconDownload size={14} aria-hidden /> Export CSV
+          </button>
+        </div>
         {summary.sources?.assets === false ? (
           <p className="text-sm text-text-muted">Holdings are temporarily unavailable from the wallet index.</p>
         ) : <div className="space-y-2">{(showAllHoldings ? summary.holdings : summary.holdings.slice(0, 8)).map((holding) => {
