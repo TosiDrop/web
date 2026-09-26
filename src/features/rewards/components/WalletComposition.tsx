@@ -15,6 +15,7 @@ import { Card } from '@/components/common/Card';
 import { apiClient } from '@/api/client';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
 import { decimalAmountToNumber } from '@/shared/amounts';
+import { ApiError } from '@/types/api';
 
 const COLORS = ['#67E8F9', '#A78BFA', '#34D399', '#FBBF24', '#F472B6', '#FB7185'];
 const TOOLTIP_STYLE = {
@@ -62,6 +63,7 @@ interface WalletQueryData {
   summary: WalletSummary;
   attachedLovelace: string | null;
   degraded: boolean;
+  addressError: string | null;
 }
 
 function formatUnits(raw: string, decimals: number, maxDecimals = 2): string {
@@ -139,8 +141,12 @@ export function WalletComposition() {
           summary: summaryResult.value,
           attachedLovelace,
           degraded: summaryResult.value.degraded,
+          addressError: null,
         };
       }
+      const addressError = summaryResult.reason instanceof ApiError && summaryResult.reason.status === 400
+        ? summaryResult.reason.message
+        : null;
       return {
         summary: {
           balance: {
@@ -158,6 +164,7 @@ export function WalletComposition() {
         },
         attachedLovelace,
         degraded: true,
+        addressError,
       };
     },
     enabled: connected && !!stakeAddress && !!wallet,
@@ -169,6 +176,17 @@ export function WalletComposition() {
   if (!connected || !stakeAddress) return <Panel><p className="text-xs text-text-muted">Not connected</p></Panel>;
   if (isLoading) return <Panel><p className="text-xs text-text-muted">Loading wallet portfolio…</p></Panel>;
   if (!data) return <Panel><p className="text-xs text-text-muted">Waiting for wallet data…</p></Panel>;
+  if (data.addressError) {
+    return (
+      <Panel>
+        <div role="alert" className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
+          <p className="label-eyebrow">Wallet address rejected</p>
+          <p className="mt-2 text-sm text-text-primary">{data.addressError}</p>
+          <p className="mt-2 text-xs text-text-muted">Reconnect your wallet or choose an account on this network. No indexed wallet values are shown until the address is accepted.</p>
+        </div>
+      </Panel>
+    );
+  }
 
   const { summary } = data;
   const attachedAda = decimalAmountToNumber(data.attachedLovelace ?? summary.balance.utxoLovelace, 6);
