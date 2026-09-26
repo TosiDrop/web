@@ -196,7 +196,7 @@ export function WalletComposition() {
         <Metric label="Rewards available" value={`₳ ${formatAda(summary.balance.rewardsAvailableLovelace)}`} detail="Available to withdraw" />
         <Metric label="Priced value" value={formatUsd(totalValueUsd)} detail={summary.market.priced ? `${summary.market.priced} assets priced` : 'Prices are being indexed'} />
       </div>
-      {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is still syncing. This view will retry automatically.</p>}
+      {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is unavailable right now. Available values remain visible while this view retries.</p>}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="min-w-0 rounded-xl border border-border-subtle bg-surface-inset/25 p-4">

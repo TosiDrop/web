@@ -4,8 +4,7 @@ import type { ClaimableToken } from '@/shared/rewards';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useClaimStore } from '@/store/claim-state';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
-import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
-import { limitSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
+import { deriveClaimCandidates } from '@/features/claim/utils/deriveClaimSelection';
 import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
 import type { PublicMarketPrice } from '@/features/market/api/market.queries';
@@ -13,11 +12,12 @@ import type { PublicMarketPrice } from '@/features/market/api/market.queries';
 interface AvailableDistributionsProps {
   tokens: ClaimableToken[];
   maxAssets: number;
+  selectedAssetIds: string[];
   marketPrices?: Record<string, PublicMarketPrice>;
 }
 
-export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }: AvailableDistributionsProps) {
-  const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
+export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, marketPrices = {} }: AvailableDistributionsProps) {
+  const storedSelection = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);
 
   const {
@@ -33,19 +33,14 @@ export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }:
   const [showHidden, setShowHidden] = useState(false);
 
   const { visible, hidden } = useMemo(
-    () => partitionPreferences(tokens, favoriteIds, dislikedIds),
-    [tokens, favoriteIds, dislikedIds],
-  );
-  const visibleAssetIds = useMemo(() => visible.map((token) => token.assetId), [visible]);
-  const selectedVisible = useMemo(
-    () => limitSelection(visibleSelection(selectedAssetIds, visibleAssetIds), maxAssets),
-    [selectedAssetIds, visibleAssetIds, maxAssets],
+    () => deriveClaimCandidates({ tokens, favoriteIds, dislikedIds, maxAssets }),
+    [tokens, favoriteIds, dislikedIds, maxAssets],
   );
 
   // Disliking a selected token also deselects it so hidden tokens can't ride
   // along into a claim unnoticed.
   const handleDislike = (token: ClaimableToken) => {
-    if (!isDisliked(token.assetId) && selectedAssetIds.includes(token.assetId)) {
+    if (!isDisliked(token.assetId) && storedSelection.includes(token.assetId)) {
       toggleAsset(token.assetId);
     }
     toggleDislike({ assetId: token.assetId, ticker: token.ticker, logo: token.logo });
@@ -55,9 +50,9 @@ export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }:
     <DistributionCard
       key={token.assetId}
       token={token}
-      selected={selectedVisible.includes(token.assetId)}
+      selected={selectedAssetIds.includes(token.assetId)}
       onToggle={() => {
-        if (selectedVisible.includes(token.assetId) || selectedVisible.length < maxAssets) toggleAsset(token.assetId);
+        if (selectedAssetIds.includes(token.assetId) || selectedAssetIds.length < maxAssets) toggleAsset(token.assetId);
       }}
       favorite={
         connected

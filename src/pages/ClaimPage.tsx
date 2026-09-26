@@ -10,9 +10,9 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
-import { limitSelection, toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
+import { toggleAllSelection } from '@/features/claim/utils/claimSelection';
+import { useClaimSelection } from '@/features/claim/hooks/useClaimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
-import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
 import { useMarketPrices } from '@/features/market/api/market.queries';
 import { estimateClaimValue } from '@/features/claim/utils/claimValue';
 
@@ -52,21 +52,25 @@ export default function ClaimPage() {
   const { stakeAddress, connected, networkId } = useWalletStore();
   const { data: settings } = useVmSettings();
   const { data: profile } = useProfile(stakeAddress);
-  const selectedAssetIds = useClaimStore((s) => s.selectedAssetIds);
   const setSelected = useClaimStore((s) => s.setSelected);
   const setRequest = useClaimStore((s) => s.setRequest);
   const lookupAddress = useClaimStore((s) => s.lookupAddress);
   const setLookupAddress = useClaimStore((s) => s.setLookupAddress);
 
   const [resolving, setResolving] = useState(false);
-  const [resolveError, setResolveError] = useState<string | null>(null);
+  const walletKey = `${connected}:${stakeAddress ?? ''}`;
+  const [resolveErrorState, setResolveErrorState] = useState({ walletKey, error: null as string | null });
+  const resolveError = resolveErrorState.walletKey === walletKey ? resolveErrorState.error : null;
+  const setResolveError = useCallback(
+    (error: string | null) => setResolveErrorState({ walletKey, error }),
+    [walletKey],
+  );
 
   useEffect(() => {
     if (stakeAddress) {
       setLookupAddress(stakeAddress);
     } else if (!connected) {
       setLookupAddress(null);
-      setResolveError(null);
     }
   }, [stakeAddress, connected, setLookupAddress]);
 
@@ -82,17 +86,22 @@ export default function ClaimPage() {
   const hasRewards = !!rewards && rewards.length > 0;
   // Disliked tokens are hidden by AvailableDistributions; they must not be
   // counted, selected by "Select all", or submitted.
-  const { favoriteIds, dislikedIds } = usePreferences();
-  const visibleAssetIds = useMemo(
-    () => partitionPreferences(rewards ?? [], favoriteIds, dislikedIds).visible.map((r) => r.assetId),
-    [rewards, favoriteIds, dislikedIds],
-  );
+  const { favoriteIds, dislikedIds, isLoading: preferencesLoading } = usePreferences();
   const configuredMaxAssets = settings?.max_assets_in_request;
   const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
     ? configuredMaxAssets
     : 25;
-  const selectableAssetIds = useMemo(() => visibleAssetIds.slice(0, maxAssets), [visibleAssetIds, maxAssets]);
-  const selectedVisible = limitSelection(visibleSelection(selectedAssetIds, selectableAssetIds), maxAssets);
+  const {
+    selectableAssetIds,
+    selectedAssetIds: selectedVisible,
+  } = useClaimSelection({
+    tokens: rewards,
+    favoriteIds,
+    dislikedIds,
+    lookupAddress,
+    preferencesLoading,
+    maxAssets,
+  });
   const rewardAssetIds = useMemo(() => (rewards ?? []).map((reward) => reward.assetId), [rewards]);
   const { data: marketPrices = {} } = useMarketPrices(rewardAssetIds);
   const selectedRewards = useMemo(
@@ -105,11 +114,6 @@ export default function ClaimPage() {
   );
   const total = selectableAssetIds.length;
   const allSelected = total > 0 && selectedVisible.length === total;
-
-  useEffect(() => {
-    if (!rewards || !lookupAddress) return;
-    setSelected(selectableAssetIds);
-  }, [rewards, lookupAddress, selectableAssetIds, setSelected]);
 
   const handleLookup = useCallback(
     async (input: string) => {
@@ -136,7 +140,7 @@ export default function ClaimPage() {
         setLookupAddress(resolved);
       }
     },
-    [lookupAddress, refetch, setLookupAddress],
+    [lookupAddress, refetch, setLookupAddress, setResolveError],
   );
 
   const claimMutation = useMutation({
@@ -224,7 +228,12 @@ export default function ClaimPage() {
             {loading ? (
               <LoadingTokens />
             ) : hasRewards ? (
-              <AvailableDistributions tokens={rewards ?? []} maxAssets={maxAssets} marketPrices={marketPrices} />
+              <AvailableDistributions
+                tokens={rewards ?? []}
+                maxAssets={maxAssets}
+                selectedAssetIds={selectedVisible}
+                marketPrices={marketPrices}
+              />
             ) : (
               !error && <NoRewardsState />
             )}

@@ -38,12 +38,13 @@ describe('AnalyticsPage', () => {
     expect(screen.getByRole('heading', { name: 'Platform pulse' })).toBeInTheDocument();
     expect(screen.getByLabelText('Loading platform statistics')).toBeInTheDocument();
 
-    expect(screen.getAllByRole('row')).toHaveLength(4);
+    expect(screen.getAllByRole('progressbar')).toHaveLength(2);
     expect(screen.getByText('mTOSI')).toBeInTheDocument();
     expect(screen.getByText('Partner')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Filter pools'), { target: { value: 'apex' } });
-    expect(screen.getAllByRole('row')).toHaveLength(3);
-    expect(screen.queryByText('TosiDrop')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+    expect(screen.getByText('APEX')).toBeInTheDocument();
+    expect(screen.queryByLabelText('TOSI relative delegator count')).not.toBeInTheDocument();
   });
 });

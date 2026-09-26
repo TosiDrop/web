@@ -10,7 +10,7 @@ export interface SyncDeps {
     put(key: string, value: string): Promise<void>;
   };
   bucket: {
-    head(key: string): Promise<unknown | null>;
+    head(key: string): Promise<unknown>;
     put(
       key: string,
       value: ArrayBuffer,
@@ -39,10 +39,11 @@ export async function syncTokenImages({
   const deploymentNetwork = normalizeDeploymentNetwork(network);
   const tokensCacheKey = `__internal:tokens_cache:${deploymentNetwork}`;
   const cursorKey = `__internal:image_sync_cursor:${deploymentNetwork}`;
-  const cached = (await kv.get(tokensCacheKey, { type: 'json' })) as Record<
-    string,
-    { logo?: string }
-  > | null;
+  const cachedValue = await kv.get(tokensCacheKey, { type: 'json' });
+  const cached =
+    typeof cachedValue === 'object' && cachedValue !== null && !Array.isArray(cachedValue)
+      ? (cachedValue as Record<string, { logo?: string }>)
+      : null;
   const tokens = cached ?? (await fetchTokens());
 
   const ids = Object.keys(tokens ?? {})

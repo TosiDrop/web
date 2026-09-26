@@ -199,7 +199,7 @@ export default function TeamPage() {
 
       <p className="flex items-start gap-2 text-xs leading-5 text-text-muted">
         <IconShieldCheck size={15} stroke={1.7} className="mt-0.5 shrink-0 text-status-success-light" aria-hidden />
-        Partner pools are marked for distribution eligibility. Claims from other pools may include a 1 ADA pool fee; the final amount is confirmed during claiming.
+        Participating pools are eligible for TosiDrop distributions. Partner pools do not pay claim fees; other pools may include a 1 ADA pool fee, confirmed before you claim.
       </p>
 
       <section className="space-y-4">
@@ -207,9 +207,9 @@ export default function TeamPage() {
           <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-tight text-text-primary">Pool directory</h2>
             <p className="mt-1 text-sm text-text-muted">
-              Explore the pools tracked by TosiDrop. Partner status marks pools
-              eligible for TosiDrop distributions; every listed pool remains a
-              valid delegation destination.
+              Explore the pools tracked by TosiDrop. Participating status marks
+              pools eligible for distributions; partner pools do not pay claim
+              fees. Every listed pool remains a valid delegation destination.
             </p>
           </div>
           {!isLoading && !error && pools && pools.length > 0 && (

@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { IconBriefcase, IconSearch, IconShieldCheck } from '@tabler/icons-react';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -78,41 +78,49 @@ function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] })
 }
 
 export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
+  const maxDelegators = Math.max(1, ...rows.map((row) => row.delegators ?? 0));
   return (
-    <div className="card-premium overflow-x-auto">
-      <table className="w-full min-w-[720px] text-left text-sm">
-        <thead>
-          <tr className="border-b border-border-subtle text-[10px] uppercase tracking-wider text-slate-500">
-            <th scope="col" className="px-5 py-3 font-medium">Pool / project</th>
-            <th scope="col" className="px-5 py-3 text-right font-medium">Delegators</th>
-            <th scope="col" className="px-5 py-3 font-medium">Tokens / epoch</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border-subtle/50">
-          {(['pool', 'project'] as const).map((kind) => {
-            const group = rows.filter((row) => row.kind === kind);
-            if (!group.length) return null;
-            return (
-              <Fragment key={kind}>
-                <tr className="bg-surface-inset/40">
-                  <th scope="rowgroup" colSpan={3} className="px-5 py-2 text-[10px] uppercase tracking-wider text-slate-500">
-                    {kind === 'pool' ? 'Stake pools' : 'Projects'}
-                  </th>
-                </tr>
-                {group.map((row) => (
-                  <tr key={row.poolId}>
-                    <td className="px-5 py-3"><PoolCell row={row} /></td>
-                    <td className="px-5 py-3 text-right font-mono text-xs text-slate-200">
-                      {row.delegators === null ? '—' : row.delegators.toLocaleString()}
-                    </td>
-                    <td className="px-5 py-3"><Offerings offerings={row.offerings} /></td>
-                  </tr>
-                ))}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-5">
+      {(['pool', 'project'] as const).map((kind) => {
+        const group = rows.filter((row) => row.kind === kind);
+        if (!group.length) return null;
+        return (
+          <section key={kind} aria-label={kind === 'pool' ? 'Stake pools' : 'Projects'} className="space-y-2.5">
+            <h3 className="label-eyebrow">{kind === 'pool' ? 'Stake pools' : 'Projects'}</h3>
+            {group.map((row) => {
+              const delegators = row.delegators;
+              const scale = delegators === null ? 0 : (delegators / maxDelegators) * 100;
+              return (
+                <article key={row.poolId} className="card-premium grid gap-4 p-4 sm:grid-cols-[minmax(0,0.85fr)_minmax(180px,0.55fr)_minmax(0,1.6fr)] sm:items-center">
+                  <PoolCell row={row} />
+                  <div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="label-eyebrow">Delegators</span>
+                      <span className="font-mono text-xs tabular-nums text-text-primary">
+                        {delegators === null ? 'Not indexed' : delegators.toLocaleString()}
+                      </span>
+                    </div>
+                    <div
+                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-inset"
+                      role="progressbar"
+                      aria-label={`${row.ticker || row.name} relative delegator count`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(scale)}
+                    >
+                      <div className="h-full rounded-full bg-accent-light" style={{ width: `${scale}%` }} />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="label-eyebrow mb-2">Tokens per epoch</p>
+                    <Offerings offerings={row.offerings} />
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        );
+      })}
     </div>
   );
 }

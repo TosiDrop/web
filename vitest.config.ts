@@ -1,4 +1,3 @@
-import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 // Date formatting in components pins 'en-US'; pin the zone too so assertions
@@ -8,7 +7,7 @@ process.env.TZ = 'UTC';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': `${import.meta.dirname}/src`,
     },
   },
   test: {

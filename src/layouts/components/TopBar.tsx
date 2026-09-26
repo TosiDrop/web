@@ -5,7 +5,7 @@ import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
 import { preloadWalletRuntime } from '@/features/wallet/preload';
-import { useMobileMenu } from '@/layouts/MobileMenuContext';
+import { useMobileMenu } from '@/layouts/useMobileMenu';
 import { useProfile } from '@/features/profile/api/profile.queries';
 import { getNetworkLabel } from '@/utils/format';
 import { DEPLOYMENT_NETWORK } from '@/config/network';

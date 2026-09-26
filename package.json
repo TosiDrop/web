@@ -37,7 +37,7 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.1.8",
     "vite-plugin-wasm": "^3.6.0",
-    "vm-sdk": "git+https://github.com/TosiDrop/vm-sdk.git#957551033250d08652df6c5cd2077ca00ec1a49c",
+    "vm-sdk": "git+https://github.com/TosiDrop/vm-sdk.git#7d9da848fe07b4b2094452e464ce25b097c07cb1",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

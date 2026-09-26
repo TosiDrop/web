@@ -74,13 +74,7 @@ export function DistributionCard({ token, selected, onToggle, favorite, dislike,
               <span className="block truncate text-sm font-semibold text-text-primary">
                 {token.ticker}
               </span>
-              {token.premium ? (
-                <span className="mt-1 inline-block rounded-md bg-accent/[0.12] px-1.5 py-0.5 text-2xs font-medium text-accent-light">
-                  Premium
-                </span>
-              ) : (
-                <span className="mt-0.5 block text-2xs text-text-muted">Reward</span>
-              )}
+              <span className="mt-0.5 block text-2xs text-text-muted">Reward</span>
             </span>
           </div>
 

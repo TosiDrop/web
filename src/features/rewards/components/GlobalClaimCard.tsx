@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -21,20 +21,18 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
     enabled: connected && !!wallet,
     staleTime: 60_000,
   });
-  const [manualInput, setManualInput] = useState('');
+  const [inputState, setInputState] = useState({ stakeAddress, value: stakeAddress ?? '' });
+  const manualInput = inputState.stakeAddress === stakeAddress ? inputState.value : stakeAddress ?? '';
+  const setManualInput = (value: string) => setInputState({ stakeAddress, value });
   const [error, setError] = useState<string | null>(null);
-  const [handlePage, setHandlePage] = useState(0);
+  const pageKey = `${stakeAddress ?? ''}:${handles.length}`;
+  const [pageState, setPageState] = useState({ key: pageKey, page: 0 });
+  const handlePage = pageState.key === pageKey ? pageState.page : 0;
+  const setHandlePage = (update: number | ((page: number) => number)) =>
+    setPageState({ key: pageKey, page: typeof update === 'function' ? update(handlePage) : update });
   const handlesPerPage = 10;
   const handlePageCount = Math.max(1, Math.ceil(handles.length / handlesPerPage));
   const visibleHandles = handles.slice(handlePage * handlesPerPage, (handlePage + 1) * handlesPerPage);
-
-  useEffect(() => {
-    setManualInput(stakeAddress ?? '');
-  }, [stakeAddress]);
-
-  useEffect(() => {
-    setHandlePage(0);
-  }, [stakeAddress, handles.length]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

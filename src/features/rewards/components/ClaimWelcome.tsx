@@ -27,7 +27,7 @@ export function ClaimWelcome() {
           Claim what you're owed
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">
-          TosiDrop delivers token rewards to delegators of partner Cardano stake pools.
+          TosiDrop distributes token rewards to delegators of participating Cardano stake pools.
           Connect a wallet to see what's waiting and claim your rewards.
         </p>
 

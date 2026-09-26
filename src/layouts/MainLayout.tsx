@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { MobileMenuProvider } from './MobileMenuContext';
+import { MobileMenuProvider } from './MobileMenuProvider';
 import { NetworkMismatchBanner } from '@/features/wallet/components/NetworkMismatchBanner';
 import { useFirstTimeCheck } from '@/features/onboarding/hooks/useFirstTimeCheck';
 import { useOnboardingStore } from '@/store/onboarding-state';
