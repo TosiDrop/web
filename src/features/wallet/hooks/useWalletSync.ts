@@ -37,17 +37,22 @@ export function useWalletSync() {
         const stakeAddress = rewardAddresses[0]
           ? rewardAddressToBech32(rewardAddresses[0])
           : null;
-        const changeAddress = await wallet.getChangeAddress();
 
-        if (!cancelled) {
-          setWalletState({
-            connected: true,
-            walletName: name,
-            stakeAddress,
-            changeAddress,
-            networkId: network ?? null,
-            wallet: wallet as WalletInstance,
-          });
+        if (cancelled) return;
+        setWalletState({
+          connected: true,
+          walletName: name,
+          stakeAddress,
+          changeAddress: null,
+          networkId: network ?? null,
+          wallet: wallet as WalletInstance,
+        });
+
+        try {
+          const changeAddress = await wallet.getChangeAddress();
+          if (!cancelled) setWalletState({ changeAddress });
+        } catch (error) {
+          console.error('Failed to sync wallet change address:', error);
         }
       } catch (error) {
         console.error('Failed to sync wallet state:', error);
