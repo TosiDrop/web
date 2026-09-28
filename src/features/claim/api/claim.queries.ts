@@ -31,10 +31,14 @@ export function useClaimStatus({
         stakeAddress,
       });
       const status = await apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
-      if (status.kind !== 'success' || status.txHash) return status;
-
       const previousStatus = client.getQueryData<ClaimStatus>(queryKey);
       const txHash = previousStatus?.kind === 'processing' ? previousStatus.txHash : undefined;
+
+      if (status.kind === 'processing' && !status.txHash && txHash) {
+        return { ...status, txHash };
+      }
+      if (status.kind !== 'success' || status.txHash) return status;
+
       return { ...status, txHash: txHash || '' };
     },
     enabled: enabled && !!requestId && !!stakeAddress,

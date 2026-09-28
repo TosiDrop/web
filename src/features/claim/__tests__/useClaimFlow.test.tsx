@@ -184,10 +184,11 @@ describe('useClaimFlow', () => {
     expect(successState.txHash).toBe('final_hash');
   });
 
-  it('retains a processing transaction hash when success has no hash', async () => {
+  it('retains a processing transaction hash across hashless polls and success', async () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
     apiGet
       .mockResolvedValueOnce({ kind: 'processing', txHash: 'processing_hash' } satisfies ClaimStatus)
+      .mockResolvedValueOnce({ kind: 'processing' } satisfies ClaimStatus)
       .mockResolvedValueOnce({ kind: 'success', txHash: '' } satisfies ClaimStatus)
       .mockResolvedValue({ kind: 'success', txHash: '' } satisfies ClaimStatus);
 
