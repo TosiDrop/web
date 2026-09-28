@@ -31,4 +31,10 @@ describe('DistributionCard', () => {
     expect(screen.queryByText('Est. claim value')).not.toBeInTheDocument();
     expect(screen.queryByText('Market estimate')).not.toBeInTheDocument();
   });
+
+  it('does not expose VM premium metadata in the claim UI', () => {
+    render(<DistributionCard token={{ ...TOKEN, premium: true }} selected={false} onToggle={() => undefined} />);
+    expect(screen.queryByText(/premium/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Reward')).toBeInTheDocument();
+  });
 });

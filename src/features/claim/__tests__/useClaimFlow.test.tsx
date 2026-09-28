@@ -184,6 +184,71 @@ describe('useClaimFlow', () => {
     expect(successState.txHash).toBe('final_hash');
   });
 
+  it('retains a processing transaction hash across hashless polls and success', async () => {
+    apiPost.mockResolvedValueOnce(DEPOSIT);
+    apiGet
+      .mockResolvedValueOnce({ kind: 'processing', txHash: 'processing_hash' } satisfies ClaimStatus)
+      .mockResolvedValueOnce({ kind: 'processing' } satisfies ClaimStatus)
+      .mockResolvedValueOnce({ kind: 'success', txHash: '' } satisfies ClaimStatus)
+      .mockResolvedValue({ kind: 'success', txHash: '' } satisfies ClaimStatus);
+
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 10 }), { wrapper: makeWrapper() });
+    await act(async () => {
+      await result.current.startClaim(['a']);
+    });
+    act(() => {
+      result.current.markDepositedExternally();
+    });
+
+    await waitFor(() => expect(result.current.state.step).toBe('success'));
+    expect(result.current.state).toMatchObject({ step: 'success', txHash: 'processing_hash' });
+  });
+
+  it('stops polling after a terminal result when the wallet changes', async () => {
+    apiPost.mockResolvedValueOnce(DEPOSIT);
+    apiGet.mockResolvedValue({ kind: 'success', txHash: 'final_hash' } satisfies ClaimStatus);
+
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 60_000 }), { wrapper: makeWrapper() });
+    await act(async () => {
+      await result.current.startClaim(['a']);
+    });
+    act(() => {
+      result.current.markDepositedExternally();
+    });
+
+    await waitFor(() => expect(result.current.state.step).toBe('success'));
+    const requestCount = apiGet.mock.calls.length;
+
+    await act(async () => {
+      useWalletStore.setState({ stakeAddress: 'stake_test_other' });
+    });
+
+    expect(result.current.state).toMatchObject({ step: 'success', txHash: 'final_hash' });
+    expect(apiGet.mock.calls.slice(requestCount).every(([url]) => !url.includes('stake_test_other'))).toBe(true);
+  });
+
+  it('does not poll an active claim with a different wallet address', async () => {
+    apiPost.mockResolvedValueOnce(DEPOSIT);
+    apiGet.mockResolvedValue({ kind: 'waiting' } satisfies ClaimStatus);
+
+    const { result } = renderHook(() => useClaimFlow({ pollIntervalMs: 60_000 }), { wrapper: makeWrapper() });
+    await act(async () => {
+      await result.current.startClaim(['a']);
+    });
+    act(() => {
+      result.current.markDepositedExternally();
+    });
+    await waitFor(() => expect(apiGet).toHaveBeenCalled());
+    const requestCount = apiGet.mock.calls.length;
+
+    await act(async () => {
+      useWalletStore.setState({ stakeAddress: 'stake_test_other' });
+    });
+
+    expect(result.current.state.step).toBe('polling');
+    expect(apiGet.mock.calls.slice(requestCount).every(([url]) => !url.includes('stake_test_other'))).toBe(true);
+  });
+
   it('polling transitions to error on a failure status', async () => {
     apiPost.mockResolvedValueOnce(DEPOSIT);
     const failure: ClaimStatus = { kind: 'failure', reason: 'rejected by network' };

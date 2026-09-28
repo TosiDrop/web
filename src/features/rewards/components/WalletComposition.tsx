@@ -15,6 +15,7 @@ import { Card } from '@/components/common/Card';
 import { apiClient } from '@/api/client';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
 import { decimalAmountToNumber } from '@/shared/amounts';
+import { ApiError } from '@/types/api';
 
 const COLORS = ['#67E8F9', '#A78BFA', '#34D399', '#FBBF24', '#F472B6', '#FB7185'];
 const TOOLTIP_STYLE = {
@@ -62,6 +63,7 @@ interface WalletQueryData {
   summary: WalletSummary;
   attachedLovelace: string | null;
   degraded: boolean;
+  addressError: string | null;
 }
 
 function formatUnits(raw: string, decimals: number, maxDecimals = 2): string {
@@ -122,6 +124,7 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
   );
 }
 
+/** Combines live wallet balances with indexed holdings, market values, and portfolio charts. */
 export function WalletComposition() {
   const { connected, stakeAddress, wallet } = useWalletStore();
   const { data, isLoading } = useQuery<WalletQueryData>({
@@ -139,8 +142,12 @@ export function WalletComposition() {
           summary: summaryResult.value,
           attachedLovelace,
           degraded: summaryResult.value.degraded,
+          addressError: null,
         };
       }
+      const addressError = summaryResult.reason instanceof ApiError && summaryResult.reason.status === 400
+        ? summaryResult.reason.message
+        : null;
       return {
         summary: {
           balance: {
@@ -158,6 +165,7 @@ export function WalletComposition() {
         },
         attachedLovelace,
         degraded: true,
+        addressError,
       };
     },
     enabled: connected && !!stakeAddress && !!wallet,
@@ -169,6 +177,17 @@ export function WalletComposition() {
   if (!connected || !stakeAddress) return <Panel><p className="text-xs text-text-muted">Not connected</p></Panel>;
   if (isLoading) return <Panel><p className="text-xs text-text-muted">Loading wallet portfolio…</p></Panel>;
   if (!data) return <Panel><p className="text-xs text-text-muted">Waiting for wallet data…</p></Panel>;
+  if (data.addressError) {
+    return (
+      <Panel>
+        <div role="alert" className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
+          <p className="label-eyebrow">Wallet address rejected</p>
+          <p className="mt-2 text-sm text-text-primary">{data.addressError}</p>
+          <p className="mt-2 text-xs text-text-muted">Reconnect your wallet or choose an account on this network. No indexed wallet values are shown until the address is accepted.</p>
+        </div>
+      </Panel>
+    );
+  }
 
   const { summary } = data;
   const attachedAda = decimalAmountToNumber(data.attachedLovelace ?? summary.balance.utxoLovelace, 6);
@@ -196,7 +215,7 @@ export function WalletComposition() {
         <Metric label="Rewards available" value={`₳ ${formatAda(summary.balance.rewardsAvailableLovelace)}`} detail="Available to withdraw" />
         <Metric label="Priced value" value={formatUsd(totalValueUsd)} detail={summary.market.priced ? `${summary.market.priced} assets priced` : 'Prices are being indexed'} />
       </div>
-      {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is still syncing. This view will retry automatically.</p>}
+      {data.degraded && <p className="mt-3 text-2xs text-text-faint">Some wallet data is unavailable right now. Available values remain visible while this view retries.</p>}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <section className="min-w-0 rounded-xl border border-border-subtle bg-surface-inset/25 p-4">

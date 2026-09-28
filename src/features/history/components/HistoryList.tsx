@@ -122,11 +122,15 @@ function SkeletonList() {
   );
 }
 
+/** Displays delivered rewards for the connected stake address with archive and fallback pagination. */
 export function HistoryList() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const { data, isLoading, error, refetch } = useDeliveredRewards(stakeAddress);
   const [showAll, setShowAll] = useState(false);
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState({ stakeAddress, page: 1 });
+  const page = pageState.stakeAddress === stakeAddress ? pageState.page : 1;
+  const setPage = (nextPage: number | ((page: number) => number)) =>
+    setPageState({ stakeAddress, page: typeof nextPage === 'function' ? nextPage(page) : nextPage });
   const [order, setOrder] = useState<HistoryOrder>('desc');
   const history = useWithdrawalHistory(stakeAddress, page, order);
 
@@ -136,7 +140,6 @@ export function HistoryList() {
   const invalidated = useRef(false);
   useEffect(() => {
     invalidated.current = false;
-    setPage(1);
   }, [stakeAddress]);
   useEffect(() => {
     if (data && !invalidated.current) {

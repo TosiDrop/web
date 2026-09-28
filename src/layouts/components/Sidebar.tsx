@@ -5,7 +5,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
-import { useMobileMenu } from '@/layouts/MobileMenuContext';
+import { useMobileMenu } from '@/layouts/useMobileMenu';
 import { DiscordIcon, XIcon, GitHubIcon } from '@/components/icons/SocialIcons';
 import TosiDropLogo from '@/assets/tosidrop_logo.png';
 import { NAV_GROUPS } from '@/layouts/navigation';
