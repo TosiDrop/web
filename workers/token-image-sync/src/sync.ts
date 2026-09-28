@@ -28,6 +28,7 @@ export interface SyncDeps {
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_SCANS_PER_RUN = 500;
 
+/** Stores a bounded, rotating batch of uncached token logos in the network-specific object bucket. */
 export async function syncTokenImages({
   kv,
   bucket,

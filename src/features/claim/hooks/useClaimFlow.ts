@@ -20,6 +20,7 @@ function friendlyError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Coordinates claim creation, wallet deposit, and status polling for the initiating stake address. */
 export function useClaimFlow(options: UseClaimFlowOptions = {}) {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const queryClient = useQueryClient();

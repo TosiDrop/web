@@ -3,6 +3,7 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { ClaimCreateRequest, ClaimStatus, DepositInfo } from '@/types/claim';
 
+/** Creates a claim request and exposes its deposit details through a mutation. */
 export function useClaimCreate() {
   return useMutation<DepositInfo, Error, ClaimCreateRequest>({
     mutationFn: (data) => apiClient.post<DepositInfo>('/api/claim/create', data),
@@ -16,6 +17,7 @@ interface UseClaimStatusArgs {
   refetchIntervalMs?: number;
 }
 
+/** Polls one claim for its original wallet and carries a known transaction hash across sparse responses. */
 export function useClaimStatus({
   requestId,
   stakeAddress,

@@ -122,6 +122,7 @@ function SkeletonList() {
   );
 }
 
+/** Displays delivered rewards for the connected stake address with archive and fallback pagination. */
 export function HistoryList() {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const { data, isLoading, error, refetch } = useDeliveredRewards(stakeAddress);

@@ -47,6 +47,7 @@ function NoRewardsState() {
   );
 }
 
+/** Drives reward lookup, token selection, and the connected-wallet claim flow. */
 export default function ClaimPage() {
   const navigate = useNavigate();
   const { stakeAddress, connected, networkId } = useWalletStore();

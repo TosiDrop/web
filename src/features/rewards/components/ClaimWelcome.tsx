@@ -12,6 +12,7 @@ const STEPS = [
   ['Approve once. Tokens settle straight to your wallet.'],
 ];
 
+/** Introduces reward claiming and starts wallet onboarding for disconnected visitors. */
 export function ClaimWelcome() {
   const openModal = useOnboardingStore((s) => s.openModal);
 

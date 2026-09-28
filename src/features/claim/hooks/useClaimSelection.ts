@@ -6,6 +6,7 @@ import { deriveClaimCandidates } from '../utils/deriveClaimSelection';
 
 const EMPTY_TOKENS: ClaimableToken[] = [];
 
+/** Initializes eligible rewards once, then validates the user's selection against every visible token. */
 export function useClaimSelection({
   tokens,
   favoriteIds,

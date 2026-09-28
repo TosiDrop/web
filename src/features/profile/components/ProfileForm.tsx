@@ -9,6 +9,7 @@ interface ProfileFormProps {
   currentName?: string;
 }
 
+/** Signs and saves a display-name update for the connected wallet. */
 export function ProfileForm({ currentName }: ProfileFormProps) {
   const { wallet, connected, stakeAddress, changeAddress } = useWalletStore();
   const saveProfile = useSaveProfile();

@@ -3,7 +3,7 @@ import { useWallet, useNetwork } from '@meshsdk/react';
 import { useWalletStore, type WalletInstance } from '@/store/wallet-state';
 import { rewardAddressToBech32 } from '@/utils/cardano-address';
 
-/** Mirrors the Mesh wallet into the app store. Must run inside MeshProvider. */
+/** Mirrors wallet, network, and address state into the app store; must run inside MeshProvider. */
 export function useWalletSync() {
   const { wallet, connected, name, disconnect, setPersist } = useWallet();
   const network = useNetwork();

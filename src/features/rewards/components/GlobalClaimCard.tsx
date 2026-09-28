@@ -13,6 +13,7 @@ interface GlobalClaimCardProps {
   displayName?: string | null;
 }
 
+/** Lets visitors look up rewards by stake address or wallet-owned ADA handle. */
 export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayName }: GlobalClaimCardProps) {
   const { connected, stakeAddress, wallet, walletName } = useWalletStore();
   const { data: handles = [] } = useQuery({

@@ -169,6 +169,7 @@ function ConnectedPoolCards({ pools, networkMatches }: { pools: TeamPool[]; netw
   );
 }
 
+/** Filters participating pools and presents delegation actions for the connected wallet. */
 export default function TeamPage() {
   const { data: pools, isLoading, error, refetch } = useParticipatingPools();
   const connected = useWalletStore((state) => state.connected);

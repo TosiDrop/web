@@ -6,6 +6,7 @@ export interface ClaimCandidates {
   selectableAssetIds: string[];
 }
 
+/** Separates hidden rewards from visible ones and caps only the initial selectable set. */
 export function deriveClaimCandidates({
   tokens,
   favoriteIds,

@@ -124,6 +124,7 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
   );
 }
 
+/** Combines live wallet balances with indexed holdings, market values, and portfolio charts. */
 export function WalletComposition() {
   const { connected, stakeAddress, wallet } = useWalletStore();
   const { data, isLoading } = useQuery<WalletQueryData>({

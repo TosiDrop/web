@@ -16,6 +16,7 @@ interface AvailableDistributionsProps {
   marketPrices?: Record<string, PublicMarketPrice>;
 }
 
+/** Lists claimable tokens with saved preferences and selection capped to the VM request limit. */
 export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, marketPrices = {} }: AvailableDistributionsProps) {
   const storedSelection = useClaimStore((s) => s.selectedAssetIds);
   const toggleAsset = useClaimStore((s) => s.toggleAsset);

@@ -17,6 +17,7 @@ export function toUnixSeconds(raw: string): number | null {
   return Number.isNaN(t) ? null : Math.floor(t / 1000);
 }
 
+/** Converts valid delivered-reward rows into idempotent inserts for the wallet archive. */
 export function buildWithdrawalUpserts(
   db: D1Database,
   network: string,

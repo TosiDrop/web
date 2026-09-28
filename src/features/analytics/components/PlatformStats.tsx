@@ -41,6 +41,7 @@ function WithdrawalsBar({ processed, failed }: { processed: number; failed: numb
   );
 }
 
+/** Summarizes indexed platform totals, reported service health, and uptime values. */
 export function PlatformStatsGrid({ stats }: { stats: Stats }) {
   return (
     <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 sm:grid-cols-3 xl:grid-cols-6">
@@ -57,13 +58,19 @@ export function PlatformStatsGrid({ stats }: { stats: Stats }) {
         detail={<WithdrawalsBar processed={stats.processed_withdrawals} failed={stats.failed_withdrawals} />}
       />
       <Metric
-        label="Uptime"
-        value={shortUptime(stats.uptime)}
+        label="Service health"
+        value={`${Number(stats.backend_up) + Number(stats.ntds_up)}/2 up`}
         detail={
-          <span className="flex flex-wrap gap-x-3">
-            <StatusDot up={stats.backend_up} label="Backend" />
-            <StatusDot up={stats.ntds_up} label="NTDS" />
-          </span>
+          <div className="space-y-1">
+            <div className="flex flex-wrap justify-between gap-x-2">
+              <StatusDot up={stats.backend_up} label="Backend" />
+              <span>Backend uptime {shortUptime(stats.uptime)}</span>
+            </div>
+            <div className="flex flex-wrap justify-between gap-x-2">
+              <StatusDot up={stats.ntds_up} label="NTDS" />
+              <span>NTDS uptime {shortUptime(stats.uptime_ntds)}</span>
+            </div>
+          </div>
         }
       />
       <Metric label="Epoch" value={num(stats.epoch)} detail="Current VM epoch" />

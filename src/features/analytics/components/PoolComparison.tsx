@@ -77,6 +77,7 @@ function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] })
   );
 }
 
+/** Compares pool and project offerings, scaling known delegator counts without inventing unknown values. */
 export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
   const maxDelegators = Math.max(1, ...rows.map((row) => row.delegators ?? 0));
   return (

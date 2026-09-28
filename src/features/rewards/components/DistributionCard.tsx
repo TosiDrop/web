@@ -25,6 +25,7 @@ function colorFor(seed: string): string {
   return `var(--color-chart-${(h % 6) + 1})`;
 }
 
+/** Presents one claimable token with its selection, preference controls, and available price estimate. */
 export function DistributionCard({ token, selected, onToggle, favorite, dislike, marketPrice }: DistributionCardProps) {
   const img = useImageFallback([tokenImageSrc(token.assetId, token.logo), token.logo]);
   const formattedAmount = token.amount.toLocaleString(undefined, {
