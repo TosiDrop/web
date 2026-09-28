@@ -24,13 +24,18 @@ export function useClaimStatus({
 }: UseClaimStatusArgs) {
   return useQuery<ClaimStatus, Error>({
     queryKey: ['claim-status', requestId, stakeAddress, DEPLOYMENT_NETWORK],
-    queryFn: async () => {
+    queryFn: async ({ queryKey, client }) => {
       if (!requestId || !stakeAddress) throw new Error('requestId and stakeAddress required');
       const params = new URLSearchParams({
         requestId,
         stakeAddress,
       });
-      return apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
+      const status = await apiClient.get<ClaimStatus>(`/api/claim/status?${params.toString()}`);
+      if (status.kind !== 'success' || status.txHash) return status;
+
+      const previousStatus = client.getQueryData<ClaimStatus>(queryKey);
+      const txHash = previousStatus?.kind === 'processing' ? previousStatus.txHash : undefined;
+      return { ...status, txHash: txHash || '' };
     },
     enabled: enabled && !!requestId && !!stakeAddress,
     refetchInterval: (query) => {

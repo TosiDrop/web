@@ -24,6 +24,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const queryClient = useQueryClient();
   const [storedState, setState] = useState<ClaimFlowStep>({ step: 'idle' });
+  const [claimStakeAddress, setClaimStakeAddress] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   const { mutateAsync: createAsync } = useClaimCreate();
@@ -34,8 +35,8 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
 
   const statusQuery = useClaimStatus({
     requestId,
-    stakeAddress,
-    enabled: polling,
+    stakeAddress: claimStakeAddress,
+    enabled: polling && stakeAddress === claimStakeAddress,
     refetchIntervalMs: options.pollIntervalMs,
   });
 
@@ -69,6 +70,8 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
         setState({ step: 'error', message: 'Select at least one reward' });
         return;
       }
+
+      setClaimStakeAddress(stakeAddress);
 
       // Drop any cached status data from a prior claim so stale success/failure
       // results cannot bleed into this fresh attempt if the backend reuses ids.
@@ -124,6 +127,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
 
   const reset = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['claim-status'] });
+    setClaimStakeAddress(null);
     setState({ step: 'idle' });
   }, [queryClient]);
 

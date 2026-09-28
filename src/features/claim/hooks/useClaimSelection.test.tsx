@@ -54,4 +54,22 @@ describe('useClaimSelection', () => {
     await waitFor(() => expect(result.current.selectedAssetIds).toEqual(['favorite-a', 'regular-a']));
     expect(result.current.selectedAssetIds).toHaveLength(2);
   });
+
+  it('keeps a later visible token selected after another selection is removed', async () => {
+    const tokens = [TOKENS[0], TOKENS[2], { ...TOKENS[2], assetId: 'regular-c', ticker: 'RC' }];
+    const props = {
+      tokens,
+      favoriteIds: new Set<string>(),
+      dislikedIds: new Set<string>(),
+      lookupAddress: 'stake1account',
+      preferencesLoading: false,
+      maxAssets: 2,
+    };
+    const { result } = renderHook((input) => useClaimSelection(input), { initialProps: props });
+
+    await waitFor(() => expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-b']));
+    act(() => useClaimStore.getState().setSelected(['regular-a', 'regular-c']));
+
+    expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-c']);
+  });
 });

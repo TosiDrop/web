@@ -34,10 +34,10 @@ export function useClaimSelection({
   );
   const selectedAssetIds = useMemo(
     () => limitSelection(
-      visibleSelection(storedSelection, candidates.selectableAssetIds),
+      visibleSelection(storedSelection, candidates.visible.map((token) => token.assetId)),
       maxAssets,
     ),
-    [storedSelection, candidates.selectableAssetIds, maxAssets],
+    [storedSelection, candidates.visible, maxAssets],
   );
 
   useEffect(() => {

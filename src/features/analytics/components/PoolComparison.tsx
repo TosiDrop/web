@@ -89,7 +89,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
             <h3 className="label-eyebrow">{kind === 'pool' ? 'Stake pools' : 'Projects'}</h3>
             {group.map((row) => {
               const delegators = row.delegators;
-              const scale = delegators === null ? 0 : (delegators / maxDelegators) * 100;
+              const scale = delegators === null ? null : (delegators / maxDelegators) * 100;
               return (
                 <article key={row.poolId} className="card-premium grid gap-4 p-4 sm:grid-cols-[minmax(0,0.85fr)_minmax(180px,0.55fr)_minmax(0,1.6fr)] sm:items-center">
                   <PoolCell row={row} />
@@ -100,16 +100,18 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
                         {delegators === null ? 'Not indexed' : delegators.toLocaleString()}
                       </span>
                     </div>
-                    <div
-                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-inset"
-                      role="progressbar"
-                      aria-label={`${row.ticker || row.name} relative delegator count`}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(scale)}
-                    >
-                      <div className="h-full rounded-full bg-accent-light" style={{ width: `${scale}%` }} />
-                    </div>
+                    {scale !== null && (
+                      <div
+                        className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-inset"
+                        role="progressbar"
+                        aria-label={`${row.ticker || row.name} relative delegator count`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(scale)}
+                      >
+                        <div className="h-full rounded-full bg-accent-light" style={{ width: `${scale}%` }} />
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="label-eyebrow mb-2">Tokens per epoch</p>
