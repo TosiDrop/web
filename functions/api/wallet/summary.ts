@@ -20,7 +20,7 @@ const MAX_METADATA_ASSETS = 100;
 const MAX_PRICED_ASSETS = 100;
 
 function unitFor(asset: KoiosAccountAsset): string | null {
-  const policy = asset.asset_policy?.trim();
+  const policy = asset.policy_id?.trim();
   const name = asset.asset_name?.trim();
   return policy ? `${policy}${name ?? ''}` : null;
 }
@@ -29,7 +29,7 @@ function metadataByUnit(rows: KoiosAssetInfo[]): Map<string, KoiosAssetInfo> {
   return new Map(
     rows
       .map((row) => {
-        const unit = row.asset_policy ? `${row.asset_policy}${row.asset_name ?? ''}` : null;
+        const unit = row.policy_id ? `${row.policy_id}${row.asset_name ?? ''}` : null;
         return unit ? [unit, row] as const : null;
       })
       .filter((entry): entry is readonly [string, KoiosAssetInfo] => entry !== null),
@@ -95,12 +95,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const unit = unitFor(asset)!;
       const info = metadataMap.get(unit);
       const registry = info?.token_registry_metadata;
-      const decimals = registry?.decimals ?? info?.decimals ?? null;
+      const decimals = registry?.decimals ?? info?.decimals ?? asset.decimals ?? null;
       const quote = marketByUnit.get(unit);
       const price = quote?.priceUsd ?? null;
       return {
         unit,
-        policyId: asset.asset_policy,
+        policyId: asset.policy_id,
         assetNameHex: asset.asset_name,
         quantity: asset.quantity ?? '0',
         name: registry?.name ?? info?.asset_name_ascii ?? null,
@@ -119,13 +119,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         pricePending: price === null,
       };
     });
-    const history = sources.account && sources.assets ? await readValueHistory(
+    const history = sources.account && sources.assets && holdings.every((holding) => holding.decimals !== null) && holdings.length <= MAX_PRICED_ASSETS ? await readValueHistory(
       env,
       network,
       holdings.flatMap((holding) => {
         const decimals = holding.decimals;
         if (decimals === null) return [];
-        const amount = Number(holding.quantity) / 10 ** decimals;
+        const amount = decimalAmountToNumber(holding.quantity, decimals);
         return Number.isFinite(amount) ? [{ unit: holding.unit, amount }] : [];
       }),
       decimalAmountToNumber(account.utxo ?? account.total_balance ?? '0', 6),
@@ -143,20 +143,27 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         rewardsAvailableLovelace: sources.account ? account.rewards_available ?? '0' : null,
         adaPriceUsd,
         adaPriceChange24h,
+        adaPriceObservedAt: adaMarket?.observedAt ?? null,
+        adaPriceSource: adaMarket?.source ?? null,
+        adaPriceSourceCount: adaMarket?.sourceCount ?? 0,
+        withdrawnLovelace: sources.account ? account.withdrawals ?? '0' : null,
+        stakeDepositLovelace: sources.account ? account.deposit ?? '0' : null,
         accountValueUsd: adaPriceUsd === null || !sources.account
           ? null
           : decimalAmountToNumber(account.total_balance ?? '0', 6) * adaPriceUsd,
       },
       delegation: {
         poolId: account.delegated_pool ?? null,
-        registered: account.status === 'registered',
+        registered: sources.account ? account.status === 'registered' : null,
+        drepId: account.delegated_drep ?? null,
       },
       rewards: {
         totalLovelace: sources.rewards ? rewardTotal(rewards) : null,
         epochs: rewards.map((reward) => ({
           epoch: reward.earned_epoch ?? null,
+          spendableEpoch: reward.spendable_epoch ?? null,
           amountLovelace: reward.amount ?? '0',
-          poolId: reward.pool_id ?? null,
+          poolId: reward.pool_id_bech32 ?? null,
           type: reward.type ?? null,
         })),
       },

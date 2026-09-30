@@ -17,23 +17,27 @@ export async function readMarketPrices(
   units: string[],
 ): Promise<Map<string, MarketPrice>> {
   if (!env.DB || units.length === 0) return new Map();
-  const placeholders = units.map(() => '?').join(', ');
   let result: D1Result<MarketPrice>;
   try {
     result = await env.DB.prepare(
       `SELECT unit, price_usd AS priceUsd, price_ada AS priceAda,
               price_change_24h AS priceChange24h, source, observed_at AS observedAt
        FROM market_asset_prices
-       WHERE network = ? AND unit IN (${placeholders})`,
+       WHERE network = ? AND unit IN (SELECT value FROM json_each(?))`,
     )
-      .bind(network, ...units)
+      .bind(network, JSON.stringify(units))
       .all<MarketPrice>();
   } catch (error) {
     console.error('market price read error:', error);
     return new Map();
   }
   const grouped = new Map<string, MarketPrice[]>();
+  const now = Math.floor(Date.now() / 1000);
   for (const row of result.results) {
+    // Quotes older than a day cannot contribute to a current wallet estimate.
+    if (!Number.isFinite(row.observedAt) || row.observedAt < now - 86_400 || row.observedAt > now + 60) continue;
+    const validPrice = (value: number | null) => value === null || (Number.isFinite(value) && value > 0);
+    if (!validPrice(row.priceUsd) || !validPrice(row.priceAda) || (row.priceUsd === null && row.priceAda === null)) continue;
     const list = grouped.get(row.unit) ?? [];
     list.push({ ...row, sourceCount: 1 });
     grouped.set(row.unit, list);
@@ -53,7 +57,7 @@ export async function readMarketPrices(
       priceChange24h: median(rows.map((row) => row.priceChange24h ?? NaN)),
       source: rows.map((row) => row.source).sort().join(', '),
       sourceCount: rows.length,
-      observedAt: Math.max(...rows.map((row) => row.observedAt)),
+      observedAt: Math.min(...rows.map((row) => row.observedAt)),
     }];
   }));
 }
@@ -73,15 +77,14 @@ export async function readValueHistory(
   if (!env.DB) return [];
   const start = Math.floor(Date.now() / 1000) - days * 86_400;
   const units = ['lovelace', ...holdings.map((holding) => holding.unit)];
-  const placeholders = units.map(() => '?').join(', ');
   let result: D1Result<{ unit: string; observedAt: number; priceAda: number | null; source: string }>;
   try {
     result = await env.DB.prepare(
       `SELECT unit, observed_at AS observedAt, price_ada AS priceAda, source
        FROM market_asset_price_history
-       WHERE network = ? AND observed_at >= ? AND unit IN (${placeholders})
+       WHERE network = ? AND observed_at >= ? AND unit IN (SELECT value FROM json_each(?))
        ORDER BY observed_at ASC`,
-    ).bind(network, start, ...units).all<{ unit: string; observedAt: number; priceAda: number | null; source: string }>();
+    ).bind(network, start, JSON.stringify(units)).all<{ unit: string; observedAt: number; priceAda: number | null; source: string }>();
   } catch (error) {
     console.error('market value history read error:', error);
     return [];
@@ -89,7 +92,7 @@ export async function readValueHistory(
 
   const buckets = new Map<number, Map<string, Map<string, number>>>();
   for (const row of result.results) {
-    if (row.priceAda === null || !Number.isFinite(row.priceAda)) continue;
+    if (row.priceAda === null || !Number.isFinite(row.priceAda) || row.priceAda <= 0) continue;
     const bucket = Math.floor(row.observedAt / 3600) * 3600;
     const byUnit = buckets.get(bucket) ?? new Map<string, Map<string, number>>();
     const bySource = byUnit.get(row.unit) ?? new Map<string, number>();

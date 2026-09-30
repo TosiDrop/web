@@ -44,21 +44,20 @@ describe('GET /api/wallet/summary', () => {
       }
       if (url.endsWith('/account_assets')) {
         return new Response(JSON.stringify([{
-          asset_policy: 'policy',
-          asset_name: 'name',
+          policy_id: 'abababababababababababababababababababababababababababab',
+          asset_name: '6e616d65',
           quantity: '2500',
         }]));
       }
-      if (url.endsWith('/account_rewards')) {
-        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id: 'pool1abc', type: 'member' }]));
+      if (url.endsWith('/account_reward_history')) {
+        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id_bech32: 'pool1abc', type: 'member' }]));
       }
       if (url.endsWith('/asset_info')) {
         return new Response(JSON.stringify([{
-          asset_policy: 'policy',
-          asset_name: 'name',
+          policy_id: 'abababababababababababababababababababababababababababab',
+          asset_name: '6e616d65',
           asset_name_ascii: 'Example Token',
-          decimals: 2,
-          token_registry_metadata: { ticker: 'EX' },
+          token_registry_metadata: { name: 'Example Token', ticker: 'EX', decimals: 2 },
         }]));
       }
       throw new Error(`unexpected URL: ${url}`);
@@ -77,8 +76,8 @@ describe('GET /api/wallet/summary', () => {
       network: 'preview',
       balance: { accountLovelace: '1234567', rewardsAvailableLovelace: '42' },
       delegation: { poolId: 'pool1abc', registered: true },
-      rewards: { totalLovelace: '99' },
-      holdings: [{ unit: 'policyname', quantity: '2500', ticker: 'EX', decimals: 2 }],
+      rewards: { totalLovelace: '99', epochs: [{ epoch: 500, poolId: 'pool1abc' }] },
+      holdings: [{ unit: 'abababababababababababababababababababababababababababab6e616d65', quantity: '2500', ticker: 'EX', decimals: 2 }],
       metadata: { returned: 1, total: 1, complete: true },
       sources: { account: true, assets: true, rewards: true },
     });
@@ -107,12 +106,12 @@ describe('GET /api/wallet/summary', () => {
   it('keeps assets whose Cardano asset name is empty', async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.endsWith('/account_assets')) return new Response(JSON.stringify([
-        { asset_policy: 'policy', asset_name: '', quantity: '1' },
+        { policy_id: 'abababababababababababababababababababababababababababab', asset_name: '', quantity: '1' },
       ]));
       return new Response('[]');
     });
     const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
     const body = await response.json() as { holdings: Array<{ unit: string }> };
-    expect(body.holdings).toEqual([expect.objectContaining({ unit: 'policy' })]);
+    expect(body.holdings).toEqual([expect.objectContaining({ unit: 'abababababababababababababababababababababababababababab' })]);
   });
 });

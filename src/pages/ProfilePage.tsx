@@ -8,7 +8,7 @@ import { useProfile } from '@/features/profile/api/profile.queries';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { useOnboardingStore } from '@/store/onboarding-state';
-import { truncateHash, getNetworkLabel } from '@/utils/format';
+import { getNetworkLabel } from '@/utils/format';
 import { WalletComposition } from '@/features/rewards/components/WalletComposition';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { rewardSnapshot } from '@/features/rewards/utils/rewardAlerts';
@@ -25,6 +25,10 @@ const FavoritesTab = lazy(async () => {
 const RewardBreakdown = lazy(async () => {
   const module = await import('@/features/profile/components/RewardBreakdown');
   return { default: module.RewardBreakdown };
+});
+const PersonalAnalytics = lazy(async () => {
+  const module = await import('@/features/profile/components/PersonalAnalytics');
+  return { default: module.PersonalAnalytics };
 });
 const ProfileForm = lazy(async () => {
   const module = await import('@/features/profile/components/ProfileForm');
@@ -52,8 +56,7 @@ function SectionHeading({
         <Icon size={18} stroke={1.6} aria-hidden />
       </span>
       <div>
-        <p className="label-eyebrow">{eyebrow}</p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
+        <h2 id={`${eyebrow.toLowerCase().replaceAll(' ', '-')}-title`} className="text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
         <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">{description}</p>
       </div>
     </div>
@@ -90,7 +93,7 @@ function AccountSection() {
               <div>
                 <dt className="label-eyebrow">Stake address</dt>
                 <dd className="mt-1.5 flex items-center gap-2">
-                  <span className="font-mono text-xs text-text-secondary">{truncateHash(stakeAddress, 14, 8)}</span>
+                  <span className="min-w-0 break-all font-mono text-xs leading-5 text-text-secondary">{stakeAddress}</span>
                   <CopyButton value={stakeAddress} ariaLabel="Copy stake address" />
                 </dd>
               </div>
@@ -163,16 +166,18 @@ export default function ProfilePage() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!location.hash) return undefined;
-    const targetId = decodeURIComponent(location.hash.slice(1));
+    const tab = new URLSearchParams(location.search).get('tab');
+    const aliases: Record<string, string> = { history: 'activity', analytics: 'claim-analytics', favorites: 'saved-assets', settings: 'account' };
+    const targetId = location.hash ? decodeURIComponent(location.hash.slice(1)) : tab ? aliases[tab] : null;
+    if (!targetId) return undefined;
     const frame = requestAnimationFrame(() => {
       document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [connected, location.hash]);
+  }, [connected, location.hash, location.search]);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 [&_section]:scroll-mt-24">
       <header className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet</h1>
@@ -185,7 +190,7 @@ export default function ProfilePage() {
               <IconGift size={13} aria-hidden /> Claim tokens
             </Link>
             <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
-              Explore analytics <IconArrowRight size={13} aria-hidden />
+              Platform analytics <IconArrowRight size={13} aria-hidden />
             </Link>
             <Link to="/profile#saved-assets" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
               <IconBookmark size={13} aria-hidden /> Saved tokens
@@ -194,6 +199,15 @@ export default function ProfilePage() {
       </header>
 
       {connected ? <>
+      <nav aria-label="Wallet sections" className="flex flex-wrap gap-x-5 gap-y-3 border-b border-border-subtle pb-4 text-sm">
+        {[
+          ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['staking', 'Staking'],
+          ['claim-analytics', 'Claim analytics'], ['activity', 'Activity'],
+          ['saved-assets', 'Favorites'], ['account', 'Account'],
+        ].map(([id, label]) => (
+          <Link key={id} to={`/profile#${id}`} className="min-h-6 text-text-secondary hover:text-accent-light hover:underline">{label}</Link>
+        ))}
+      </nav>
       {rewardTokenCount > 0 && (
         <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/[0.08] px-4 py-3">
           <p className="flex items-center gap-2 text-sm text-text-primary">
@@ -207,8 +221,15 @@ export default function ProfilePage() {
         <WalletComposition />
       </section>
 
+      <section id="claim-analytics" aria-labelledby="claim-analytics-title">
+        <SectionHeading icon={IconChartLine} eyebrow="Claim analytics" title="Your reward trends" description="Delivered reward amounts, claim frequency, token mix, and recorded claim costs." />
+        <Suspense fallback={<SectionLoading label="claim analytics" />}>
+          <PersonalAnalytics />
+        </Suspense>
+      </section>
+
       <div className="grid items-start gap-10 xl:grid-cols-2">
-        <section id="rewards" aria-labelledby="rewards-title">
+        <section id="rewards" aria-labelledby="rewards-provenance-title">
           <SectionHeading
             icon={IconChartLine}
             eyebrow="Rewards provenance"
