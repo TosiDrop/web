@@ -15,22 +15,25 @@ import { tickerFor } from '@/features/history/api/history.queries';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { FavoriteStarButton } from '@/features/favorites/components/FavoriteStarButton';
 import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
+import { catalogAssetId, nativeAssetUnit } from '@/shared/assets';
 
 export default function TokenDetailPage() {
-  const { assetId = '' } = useParams();
+  const { assetId: routeId = '' } = useParams();
+  const assetId = catalogAssetId(routeId);
+  const unit = nativeAssetUnit(assetId);
   const queryClient = useQueryClient();
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
   const walletData = queryClient.getQueryData<{ summary: WalletSummary }>(['wallet-summary', DEPLOYMENT_NETWORK, stakeAddress]);
-  const holding = walletData?.summary.holdings.find((item) => item.unit === assetId);
+  const holding = walletData?.summary.holdings.find((item) => item.unit === unit);
   const { data: catalog, isLoading } = usePublicTokens();
   const { data: tokenMap } = useTokenMap();
-  const { data: prices } = useMarketPrices(assetId ? [assetId] : []);
+  const { data: prices } = useMarketPrices(assetId ? [assetId, unit] : []);
   const preferences = usePreferences();
   const project = catalog?.projects.find((item) => item.tokenId === assetId);
   const metadata = tokenMap?.[assetId] ?? catalog?.tokens?.[assetId];
   const ticker = metadata?.ticker || holding?.ticker || tickerFor(assetId, metadata);
   const name = project?.name || metadata?.name || holding?.name || ticker;
-  const price = prices?.[assetId] ?? catalog?.marketPrices?.[assetId];
+  const price = prices?.[assetId] ?? prices?.[unit] ?? catalog?.marketPrices?.[assetId];
   const logo = project?.logoUrl || metadata?.logo || '';
 
   if (!assetId) return <p className="text-sm text-text-muted">Token ID is missing.</p>;

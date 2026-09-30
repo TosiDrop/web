@@ -24,12 +24,11 @@ export interface KoiosAccountAsset {
 export interface KoiosAssetInfo {
   policy_id?: string;
   asset_name?: string;
-  decimals?: number | null;
   asset_name_ascii?: string | null;
   token_registry_metadata?: {
     name?: string;
     ticker?: string;
-    decimals?: number;
+    decimals?: number | null;
     logo?: string;
   } | null;
 }
@@ -46,6 +45,10 @@ const DEFAULT_BASES = {
   mainnet: 'https://api.koios.rest/api/v1',
   preview: 'https://preview.koios.rest/api/v1',
 } as const;
+
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 10;
+const MAX_METADATA_BODY_BYTES = 1000;
 
 export interface KoiosConfig {
   baseUrl: string;
@@ -167,7 +170,7 @@ export class KoiosClient {
         if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
         continue;
       }
-      if (response.ok) return validatePayload(endpoint, await response.json()) as T;
+      if (response.ok) return validatePayload(endpoint.split('?')[0], await response.json()) as T;
       const error = new Error(`Koios ${endpoint} failed (${response.status})`);
       if (response.status < 500 && response.status !== 408 && response.status !== 429) throw error;
       lastError = error;
@@ -181,14 +184,38 @@ export class KoiosClient {
   }
 
   accountAssets(stakeAddress: string) {
-    return this.post<KoiosAccountAsset[]>('account_assets', { _stake_addresses: [stakeAddress] });
+    return this.pages<KoiosAccountAsset>('account_assets', { _stake_addresses: [stakeAddress] }, 'policy_id.asc,asset_name.asc');
   }
 
   accountRewards(stakeAddress: string) {
-    return this.post<KoiosReward[]>('account_reward_history', { _stake_addresses: [stakeAddress] });
+    return this.pages<KoiosReward>('account_reward_history', { _stake_addresses: [stakeAddress] }, 'earned_epoch.asc,spendable_epoch.asc,type.asc,pool_id_bech32.asc');
   }
 
-  assetInfo(units: string[]) {
-    return this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: units.map((unit) => [unit.slice(0, 56), unit.slice(56)]) });
+  private async pages<T>(endpoint: string, body: Record<string, unknown>, order: string): Promise<T[]> {
+    const rows: T[] = [];
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const query = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(page * PAGE_SIZE), order });
+      const batch = await this.post<T[]>(`${endpoint}?${query}`, body);
+      rows.push(...batch);
+      if (batch.length < PAGE_SIZE) return rows;
+    }
+    // A bounded read must fail as unavailable rather than return an incomplete total.
+    throw new Error(`Koios ${endpoint} exceeded the ${MAX_PAGES * PAGE_SIZE}-row read limit`);
+  }
+
+  async assetInfo(units: string[]): Promise<KoiosAssetInfo[]> {
+    const rows: KoiosAssetInfo[] = [];
+    let batch: string[][] = [];
+    const bytes = (pairs: string[][]) => new TextEncoder().encode(JSON.stringify({ _asset_list: pairs })).length;
+    for (const unit of units) {
+      const pair = [unit.slice(0, 56), unit.slice(56)];
+      if (batch.length && bytes([...batch, pair]) > MAX_METADATA_BODY_BYTES) {
+        rows.push(...await this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: batch }));
+        batch = [];
+      }
+      batch.push(pair);
+    }
+    if (batch.length) rows.push(...await this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: batch }));
+    return rows;
   }
 }

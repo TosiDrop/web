@@ -95,7 +95,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const unit = unitFor(asset)!;
       const info = metadataMap.get(unit);
       const registry = info?.token_registry_metadata;
-      const decimals = registry?.decimals ?? info?.decimals ?? asset.decimals ?? null;
+      // account_assets fills missing registry decimals with zero; it cannot confirm precision.
+      const registryDecimals = registry?.decimals;
+      const decimals = typeof registryDecimals === 'number' && Number.isInteger(registryDecimals) && registryDecimals >= 0 && registryDecimals <= 38
+        ? registryDecimals : null;
       const quote = marketByUnit.get(unit);
       const price = quote?.priceUsd ?? null;
       return {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { catalogAssetId } from '@/shared/assets';
 import { downloadCsv } from '@/utils/csv';
 import type { WalletHolding, WalletSummary } from '../types/walletSummary';
 import {
@@ -19,7 +20,7 @@ function AssetName({ holding }: { holding: WalletHolding }) {
   return (
     <div className="min-w-0">
       <Link
-        to={`/tokens/${encodeURIComponent(holding.unit)}`}
+        to={`/tokens/${encodeURIComponent(catalogAssetId(holding.unit))}`}
         className="break-words font-medium text-text-primary hover:text-accent-light hover:underline [overflow-wrap:anywhere]"
       >
         {holdingName(holding)}

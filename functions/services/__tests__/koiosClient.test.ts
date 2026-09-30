@@ -101,4 +101,39 @@ describe('KoiosClient', () => {
     ])));
     await expect(new KoiosClient({ VITE_NETWORK: 'preview' }).accountAssets('stake_test1example')).rejects.toThrow('quantity');
   });
+
+  it.each(['account_reward_history', 'account_assets'])('reads every page of %s with stable ordering', async (endpoint) => {
+    const row = endpoint === 'account_assets'
+      ? { policy_id: 'ab'.repeat(28), asset_name: '', quantity: '1' }
+      : { earned_epoch: 500, amount: '100', type: 'member' };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+      expect(url.searchParams.get('order')).toBeTruthy();
+      return new Response(JSON.stringify(url.searchParams.get('offset') === '1000' ? [row] : Array.from({ length: 1000 }, () => row)));
+    });
+    const client = new KoiosClient({ VITE_NETWORK: 'preview' });
+    const rows = endpoint === 'account_assets' ? await client.accountAssets('stake_test1example') : await client.accountRewards('stake_test1example');
+    expect(rows).toHaveLength(1001);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('batches metadata within the public request-body limit', async () => {
+    const units = Array.from({ length: 100 }, (_, index) => `${index.toString(16).padStart(56, '0')}${'ab'.repeat(32)}`);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
+      const body = typeof init?.body === 'string' ? init.body : '';
+      if (new TextEncoder().encode(body).length > 1000) return new Response('body too large', { status: 413 });
+      const pairs = JSON.parse(body)._asset_list as string[][];
+      return new Response(JSON.stringify(pairs.map(([policy_id, asset_name]) => ({ policy_id, asset_name }))));
+    });
+    const rows = await new KoiosClient({ VITE_NETWORK: 'preview' }).assetInfo(units);
+    expect(rows).toHaveLength(100);
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('fails the full rewards read when a later page is unavailable', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify(Array.from({ length: 1000 }, () => ({ earned_epoch: 500, amount: '100' })))))
+      .mockResolvedValueOnce(new Response('page unavailable', { status: 400 }));
+    await expect(new KoiosClient({ VITE_NETWORK: 'preview' }).accountRewards('stake_test1example')).rejects.toThrow('failed (400)');
+  });
 });
