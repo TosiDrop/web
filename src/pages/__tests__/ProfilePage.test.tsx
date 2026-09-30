@@ -1,12 +1,13 @@
 import { MemoryRouter } from 'react-router-dom';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const profileMock = vi.fn();
 
 vi.mock('@/features/history/components/HistoryList', () => ({ HistoryList: () => <div>Claim history content</div> }));
 vi.mock('@/features/favorites/components/FavoritesTab', () => ({ FavoritesTab: () => <div>Saved assets content</div> }));
 vi.mock('@/features/profile/components/RewardBreakdown', () => ({ RewardBreakdown: () => <div>Reward sources content</div> }));
+vi.mock('@/features/profile/components/PersonalAnalytics', () => ({ PersonalAnalytics: () => <div /> }));
 vi.mock('@/features/profile/components/ProfileForm', () => ({ ProfileForm: () => <div>Profile form content</div> }));
 vi.mock('@/features/rewards/components/WalletComposition', () => ({ WalletComposition: () => <div>Portfolio chart content</div> }));
 vi.mock('@/features/rewards/api/rewards.queries', () => ({
@@ -23,8 +24,12 @@ vi.mock('@/store/wallet-state', () => ({
 import ProfilePage from '../ProfilePage';
 
 describe('ProfilePage', () => {
+  const scroll = vi.fn();
+  beforeEach(() => Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scroll, configurable: true }));
   afterEach(() => {
     cleanup();
+    scroll.mockClear();
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
     profileMock.mockReset();
   });
 
@@ -45,6 +50,8 @@ describe('ProfilePage', () => {
     expect(await screen.findByText('Saved assets content')).toBeInTheDocument();
     expect(screen.getByText('Your TosiDrop identity')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Claim analytics' })).toHaveAttribute('href', '/profile#claim-analytics');
+    await waitFor(() => expect(scroll).toHaveBeenCalled());
   });
 
   it('keeps profile failures inside the account workspace with a retry action', () => {

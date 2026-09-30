@@ -1,3 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { useWalletStore } from '@/store/wallet-state';
+import type { WalletSummary } from '@/features/rewards/types/walletSummary';
 import { Link, useParams } from 'react-router-dom';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
@@ -14,14 +18,18 @@ import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveB
 
 export default function TokenDetailPage() {
   const { assetId = '' } = useParams();
+  const queryClient = useQueryClient();
+  const stakeAddress = useWalletStore((state) => state.stakeAddress);
+  const walletData = queryClient.getQueryData<{ summary: WalletSummary }>(['wallet-summary', DEPLOYMENT_NETWORK, stakeAddress]);
+  const holding = walletData?.summary.holdings.find((item) => item.unit === assetId);
   const { data: catalog, isLoading } = usePublicTokens();
   const { data: tokenMap } = useTokenMap();
   const { data: prices } = useMarketPrices(assetId ? [assetId] : []);
   const preferences = usePreferences();
   const project = catalog?.projects.find((item) => item.tokenId === assetId);
   const metadata = tokenMap?.[assetId] ?? catalog?.tokens?.[assetId];
-  const ticker = tickerFor(assetId, metadata);
-  const name = project?.name || metadata?.name || ticker;
+  const ticker = metadata?.ticker || holding?.ticker || tickerFor(assetId, metadata);
+  const name = project?.name || metadata?.name || holding?.name || ticker;
   const price = prices?.[assetId] ?? catalog?.marketPrices?.[assetId];
   const logo = project?.logoUrl || metadata?.logo || '';
 

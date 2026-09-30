@@ -45,7 +45,7 @@ function hexToUtf8(hex: string): string {
     }
     return new TextDecoder().decode(bytes);
   } catch {
-    return hex.slice(0, 12);
+    return hex;
   }
 }
 
@@ -53,7 +53,7 @@ export function tickerFor(token: string, info?: TokenInfo): string {
   if (token === 'lovelace') return 'ADA';
   if (info?.ticker) return info.ticker;
   const parts = token.split('.');
-  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token.slice(0, 12);
+  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token;
 }
 
 export function decimalsFor(token: string, info?: TokenInfo): number {

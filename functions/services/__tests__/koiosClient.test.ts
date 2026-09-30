@@ -58,7 +58,7 @@ describe('KoiosClient', () => {
 
   it('rejects incomplete account asset rows', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify([{ asset_policy: 'policy', quantity: '1' }]), { status: 200 }),
+      new Response(JSON.stringify([{ policy_id: 'abababababababababababababababababababababababababababab', quantity: '1' }]), { status: 200 }),
     );
     const client = new KoiosClient({ VITE_NETWORK: 'preview' });
 
@@ -67,10 +67,38 @@ describe('KoiosClient', () => {
 
   it('rejects incomplete asset metadata rows', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify([{ asset_policy: 'policy' }]), { status: 200 }),
+      new Response(JSON.stringify([{ policy_id: 'abababababababababababababababababababababababababababab' }]), { status: 200 }),
     );
     const client = new KoiosClient({ VITE_NETWORK: 'preview' });
 
-    await expect(client.assetInfo(['policyname'])).rejects.toThrow('asset_info returned an incomplete asset row');
+    await expect(client.assetInfo(['abababababababababababababababababababababababababababab'])).rejects.toThrow('asset_info returned an incomplete asset row');
+  });
+
+  it('uses policy and asset-name pairs for bulk metadata, including an empty asset name', async () => {
+    const policy = 'ab'.repeat(28);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const body = JSON.parse(typeof init?.body === 'string' ? init.body : '{}');
+      return body._asset_list?.[0]?.[0] === policy && body._asset_list?.[0]?.[1] === ''
+        ? new Response(JSON.stringify([{ policy_id: policy, asset_name: '', token_registry_metadata: { ticker: 'TOKEN', decimals: 6 } }]))
+        : new Response('invalid asset list', { status: 400 });
+    });
+    const client = new KoiosClient({ VITE_NETWORK: 'preview' });
+    const rows = await client.assetInfo([policy]);
+    expect(rows[0].token_registry_metadata?.ticker).toBe('TOKEN');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects malformed reward amounts instead of reporting a zero earned total', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify([
+      { earned_epoch: 500, amount: 'invalid', pool_id_bech32: null, type: 'member' },
+    ])));
+    await expect(new KoiosClient({ VITE_NETWORK: 'preview' }).accountRewards('stake_test1example')).rejects.toThrow('amount');
+  });
+
+  it('rejects nonnumeric token quantities before they can become portfolio values', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify([
+      { policy_id: 'ab'.repeat(28), asset_name: '', quantity: '-1', decimals: 0 },
+    ])));
+    await expect(new KoiosClient({ VITE_NETWORK: 'preview' }).accountAssets('stake_test1example')).rejects.toThrow('quantity');
   });
 });
