@@ -71,4 +71,18 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Profile data is unavailable');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
+
+  it('scrolls to a holdings deep link after the asynchronous section appears', async () => {
+    profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
+    render(<MemoryRouter initialEntries={['/profile#holdings']}><ProfilePage /></MemoryRouter>);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(scroll).not.toHaveBeenCalled();
+    const section = document.createElement('section');
+    section.id = 'holdings';
+    document.getElementById('portfolio-visuals')!.appendChild(section);
+    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+    section.appendChild(document.createElement('p'));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(scroll).toHaveBeenCalledTimes(1);
+  });
 });

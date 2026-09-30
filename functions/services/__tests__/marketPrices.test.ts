@@ -40,4 +40,25 @@ describe('market price freshness', () => {
     expect((await readMarketPrices(env, 'mainnet', ['lovelace', ...units])).size).toBe(101);
     expect(await readValueHistory(env, 'mainnet', units.map((unit) => ({ unit, amount: 1 })), 10)).toEqual([{ observedAt: Math.floor(now / 3600) * 3600, valueAda: 110 }]);
   });
+
+  it('shares prices and replay between catalog IDs and concatenated wallet units', async () => {
+    const unit = `${'ab'.repeat(28)}544f5349`;
+    const id = `${'ab'.repeat(28)}.544f5349`;
+    const now = Math.floor(Date.now() / 1000);
+    const rows = [
+      { unit: id, priceUsd: 1, priceAda: 2, priceChange24h: 5, source: 'a', observedAt: now - 60 },
+      { unit, priceUsd: 3, priceAda: 6, priceChange24h: 10, source: 'a', observedAt: now },
+    ];
+    let requested: string[] = [];
+    const statement = {
+      bind: (_network: string, unitsJson: string) => { requested = JSON.parse(unitsJson) as string[]; return statement; },
+      all: async () => ({ results: rows.filter((row) => requested.includes(row.unit)) }),
+    };
+    const env = { DB: { prepare: () => statement } } as unknown as Env;
+    const prices = await readMarketPrices(env, 'mainnet', [id, unit]);
+    expect(prices.get(id)).toMatchObject({ priceUsd: 3, sourceCount: 1 });
+    expect(prices.get(unit)).toMatchObject({ priceUsd: 3, sourceCount: 1 });
+    const historyEnv = envWithRows([{ unit: id, priceAda: 2, source: 'a', observedAt: now }]);
+    expect(await readValueHistory(historyEnv, 'mainnet', [{ unit, amount: 10 }], 1)).toEqual([{ observedAt: Math.floor(now / 3600) * 3600, valueAda: 21 }]);
+  });
 });

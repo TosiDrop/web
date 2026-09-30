@@ -13,7 +13,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 | Favorites | Wallet-scoped draft persistence, signed server save, visible saved-token feedback and controls. |
 | Chopped strings and alignment | Wrapping token names and IDs, full stake address, container-responsive holdings rows/table, readable metric spacing. |
 | Claimed-page polling | Claim status and delivered history refresh while open. |
-| Token links | Claim, history, and wallet holdings link to token details; cached wallet metadata supplies names when catalog metadata is absent. |
+| Token links | Claim, history, and wallet holdings link to token details using the catalog's policy/name ID; token-page favorites match claim filtering. Cached wallet metadata supplies names when catalog metadata is absent. |
 | Analytics UI | Personal claim charts inside the wallet plus a separate public platform view. Missing data gets an unavailable state. |
 | Blink Labs logo | Official brand asset on the team page. |
 | Markdown | Safe Markdown rendering for token program descriptions. |
@@ -30,6 +30,9 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 
 - Use Koios `policy_id` for assets/metadata, policy/name pairs for bulk metadata, and `account_reward_history` with `pool_id_bech32` for earned rewards.
 - Preserve token quantities when metadata is incomplete; reject malformed quantities and reward amounts.
+- Accept validated registry decimals only; Koios's synthesized zero from account assets leaves precision unknown. Batch bulk metadata below the public payload limit.
+- Paginate reward and asset lists with stable ordering; later-page failures or the 10,000-row safety cap make the source unavailable rather than expose incomplete totals.
+- Resolve catalog IDs and concatenated wallet units to the same market quotes/history, counting each contributing source once. Retry wallet section navigation when asynchronous chart content mounts.
 - Exclude stale/invalid current quotes; report the oldest contributing quote time for an aggregate.
 - Read large asset lists through a JSON SQL parameter to stay within D1's 100-bound-parameter limit.
 - Historical replay requires known decimals and price coverage for every indexed holding; charts omit incomplete buckets.
@@ -39,7 +42,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 ## Integration work and verification boundaries
 
 - Market readers and migrations exist, but this repository has no scheduled market-price ingestion job. Current valuations, allocation, replay and receipt estimates need populated, network-correct market tables. Preview tokens may have no market price.
-- Public platform counts require the network-scoped withdrawals schema and a populated archive. The earlier preview check returned HTTP 500. This pass's terminal requests were blocked by Cloudflare HTTP 403; Wrangler was logged out, so the remote schema was not inspected.
+- Public platform counts require the network-scoped withdrawals schema and a populated archive. The earlier preview check returned HTTP 500. The updated preview UI still shows "Platform usage is unavailable." Terminal requests were blocked by Cloudflare HTTP 403; Wrangler was logged out, so the remote schema was not inspected.
 - Closed-site push notifications require subscriptions and a server delivery flow. Existing browser alerts require the site to remain open.
 - Wallet value history is a price replay of current indexed quantities. Actual historical balances, general on-chain transaction history, cost basis and realized returns remain future work in the platform plan.
 - Visitor and connected-wallet usage tracking is separate from indexed claimant analytics and is not implemented.

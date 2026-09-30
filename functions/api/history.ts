@@ -25,7 +25,7 @@ interface WithdrawalRow {
 }
 
 const RECEIPT_PRICE_FILTER =
-  'p.network = w.network AND p.unit = w.token AND w.delivered_at IS NOT NULL ' +
+  "p.network = w.network AND p.unit IN (w.token, REPLACE(w.token, '.', '')) AND w.delivered_at IS NOT NULL " +
   'AND p.observed_at <= w.delivered_at AND p.observed_at >= w.delivered_at - 86400 ' +
   'AND p.price_usd IS NOT NULL';
 

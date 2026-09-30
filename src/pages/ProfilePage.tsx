@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconGift, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
@@ -164,20 +164,31 @@ export default function ProfilePage() {
   const { data: claimableRewards } = useRewards(connected ? stakeAddress : null);
   const rewardTokenCount = claimableRewards ? rewardSnapshot(claimableRewards).length : 0;
   const location = useLocation();
+  const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
     const aliases: Record<string, string> = { history: 'activity', analytics: 'claim-analytics', favorites: 'saved-assets', settings: 'account' };
     const targetId = location.hash ? decodeURIComponent(location.hash.slice(1)) : tab ? aliases[tab] : null;
     if (!targetId) return undefined;
-    const frame = requestAnimationFrame(() => {
-      document.getElementById(targetId)?.scrollIntoView({ block: 'start' });
+    let frame: number;
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(scrollToSection);
     });
-    return () => cancelAnimationFrame(frame);
+    function scrollToSection() {
+      const target = document.getElementById(targetId!);
+      if (!target || !pageRef.current?.contains(target)) return;
+      observer.disconnect();
+      target.scrollIntoView({ block: 'start' });
+    }
+    if (pageRef.current) observer.observe(pageRef.current, { childList: true, subtree: true });
+    frame = requestAnimationFrame(scrollToSection);
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
   }, [connected, location.hash, location.search]);
 
   return (
-    <div className="space-y-10 [&_section]:scroll-mt-24">
+    <div ref={pageRef} className="space-y-10 [&_section]:scroll-mt-24">
       <header className="flex flex-wrap items-end justify-between gap-5">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet</h1>
