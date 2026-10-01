@@ -33,7 +33,7 @@ describe('ProfilePage', () => {
     profileMock.mockReset();
   });
 
-  it('renders portfolio, rewards, activity, saved assets, and account as one workspace', async () => {
+  it('renders holdings, rewards, history, favorites, and settings on the profile page', async () => {
     profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
     render(
       <MemoryRouter initialEntries={['/profile?tab=analytics']}>
@@ -41,20 +41,20 @@ describe('ProfilePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Your wallet' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your profile' })).toBeInTheDocument();
     expect(screen.getByText('2 reward tokens ready to claim').closest('[role="status"]')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Review rewards' })).toHaveAttribute('href', '/claim');
     expect(screen.getByText('Portfolio chart content')).toBeInTheDocument();
     expect(await screen.findByText('Reward sources content')).toBeInTheDocument();
     expect(await screen.findByText('Claim history content')).toBeInTheDocument();
     expect(await screen.findByText('Saved assets content')).toBeInTheDocument();
-    expect(screen.getByText('Your TosiDrop identity')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(screen.getByText('Claim analytics & reward sources').closest('details')).toHaveProperty('open', true);
+    expect(screen.getByText('Reward analytics', { selector: 'summary' }).closest('details')).toHaveProperty('open', true);
     await waitFor(() => expect(scroll).toHaveBeenCalled());
   });
 
-  it('keeps profile failures inside the account workspace with a retry action', () => {
+  it('keeps profile failures inside settings with a retry action', () => {
     profileMock.mockReturnValue({
       data: undefined,
       isLoading: false,

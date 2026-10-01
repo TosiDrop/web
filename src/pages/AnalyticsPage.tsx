@@ -11,8 +11,7 @@ export default function AnalyticsPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="label-eyebrow">Signals, trends, and context</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
             Analytics
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
@@ -27,9 +26,8 @@ export default function AnalyticsPage() {
       {connected && (
         <section aria-labelledby="wallet-insights">
           <div className="mb-4">
-            <p className="label-eyebrow">Your wallet</p>
-            <h2 id="wallet-insights" className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">
-              Personal insights
+            <h2 id="wallet-insights" className="text-2xl font-semibold tracking-tight text-text-primary">
+              Personal claim analytics
             </h2>
           </div>
           <PersonalAnalytics />
@@ -38,9 +36,8 @@ export default function AnalyticsPage() {
 
       <section className="space-y-5" aria-labelledby="platform-stats">
         <div>
-          <p className="label-eyebrow">The network</p>
-          <h2 id="platform-stats" className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">
-            Platform pulse
+          <h2 id="platform-stats" className="text-2xl font-semibold tracking-tight text-text-primary">
+            Platform statistics
           </h2>
           <p className="mt-1 text-sm text-text-muted">Latest counters from the reward distributor.</p>
         </div>
@@ -57,9 +54,8 @@ export default function AnalyticsPage() {
 
       <section className="space-y-5" aria-labelledby="pool-comparison">
         <div>
-          <p className="label-eyebrow">Delegation and distribution</p>
-          <h2 id="pool-comparison" className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">
-            Pool performance
+          <h2 id="pool-comparison" className="text-2xl font-semibold tracking-tight text-text-primary">
+            Pool comparison
           </h2>
           <p className="mt-1 text-sm text-text-muted">
             Token programs, delegation size, partner status, and claim volume per pool.

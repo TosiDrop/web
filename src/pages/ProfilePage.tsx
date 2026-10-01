@@ -75,8 +75,8 @@ function AccountSection() {
       <SectionHeading
         icon={IconSettings}
         eyebrow="Account"
-        title="Your TosiDrop identity"
-        description="The wallet is your sign-in. Keep your display name and network details here."
+        title="Settings"
+        description="Your connected wallet and display name."
       />
       <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <Card as="section" className="p-5">
@@ -107,7 +107,7 @@ function AccountSection() {
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-text-primary">Display name</h3>
             <p className="mt-1.5 text-sm text-text-muted">
-              Sign a message to update the name shown across TosiDrop.
+              Sign a message to update the display name shown across TosiDrop.
             </p>
           </div>
           {isLoading ? (
@@ -145,10 +145,9 @@ function ConnectPortfolioPrompt() {
   return (
     <Card className="relative overflow-hidden border-accent/20 bg-[radial-gradient(circle_at_85%_0%,rgba(103,232,249,0.12),transparent_34%),rgba(17,26,47,0.78)] px-6 py-10 sm:px-10 sm:py-14">
       <div className="relative max-w-2xl">
-        <p className="label-eyebrow text-accent-light">Your private workspace</p>
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">Connect once. See the whole picture.</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">Connect your wallet</h2>
         <p className="mt-3 max-w-xl text-sm leading-6 text-text-secondary">
-          Your wallet is your sign-in. TosiDrop will use it to show holdings, prices, reward provenance, claim history, and saved assets in this one view.
+          Connect a wallet to view your holdings, claim history, and saved tokens.
         </p>
         <GradientButton className="mt-6" onClick={openModal} onPointerEnter={preloadWalletRuntime} onFocus={preloadWalletRuntime}>
           <IconWallet size={17} aria-hidden /> Connect wallet
@@ -199,20 +198,20 @@ export default function ProfilePage() {
     <div ref={pageRef} className="space-y-10 [&_section]:scroll-mt-24">
       <header className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your wallet</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your profile</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-              Holdings, claim activity, and saved tokens for your connected wallet.
+              Claim history, saved tokens, and your display name.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link to="/claim" className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition hover:bg-accent-light">
-              <IconGift size={13} aria-hidden /> Claim tokens
+              <IconGift size={13} aria-hidden /> Claim rewards
             </Link>
             <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
-              Platform analytics <IconArrowRight size={13} aria-hidden />
+              Analytics <IconArrowRight size={13} aria-hidden />
             </Link>
             <Link to="/profile#saved-assets" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
-              <IconBookmark size={13} aria-hidden /> Saved tokens
+              <IconBookmark size={13} aria-hidden /> Favorites
             </Link>
           </div>
       </header>
@@ -220,8 +219,8 @@ export default function ProfilePage() {
       {connected ? <>
       <nav aria-label="Wallet sections" className="flex flex-wrap gap-x-5 gap-y-3 border-b border-border-subtle pb-4 text-sm">
         {[
-          ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['activity', 'Activity'],
-          ['saved-assets', 'Favorites'], ['account', 'Account'],
+          ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['activity', 'History'],
+          ['saved-assets', 'Favorites'], ['account', 'Settings'],
         ].map(([id, label]) => (
           <Link key={id} to={`/profile#${id}`} className="min-h-6 text-text-secondary hover:text-accent-light hover:underline">{label}</Link>
         ))}
@@ -240,9 +239,9 @@ export default function ProfilePage() {
       </section>
 
       <details onToggle={(event) => setInsightsOpen(event.currentTarget.open)} className="border-y border-border-subtle py-4">
-        <summary className="cursor-pointer text-sm text-text-secondary hover:text-text-primary">Claim analytics &amp; reward sources</summary>
+        <summary className="cursor-pointer text-sm text-text-secondary hover:text-text-primary">Reward analytics</summary>
       <section id="claim-analytics" aria-labelledby="claim-analytics-title" className="mt-6">
-        <SectionHeading icon={IconChartLine} eyebrow="Claim analytics" title="Your reward trends" description="Delivered reward amounts, claim frequency, token mix, and recorded claim costs." />
+        <SectionHeading icon={IconChartLine} eyebrow="Claim analytics" title="Reward analytics" description="Delivered claim trends, fee history, and current reward sources." />
         {insightsOpen && <Suspense fallback={<SectionLoading label="claim analytics" />}>
           <PersonalAnalytics />
         </Suspense>}
@@ -252,8 +251,8 @@ export default function ProfilePage() {
           <SectionHeading
             icon={IconChartLine}
             eyebrow="Rewards provenance"
-            title="Where your rewards come from"
-            description="Trace eligible distributions back to their source pools and reward rules."
+            title="Current allocations"
+            description="Rewards waiting for your next claim, grouped by source."
           />
           {insightsOpen && <Suspense fallback={<SectionLoading label="reward sources" />}>
             <RewardBreakdown />
@@ -265,8 +264,8 @@ export default function ProfilePage() {
           <SectionHeading
             icon={IconClock}
             eyebrow="Activity"
-            title="Your claim history"
-            description="A chronological record of tokens delivered to this stake address."
+            title="Claim history"
+            description="Tokens delivered to your stake address."
           />
           <Suspense fallback={<SectionLoading label="claim history" />}>
             <HistoryList />
@@ -277,8 +276,8 @@ export default function ProfilePage() {
         <SectionHeading
           icon={IconBookmark}
           eyebrow="Saved assets"
-          title="Tokens you want close"
-          description="Keep favorite assets visible and hide the ones that do not belong in your claim flow."
+          title="Favorites"
+          description="Saved tokens rise to the top of your claimable list."
         />
         <Suspense fallback={<SectionLoading label="saved assets" />}>
           <FavoritesTab />

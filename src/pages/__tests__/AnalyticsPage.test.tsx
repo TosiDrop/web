@@ -37,8 +37,8 @@ describe('AnalyticsPage', () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Analytics' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Pool performance' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Platform pulse' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pool comparison' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Platform statistics' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Platform usage' })).toBeInTheDocument();
     expect(screen.getByLabelText('Loading platform statistics')).toBeInTheDocument();
 
