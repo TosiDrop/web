@@ -77,6 +77,8 @@ export function WalletPortfolio({
   onRefresh: () => void;
 }) {
   const [range, setRange] = useState<7 | 30>(30);
+  const [chart, setChart] = useState<'history' | 'allocation'>('history');
+  const [stakingOpen, setStakingOpen] = useState(false);
   const gradientId = useId();
   const metrics = portfolioMetrics(summary, walletLovelace);
   const [openedAt] = useState(() => Math.floor(Date.now() / 1000));
@@ -112,9 +114,8 @@ export function WalletPortfolio({
           </h2>
           <p className="mt-1 text-xs text-text-muted">
             {summary.observedAt
-              ? `Indexed data fetched ${new Date(summary.observedAt * 1000).toLocaleString()}`
-              : 'Wallet index is catching up'}{' '}
-            · Refreshes every 30 seconds while visible
+              ? `Updated ${new Date(summary.observedAt * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+              : 'Wallet index is catching up'}
           </p>
         </div>
         <button
@@ -131,14 +132,14 @@ export function WalletPortfolio({
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </header>
-      <dl className="mt-4 grid divide-y divide-border-subtle border-y border-border-subtle sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-2 divide-y divide-border-subtle border-y border-border-subtle [&>div:first-child]:col-span-2 sm:grid-cols-3 sm:divide-y-0 sm:[&>div:first-child]:col-span-1">
         <WalletMetric
-          label="Estimated holdings value"
+          label="Estimated value"
           value={walletUsd(metrics.totalUsd)}
           detail={
             summary.sources?.assets === false
               ? 'Holdings index unavailable'
-              : `${metrics.priced.length} of ${summary.holdings.length} tokens valued${metrics.partial ? ' · partial estimate' : ' · includes wallet ADA'}`
+              : metrics.partial ? `${metrics.priced.length} of ${summary.holdings.length} tokens priced · partial` : 'ADA and priced tokens'
           }
         />
         <WalletMetric
@@ -150,67 +151,31 @@ export function WalletPortfolio({
           }
           detail={
             liveBalance
-              ? 'Balance from your connected wallet'
+              ? 'Connected wallet'
               : walletLovelace === null
                 ? 'Balance source unavailable'
-                : 'Balance from the stake address index'
+                : 'Indexed balance'
           }
         />
         <WalletMetric
-          label="Available staking rewards"
+          label="Staking rewards"
           value={
             summary.balance.rewardsAvailableLovelace === null
               ? '—'
               : `₳ ${formatWalletUnits(summary.balance.rewardsAvailableLovelace, 6)}`
           }
-          detail="Stake account balance · separate from holdings"
-        />
-        <WalletMetric
-          label="24h price movement"
-          value={walletPercent(metrics.marketChangePct)}
-          tone={
-            metrics.marketChangePct === null
-              ? undefined
-              : metrics.marketChangePct >= 0
-                ? 'text-status-success-light'
-                : 'text-status-error-light'
-          }
-          detail={
-            metrics.marketChangePct === null
-              ? '24h prices unavailable'
-              : `${metrics.marketChangeComplete ? 'All priced holdings' : 'Available 24h prices only'} · current quantities`
-          }
+          detail="Available in your stake account"
         />
       </dl>
-      <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
-        <span>
-          ADA/USD{' '}
-          <span className="font-mono text-text-secondary">
-            {walletPrice(summary.balance.adaPriceUsd)}
-          </span>
-        </span>
-        <span>
-          24h{' '}
-          <span className="font-mono text-text-secondary">
-            {walletPercent(summary.balance.adaPriceChange24h)}
-          </span>
-        </span>
-        {summary.balance.adaPriceObservedAt && (
-          <span>
-            Quote:{' '}
-            {new Date(
-              summary.balance.adaPriceObservedAt * 1000,
-            ).toLocaleString()}{' '}
-            · {summary.balance.adaPriceSource || 'Indexed market'}
-          </span>
-        )}
-      </p>
-      <p className="mt-2 text-xs leading-5 text-text-muted">
-        Values are estimates. Indexed holdings can lag your wallet; quotes may
-        be up to 24 hours old. Unpriced assets and staking rewards are excluded
-        from the holdings value. The 24h move reflects prices of current
-        quantities.
-      </p>
+      <details className="mt-3 text-xs text-text-muted">
+        <summary className="w-fit cursor-pointer hover:text-text-secondary">About these estimates</summary>
+        <div className="mt-2 max-w-2xl space-y-2 leading-5">
+          <p>Values include ADA and priced tokens. Unpriced assets and staking rewards are excluded. Indexed holdings can lag your wallet; quotes may be up to 24 hours old.</p>
+          <p>ADA/USD <span className="font-mono text-text-secondary">{walletPrice(summary.balance.adaPriceUsd)}</span> · 24h {walletPercent(summary.balance.adaPriceChange24h)}</p>
+          <p>Holdings price move: {walletPercent(metrics.marketChangePct)}{!metrics.marketChangeComplete && ' · partial coverage'}. Current quantities only.</p>
+          {summary.balance.adaPriceObservedAt && <p>Quote: {new Date(summary.balance.adaPriceObservedAt * 1000).toLocaleString()} · {summary.balance.adaPriceSource || 'Indexed market'}</p>}
+        </div>
+      </details>
       {summary.degraded && (
         <p role="status" className="mt-2 text-sm text-status-pending-light">
           Some wallet sources are unavailable. Available data stays visible as
@@ -218,21 +183,26 @@ export function WalletPortfolio({
         </p>
       )}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <section
-          aria-labelledby="wallet-price-history-title"
+      <div className="mt-6">
+        <div role="group" aria-label="Wallet chart" className="mb-4 flex gap-5 border-b border-border-subtle">
+          {(['history', 'allocation'] as const).map((view) => (
+            <button key={view} id={`${gradientId}-${view}`} type="button"
+              aria-pressed={chart === view} aria-controls={`${gradientId}-chart`}
+              onClick={() => setChart(view)}
+              className={`min-h-10 border-b-2 pb-2 text-sm ${chart === view ? 'border-accent text-accent-light' : 'border-transparent text-text-muted hover:text-text-primary'}`}>
+              {view === 'history' ? 'Price history' : 'Allocation'}
+            </button>
+          ))}
+        </div>
+        <div role="region" id={`${gradientId}-chart`} aria-labelledby={`${gradientId}-${chart}`}>
+        {chart === 'history' ? <section
+          aria-label="Holdings price history"
           className="min-w-0"
         >
           <header className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3
-                id="wallet-price-history-title"
-                className="text-sm font-medium text-text-primary"
-              >
-                Holdings price history
-              </h3>
-              <p className="mt-1 text-xs text-text-muted">
-                Current quantities revalued in ADA
+              <p className="text-xs text-text-muted">
+                Current holdings valued at past prices · ADA
               </p>
             </div>
             <div
@@ -255,25 +225,11 @@ export function WalletPortfolio({
           </header>
           {history.length > 1 ? (
             <>
-              <p className="mt-4 flex flex-wrap items-baseline gap-2">
-                <span className="font-mono text-2xl text-text-primary">
-                  ₳{' '}
-                  {history[history.length - 1].valueAda.toLocaleString(
-                    'en-US',
-                    { maximumFractionDigits: 2 },
-                  )}
-                </span>
-                <span
-                  className={`font-mono text-xs ${change !== null && change >= 0 ? 'text-status-success-light' : 'text-status-error-light'}`}
-                >
-                  {walletPercent(change)}
-                </span>
-                <span className="text-xs text-text-muted">
-                  across available snapshots
-                </span>
+              <p className="mt-3 text-xs text-text-muted">
+                <span className={`font-mono ${change !== null && change >= 0 ? 'text-status-success-light' : 'text-status-error-light'}`}>{walletPercent(change)}</span> across available snapshots
               </p>
               <div
-                className="mt-3 h-56"
+                className="mt-3 h-40 sm:h-44"
                 role="img"
                 aria-label={`Current holdings revalued at past prices over ${range} days. Latest ${history[history.length - 1].valueAda.toFixed(2)} ADA. Change ${walletPercent(change)}.`}
               >
@@ -356,22 +312,18 @@ export function WalletPortfolio({
               </div>
             </>
           ) : (
-            <div className="mt-4 flex h-56 items-center justify-center rounded-lg border border-dashed border-border-default px-6 text-center text-sm leading-6 text-text-muted">
+            <div className="mt-4 flex min-h-24 items-center justify-center rounded-lg border border-dashed border-border-default px-6 text-center text-sm leading-6 text-text-muted">
               {summary.sources?.assets === false
                 ? 'Holdings history is unavailable while the wallet index reconnects.'
-                : `A ${range}-day view needs at least two indexed price snapshots covering all your holdings. Historical prices are unavailable for some or all holdings.`}
+                : 'Price history will appear when enough indexed prices are available.'}
             </div>
           )}
           <p className="mt-3 text-xs leading-5 text-text-muted">
-            This is a price replay of today&apos;s holdings. Historical wallet
-            balances, deposits, withdrawals, and realized returns are outside
-            this chart.
+            Price replay of today&apos;s holdings, not historical wallet balances.
           </p>
-        </section>
-
-        <section
+        </section> : <section
           aria-labelledby="wallet-allocation-title"
-          className="min-w-0 border-t border-border-subtle pt-5 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0"
+          className="min-w-0"
         >
           <h3
             id="wallet-allocation-title"
@@ -418,7 +370,7 @@ export function WalletPortfolio({
                   <span className="text-xs text-text-muted">valued assets</span>
                 </div>
               </div>
-              <ul className="space-y-3">
+              <ul className="mx-auto max-w-lg space-y-2">
                 {allocation.map((item, i) => (
                   <li key={item.id} className="flex items-start gap-2 text-xs">
                     <span
@@ -439,7 +391,7 @@ export function WalletPortfolio({
               </ul>
             </>
           ) : (
-            <div className="flex min-h-56 items-center justify-center text-center text-sm text-text-muted">
+            <div className="flex min-h-24 items-center justify-center text-center text-sm text-text-muted">
               Allocation appears when holdings have indexed USD prices.
             </div>
           )}
@@ -449,7 +401,8 @@ export function WalletPortfolio({
               unavailable valuations excluded. View their quantities below.
             </p>
           )}
-        </section>
+        </section>}
+        </div>
       </div>
       <WalletHoldings
         summary={summary}
@@ -458,7 +411,12 @@ export function WalletPortfolio({
         totalUsd={metrics.totalUsd}
         averageTokenUsd={metrics.averageTokenUsd}
       />
-      <WalletStaking summary={summary} />
+      <section id="staking" className="mt-6 border-t border-border-subtle pt-4">
+        <details onToggle={(event) => setStakingOpen(event.currentTarget.open)}>
+          <summary className="cursor-pointer text-sm text-text-secondary hover:text-text-primary">Staking details</summary>
+          {stakingOpen && <WalletStaking summary={summary} />}
+        </details>
+      </section>
     </Card>
   );
 }

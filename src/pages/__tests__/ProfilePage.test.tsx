@@ -50,7 +50,7 @@ describe('ProfilePage', () => {
     expect(await screen.findByText('Saved assets content')).toBeInTheDocument();
     expect(screen.getByText('Your TosiDrop identity')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Claim analytics' })).toHaveAttribute('href', '/profile#claim-analytics');
+    expect(screen.getByText('Claim analytics & reward sources').closest('details')).toHaveProperty('open', true);
     await waitFor(() => expect(scroll).toHaveBeenCalled());
   });
 
@@ -79,8 +79,11 @@ describe('ProfilePage', () => {
     expect(scroll).not.toHaveBeenCalled();
     const section = document.createElement('section');
     section.id = 'holdings';
-    document.getElementById('portfolio-visuals')!.appendChild(section);
+    const details = document.createElement('details');
+    details.appendChild(section);
+    document.getElementById('portfolio-visuals')!.appendChild(details);
     await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+    expect(details.open).toBe(true);
     section.appendChild(document.createElement('p'));
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(scroll).toHaveBeenCalledTimes(1);
