@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconGift, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
@@ -165,6 +165,7 @@ export default function ProfilePage() {
   const rewardTokenCount = claimableRewards ? rewardSnapshot(claimableRewards).length : 0;
   const location = useLocation();
   const pageRef = useRef<HTMLDivElement>(null);
+  const [insightsOpen, setInsightsOpen] = useState(false);
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
@@ -180,7 +181,14 @@ export default function ProfilePage() {
       const target = document.getElementById(targetId!);
       if (!target || !pageRef.current?.contains(target)) return;
       observer.disconnect();
-      target.scrollIntoView({ block: 'start' });
+      let ancestor: HTMLElement | null = target;
+      while (ancestor && ancestor !== pageRef.current) {
+        if (ancestor instanceof HTMLDetailsElement) ancestor.open = true;
+        ancestor = ancestor.parentElement;
+      }
+      const stakingDetails = targetId === 'staking' ? target.querySelector('details') : null;
+      if (stakingDetails) stakingDetails.open = true;
+      frame = requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
     }
     if (pageRef.current) observer.observe(pageRef.current, { childList: true, subtree: true });
     frame = requestAnimationFrame(scrollToSection);
@@ -212,8 +220,7 @@ export default function ProfilePage() {
       {connected ? <>
       <nav aria-label="Wallet sections" className="flex flex-wrap gap-x-5 gap-y-3 border-b border-border-subtle pb-4 text-sm">
         {[
-          ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['staking', 'Staking'],
-          ['claim-analytics', 'Claim analytics'], ['activity', 'Activity'],
+          ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['activity', 'Activity'],
           ['saved-assets', 'Favorites'], ['account', 'Account'],
         ].map(([id, label]) => (
           <Link key={id} to={`/profile#${id}`} className="min-h-6 text-text-secondary hover:text-accent-light hover:underline">{label}</Link>
@@ -232,25 +239,27 @@ export default function ProfilePage() {
         <WalletComposition />
       </section>
 
-      <section id="claim-analytics" aria-labelledby="claim-analytics-title">
+      <details onToggle={(event) => setInsightsOpen(event.currentTarget.open)} className="border-y border-border-subtle py-4">
+        <summary className="cursor-pointer text-sm text-text-secondary hover:text-text-primary">Claim analytics &amp; reward sources</summary>
+      <section id="claim-analytics" aria-labelledby="claim-analytics-title" className="mt-6">
         <SectionHeading icon={IconChartLine} eyebrow="Claim analytics" title="Your reward trends" description="Delivered reward amounts, claim frequency, token mix, and recorded claim costs." />
-        <Suspense fallback={<SectionLoading label="claim analytics" />}>
+        {insightsOpen && <Suspense fallback={<SectionLoading label="claim analytics" />}>
           <PersonalAnalytics />
-        </Suspense>
+        </Suspense>}
       </section>
 
-      <div className="grid items-start gap-10 xl:grid-cols-2">
-        <section id="rewards" aria-labelledby="rewards-provenance-title">
+        <section id="rewards" aria-labelledby="rewards-provenance-title" className="mt-8">
           <SectionHeading
             icon={IconChartLine}
             eyebrow="Rewards provenance"
             title="Where your rewards come from"
             description="Trace eligible distributions back to their source pools and reward rules."
           />
-          <Suspense fallback={<SectionLoading label="reward sources" />}>
+          {insightsOpen && <Suspense fallback={<SectionLoading label="reward sources" />}>
             <RewardBreakdown />
-          </Suspense>
+          </Suspense>}
         </section>
+      </details>
 
         <section id="activity" aria-labelledby="activity-title">
           <SectionHeading
@@ -263,7 +272,6 @@ export default function ProfilePage() {
             <HistoryList />
           </Suspense>
         </section>
-      </div>
 
       <section id="saved-assets" aria-labelledby="saved-assets-title">
         <SectionHeading

@@ -48,7 +48,6 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
     !summary.rewards;
   return (
     <section
-      id="staking"
       aria-labelledby="wallet-staking-title"
       className="mt-6 border-t border-border-subtle pt-6"
     >

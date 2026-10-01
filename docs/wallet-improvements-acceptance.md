@@ -6,7 +6,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 
 | Request | Implementation |
 | --- | --- |
-| Wallet metrics at the top | Estimated holdings value, connected-wallet ADA, available staking rewards, 24h price movement, ADA quote timestamp/source, token count and average valued token holding. |
+| Wallet metrics at the top | Estimated value, wallet ADA and staking rewards. Price movement/source information lives under About these estimates; average token value is in More detail. |
 | Reward notifications | Wallet reward-ready notice, header bell, 60-second eligibility checks, alerts for newly available amounts, optional browser alerts for hidden tabs. First fetch establishes a silent baseline. |
 | 25-token claim limit | Selection and claim batches capped at 25 distinct assets, with a path to the next batch. |
 | Claim-page redundancy | Clear batch/status copy and grouped claim details. |
@@ -17,7 +17,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 | Analytics UI | Personal claim charts inside the wallet plus a separate public platform view. Missing data gets an unavailable state. |
 | Blink Labs logo | Official brand asset on the team page. |
 | Markdown | Safe Markdown rendering for token program descriptions. |
-| Charts and allocation | 7/30-day holdings price replay, USD allocation with grouped small assets, staking rewards by earned epoch with 12/36/all ranges, per-token claim accumulation, claim frequency and delivery mix. |
+| Charts and allocation | One chart at a time: 7/30-day price replay or USD allocation. Staking charts and personal claim analytics expand on demand. |
 | Wallet-data accuracy | Source availability, fetched/quote times, partial value coverage, explicit unknown decimals, 24-hour current-quote cutoff. Raw quantities remain visible and exportable. |
 | Platform user analytics | Indexed claiming-wallet, returning-wallet and claim counts, monthly trends. These describe claimants in the synced archive. |
 | Cost per claim | Mean recorded cost over complete claim-fee records; coverage displayed. |
