@@ -10,7 +10,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
-import { nextClaimBatch, toggleAllSelection } from '@/features/claim/utils/claimSelection';
+import { MAX_CLAIM_ASSETS, nextClaimBatch, toggleAllSelection } from '@/features/claim/utils/claimSelection';
 import { useClaimSelection } from '@/features/claim/hooks/useClaimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { useMarketPrices } from '@/features/market/api/market.queries';
@@ -90,8 +90,8 @@ export default function ClaimPage() {
   const { favoriteIds, dislikedIds, isLoading: preferencesLoading } = usePreferences();
   const configuredMaxAssets = settings?.max_assets_in_request;
   const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
-    ? configuredMaxAssets
-    : 25;
+    ? Math.min(configuredMaxAssets, MAX_CLAIM_ASSETS)
+    : MAX_CLAIM_ASSETS;
   const {
     visible,
     selectableAssetIds,

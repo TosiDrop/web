@@ -1,3 +1,5 @@
+export const MAX_CLAIM_ASSETS = 25;
+
 /**
  * Hidden (disliked) tokens never ride along into a claim: every selection
  * derived here is intersected with the tokens the user can actually see.
@@ -12,13 +14,14 @@ export function toggleAllSelection(allSelected: boolean, visibleAssetIds: string
 }
 
 export function limitSelection(selectedAssetIds: string[], maxAssets: number): string[] {
-  return selectedAssetIds.slice(0, Math.max(0, maxAssets));
+  return selectedAssetIds.slice(0, Math.max(0, Math.min(maxAssets, MAX_CLAIM_ASSETS)));
 }
 
 export function nextClaimBatch(visibleAssetIds: string[], selectedAssetIds: string[], maxAssets: number): string[] {
   if (maxAssets <= 0 || visibleAssetIds.length === 0) return [];
-  if (selectedAssetIds.length === 0) return visibleAssetIds.slice(0, maxAssets);
+  const batchSize = Math.min(maxAssets, MAX_CLAIM_ASSETS);
+  if (selectedAssetIds.length === 0) return visibleAssetIds.slice(0, batchSize);
   const lastIndex = Math.max(...selectedAssetIds.map((id) => visibleAssetIds.indexOf(id)));
   const nextStart = lastIndex + 1 >= visibleAssetIds.length ? 0 : lastIndex + 1;
-  return visibleAssetIds.slice(nextStart, nextStart + maxAssets);
+  return visibleAssetIds.slice(nextStart, nextStart + batchSize);
 }
