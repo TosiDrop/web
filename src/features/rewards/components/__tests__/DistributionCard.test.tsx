@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { DistributionCard } from '../DistributionCard';
 
 const TOKEN = {
@@ -11,14 +12,14 @@ describe('DistributionCard', () => {
 
   it('shows the claim estimate and keeps actions in their own row when priced', () => {
     render(
-      <DistributionCard
+      <MemoryRouter><DistributionCard
         token={TOKEN}
         selected
         onToggle={() => undefined}
         favorite={{ active: false, onToggle: () => undefined }}
         dislike={{ active: false, onToggle: () => undefined }}
         marketPrice={{ priceUsd: 2, priceAda: 1, priceChange24h: null, source: 'index', sourceCount: 1, observedAt: 1 }}
-      />,
+      /></MemoryRouter>,
     );
     expect(screen.getByText('Est. claim value')).toBeInTheDocument();
     expect(screen.getByText('$20.00')).toBeInTheDocument();
@@ -27,7 +28,7 @@ describe('DistributionCard', () => {
   });
 
   it('does not reserve an empty market block for unpriced tokens', () => {
-    render(<DistributionCard token={TOKEN} selected={false} onToggle={() => undefined} />);
+    render(<MemoryRouter><DistributionCard token={TOKEN} selected={false} onToggle={() => undefined} /></MemoryRouter>);
     expect(screen.queryByText('Est. claim value')).not.toBeInTheDocument();
     expect(screen.queryByText('Market estimate')).not.toBeInTheDocument();
   });

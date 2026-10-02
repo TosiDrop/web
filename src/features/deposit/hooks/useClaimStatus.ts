@@ -27,7 +27,7 @@ export interface UseClaimStatusResult {
   isTerminal: boolean;
 }
 
-const DEFAULT_INTERVAL_MS = 60_000;
+const DEFAULT_INTERVAL_MS = 15_000;
 
 function isTerminalStatus(status: ClaimStatus | undefined): boolean {
   return status?.kind === 'success' || status?.kind === 'failure';

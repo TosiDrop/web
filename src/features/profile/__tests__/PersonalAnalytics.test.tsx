@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
+import '@testing-library/jest-dom/vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useWalletStore } from '@/store/wallet-state';
+import { useWalletStore } from '../../../store/wallet-state';
 
 const hookMock = vi.fn();
 vi.mock('../hooks/usePersonalAnalytics', () => ({
@@ -79,14 +80,14 @@ describe('PersonalAnalytics', () => {
 
   beforeEach(() => {
     hookMock.mockReset();
-    useWalletStore.setState({
+    useWalletStore.getState().setWalletState({
       stakeAddress: 'stake_test1analytics',
       connected: true,
     });
   });
 
   it('asks for a wallet connection when no stake address is available', () => {
-    useWalletStore.setState({ stakeAddress: null, connected: false });
+    useWalletStore.getState().setWalletState({ stakeAddress: null, connected: false });
     hookMock.mockReturnValue({ data: undefined, isLoading: false, error: null });
 
     render(<PersonalAnalytics />);
@@ -142,8 +143,10 @@ describe('PersonalAnalytics', () => {
     expect(within(screen.getByLabelText('Claim summary')).getByText('4')).toBeInTheDocument();
     expect(screen.getByText('2 token types')).toBeInTheDocument();
     expect(screen.getByText('1.25 ADA')).toBeInTheDocument();
+    expect(screen.getByText('0.625 ADA')).toBeInTheDocument();
+    expect(screen.getByText('Average cost per claim')).toBeInTheDocument();
     expect(screen.getByText('Tracked fees')).toBeInTheDocument();
-    expect(screen.getByText('May 1, 2026')).toBeInTheDocument();
+    expect(screen.getByText('Claim history since May 1, 2026')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reward accumulation' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Claim frequency' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Tokens claimed' })).toBeInTheDocument();
@@ -175,9 +178,9 @@ describe('PersonalAnalytics', () => {
     render(<PersonalAnalytics />);
 
     const summary = screen.getByLabelText('Claim summary');
-    expect(within(summary).getByText('—')).toBeInTheDocument();
+    expect(within(summary).getAllByText('—')).toHaveLength(2);
     expect(within(summary).queryByText(/0 ADA/)).not.toBeInTheDocument();
-    expect(within(summary).getByText('Unavailable')).toBeInTheDocument();
+    expect(within(summary).getAllByText('Unavailable')).toHaveLength(2);
     expect(screen.getByText(/Fee history is temporarily unavailable/)).toBeInTheDocument();
   });
 

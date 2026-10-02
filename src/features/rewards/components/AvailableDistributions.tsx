@@ -56,6 +56,7 @@ export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }:
       key={token.assetId}
       token={token}
       selected={selectedVisible.includes(token.assetId)}
+      selectionDisabled={!selectedVisible.includes(token.assetId) && selectedVisible.length >= maxAssets}
       onToggle={() => {
         if (selectedVisible.includes(token.assetId) || selectedVisible.length < maxAssets) toggleAsset(token.assetId);
       }}
@@ -93,6 +94,12 @@ export function AvailableDistributions({ tokens, maxAssets, marketPrices = {} }:
       </div>
 
       <FavoritesSaveBar />
+
+      {visible.length > maxAssets && (
+        <p className="text-xs text-text-muted">
+          The claim service accepts {maxAssets} token types per request. Clear one selection to pick a different token, or use Select next batch above.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {visible.map(renderCard)}

@@ -197,6 +197,16 @@ export default function TeamPage() {
         </p>
       </header>
 
+      <section className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-border-subtle bg-surface-raised px-5 py-4" aria-label="Built by Blink Labs">
+        <div>
+          <h2 className="text-sm font-semibold text-text-primary">Built by Blink Labs</h2>
+          <p className="mt-1 text-xs text-text-muted">The team behind TosiDrop.</p>
+        </div>
+        <a href="https://blinklabs.io" target="_blank" rel="noopener noreferrer" aria-label="Visit Blink Labs (opens in new tab)">
+          <img src="/blink-labs-logo.png" alt="Blink Labs" className="h-auto w-40 sm:w-52" />
+        </a>
+      </section>
+
       <p className="flex items-start gap-2 text-xs leading-5 text-text-muted">
         <IconShieldCheck size={15} stroke={1.7} className="mt-0.5 shrink-0 text-status-success-light" aria-hidden />
         Partner pools are marked for distribution eligibility. Claims from other pools may include a 1 ADA pool fee; the final amount is confirmed during claiming.

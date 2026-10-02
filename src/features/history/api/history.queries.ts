@@ -31,6 +31,10 @@ export interface DeliveredReward {
   deliveredOnRaw: string;
   epoch: number | null;
   logo?: string;
+  decimalsKnown?: boolean;
+  receiptPriceUsd?: number | null;
+  receiptPriceObservedAt?: number | null;
+  receiptPriceSource?: string | null;
 }
 
 function hexToUtf8(hex: string): string {
@@ -41,7 +45,7 @@ function hexToUtf8(hex: string): string {
     }
     return new TextDecoder().decode(bytes);
   } catch {
-    return hex.slice(0, 12);
+    return hex;
   }
 }
 
@@ -49,12 +53,20 @@ export function tickerFor(token: string, info?: TokenInfo): string {
   if (token === 'lovelace') return 'ADA';
   if (info?.ticker) return info.ticker;
   const parts = token.split('.');
-  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token.slice(0, 12);
+  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token;
 }
 
 export function decimalsFor(token: string, info?: TokenInfo): number {
   if (token === 'lovelace') return 6;
   return Number(info?.decimals ?? 0) || 0;
+}
+
+export function hasKnownDecimals(token: string, info?: TokenInfo): boolean {
+  if (token === 'lovelace') return true;
+  if (info?.decimals === undefined || info.decimals === null) return false;
+  if (typeof info.decimals === 'string' && info.decimals.trim() === '') return false;
+  const decimals = Number(info.decimals);
+  return Number.isInteger(decimals) && decimals >= 0 && decimals <= 18;
 }
 
 export function parseDeliveredOn(raw: string): Date | null {
@@ -71,6 +83,7 @@ export function useDeliveredRewards(stakeAddress: string | null) {
     queryKey: ['delivered-rewards', stakeAddress],
     enabled: !!stakeAddress,
     staleTime: 60_000,
+    refetchInterval: 300_000,
     queryFn: async () => {
       if (!stakeAddress) throw new Error('stakeAddress is required');
 

@@ -1,14 +1,18 @@
 import { MemoryRouter } from 'react-router-dom';
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const profileMock = vi.fn();
 
 vi.mock('@/features/history/components/HistoryList', () => ({ HistoryList: () => <div>Claim history content</div> }));
 vi.mock('@/features/favorites/components/FavoritesTab', () => ({ FavoritesTab: () => <div>Saved assets content</div> }));
 vi.mock('@/features/profile/components/RewardBreakdown', () => ({ RewardBreakdown: () => <div>Reward sources content</div> }));
+vi.mock('@/features/profile/components/PersonalAnalytics', () => ({ PersonalAnalytics: () => <div /> }));
 vi.mock('@/features/profile/components/ProfileForm', () => ({ ProfileForm: () => <div>Profile form content</div> }));
 vi.mock('@/features/rewards/components/WalletComposition', () => ({ WalletComposition: () => <div>Portfolio chart content</div> }));
+vi.mock('@/features/rewards/api/rewards.queries', () => ({
+  useRewards: () => ({ data: [{ assetId: 'token1', amount: 1 }, { assetId: 'token1', amount: 2 }, { assetId: 'token2', amount: 3 }] }),
+}));
 vi.mock('@/features/profile/api/profile.queries', () => ({
   useProfile: () => profileMock(),
 }));
@@ -20,12 +24,16 @@ vi.mock('@/store/wallet-state', () => ({
 import ProfilePage from '../ProfilePage';
 
 describe('ProfilePage', () => {
+  const scroll = vi.fn();
+  beforeEach(() => Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scroll, configurable: true }));
   afterEach(() => {
     cleanup();
+    scroll.mockClear();
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
     profileMock.mockReset();
   });
 
-  it('renders portfolio, rewards, activity, saved assets, and account as one workspace', async () => {
+  it('renders holdings, rewards, history, favorites, and settings on the profile page', async () => {
     profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
     render(
       <MemoryRouter initialEntries={['/profile?tab=analytics']}>
@@ -33,17 +41,20 @@ describe('ProfilePage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Everything you own, earned, and saved.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your profile' })).toBeInTheDocument();
+    expect(screen.getByText('2 reward tokens ready to claim').closest('[role="status"]')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Review rewards' })).toHaveAttribute('href', '/claim');
     expect(screen.getByText('Portfolio chart content')).toBeInTheDocument();
     expect(await screen.findByText('Reward sources content')).toBeInTheDocument();
     expect(await screen.findByText('Claim history content')).toBeInTheDocument();
     expect(await screen.findByText('Saved assets content')).toBeInTheDocument();
-    expect(screen.getByText('Your TosiDrop identity')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByText('Reward analytics', { selector: 'summary' }).closest('details')).toHaveProperty('open', true);
+    await waitFor(() => expect(scroll).toHaveBeenCalled());
   });
 
-  it('keeps profile failures inside the account workspace with a retry action', () => {
+  it('keeps profile failures inside settings with a retry action', () => {
     profileMock.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -59,5 +70,22 @@ describe('ProfilePage', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Profile data is unavailable');
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('scrolls to a holdings deep link after the asynchronous section appears', async () => {
+    profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
+    render(<MemoryRouter initialEntries={['/profile#holdings']}><ProfilePage /></MemoryRouter>);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(scroll).not.toHaveBeenCalled();
+    const section = document.createElement('section');
+    section.id = 'holdings';
+    const details = document.createElement('details');
+    details.appendChild(section);
+    document.getElementById('portfolio-visuals')!.appendChild(details);
+    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+    expect(details.open).toBe(true);
+    section.appendChild(document.createElement('p'));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(scroll).toHaveBeenCalledTimes(1);
   });
 });

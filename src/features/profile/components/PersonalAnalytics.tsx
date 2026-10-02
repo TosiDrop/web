@@ -13,12 +13,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { IconChartDots3 } from '@tabler/icons-react';
+import { IconChartDots3, IconDownload } from '@tabler/icons-react';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { useWalletStore } from '@/store/wallet-state';
 import { usePersonalAnalytics } from '@/features/profile/hooks/usePersonalAnalytics';
 import { formatTokenAmount as formatReward } from '@/utils/format';
 import { StateMessage } from './StateMessage';
+import { downloadCsv } from '@/utils/csv';
+import { personalAnalyticsCsvRows } from '@/features/profile/utils/exportPersonalAnalytics';
 
 const TOKEN_COLORS = ['#22D3EE', '#A78BFA', '#34D399', '#FBBF24', '#F472B6'];
 
@@ -68,11 +70,11 @@ function Metric({
 }) {
   return (
     <div className="bg-surface-raised px-5 py-5">
-      <p className="label-eyebrow">{label}</p>
+      <p className="text-xs text-text-muted">{label}</p>
       <p className="mt-3 font-mono text-2xl font-medium tracking-tight text-white">
         {value}
       </p>
-      {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+      {detail && <p className="mt-1 text-xs text-text-muted">{detail}</p>}
     </div>
   );
 }
@@ -87,12 +89,16 @@ export function PersonalAnalytics() {
     data && chosenToken && data.seriesByToken[chosenToken] ? chosenToken : (data?.defaultToken ?? '');
 
   const selectedSeries = selectedToken ? data?.seriesByToken[selectedToken] : undefined;
+  const selectedUnit = selectedSeries?.decimalsKnown === false ? 'raw units' : selectedSeries?.ticker;
   const activeSince = data?.summary.activeSince?.toLocaleDateString('en-US', DATE_FORMAT);
   const totalRewards = useMemo(
     () => data?.tokenMix.reduce((sum, item) => sum + item.rewards, 0) ?? 0,
     [data],
   );
   const feesKnown = !!data && !data.feesUnavailable && data.summary.totalFeesAda !== null;
+  const averageClaimFee = feesKnown && data.feeCoverage.completeClaims > 0
+    ? data.summary.totalFeesAda! / data.feeCoverage.completeClaims
+    : null;
 
   if (!stakeAddress) {
     return (
@@ -124,6 +130,16 @@ export function PersonalAnalytics() {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-text-muted">Your delivered claims and rewards from the indexed archive.</p>
+        <button
+          type="button"
+          onClick={() => downloadCsv(`tosidrop-personal-analytics-${new Date().toISOString().slice(0, 10)}.csv`, personalAnalyticsCsvRows(data))}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+        >
+          <IconDownload size={14} aria-hidden /> Export CSV
+        </button>
+      </div>
       <section
         className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4"
         aria-label="Claim summary"
@@ -144,21 +160,25 @@ export function PersonalAnalytics() {
               : 'Unavailable'
           }
         />
-        <Metric label="Active since" value={activeSince ?? '—'} />
+        <Metric
+          label="Average cost per claim"
+          value={averageClaimFee === null ? '—' : `${formatReward(averageClaimFee)} ADA`}
+          detail={averageClaimFee === null ? 'Unavailable' : `Based on ${data.feeCoverage.completeClaims} complete fee records`}
+        />
       </section>
+      {activeSince && <p className="text-xs text-text-muted">Claim history since {activeSince}</p>}
 
       <section className="card-premium overflow-hidden">
         <header className="flex flex-col gap-4 border-b border-border-subtle/60 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="label-eyebrow">Delivered over time</p>
-            <h3 className="mt-1.5 text-base font-medium text-white">
+            <h3 className="text-base font-medium text-white">
               Reward accumulation
             </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              A running total for one reward asset at a time.
+            <p className="mt-1 text-xs text-text-muted">
+              {selectedSeries?.decimalsKnown === false ? 'Quantity in raw units; token decimals unavailable.' : 'A running total for one reward asset at a time.'}
             </p>
           </div>
-          <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-slate-500">
+          <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-text-muted">
             Reward token
             <select
               value={selectedToken}
@@ -181,7 +201,7 @@ export function PersonalAnalytics() {
             {(selectedSeries?.points ?? []).map((point) => (
               <li key={point.month}>
                 {point.label}: {formatReward(point.cumulative)}{' '}
-                {selectedSeries?.ticker} cumulative
+                {selectedUnit} cumulative
               </li>
             ))}
           </ul>
@@ -198,20 +218,20 @@ export function PersonalAnalytics() {
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#6B7895', fontSize: 10, fontFamily: 'Geist Mono' }}
+                tick={{ fill: '#8F95A8', fontSize: 10, fontFamily: 'Geist Mono' }}
                 minTickGap={24}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
                 width={46}
-                tick={{ fill: '#6B7895', fontSize: 10, fontFamily: 'Geist Mono' }}
+                tick={{ fill: '#8F95A8', fontSize: 10, fontFamily: 'Geist Mono' }}
                 tickFormatter={(value) => formatReward(Number(value))}
               />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(value) => [
-                  `${formatReward(Number(value))} ${selectedSeries?.ticker ?? ''}`,
+                  `${formatReward(Number(value))} ${selectedUnit ?? ''}`,
                   'Cumulative',
                 ]}
               />
@@ -231,8 +251,7 @@ export function PersonalAnalytics() {
       <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         <section className="card-premium overflow-hidden">
           <header className="border-b border-border-subtle/60 px-5 py-4">
-            <p className="label-eyebrow">Monthly cadence</p>
-            <h3 className="mt-1.5 text-sm font-medium text-white">
+            <h3 className="text-sm font-medium text-white">
               Claim frequency
             </h3>
           </header>
@@ -251,7 +270,7 @@ export function PersonalAnalytics() {
                   dataKey="label"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#6B7895', fontSize: 10, fontFamily: 'Geist Mono' }}
+                  tick={{ fill: '#8F95A8', fontSize: 10, fontFamily: 'Geist Mono' }}
                   minTickGap={18}
                 />
                 <YAxis
@@ -259,7 +278,7 @@ export function PersonalAnalytics() {
                   axisLine={false}
                   tickLine={false}
                   width={28}
-                  tick={{ fill: '#6B7895', fontSize: 10, fontFamily: 'Geist Mono' }}
+                  tick={{ fill: '#8F95A8', fontSize: 10, fontFamily: 'Geist Mono' }}
                 />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Bar dataKey="claims" fill="#67E8F9" radius={[5, 5, 1, 1]} maxBarSize={34} />
@@ -270,8 +289,7 @@ export function PersonalAnalytics() {
 
         <section className="card-premium overflow-hidden">
           <header className="border-b border-border-subtle/60 px-5 py-4">
-            <p className="label-eyebrow">Delivery mix</p>
-            <h3 className="mt-1.5 text-sm font-medium text-white">
+            <h3 className="text-sm font-medium text-white">
               Tokens claimed
             </h3>
           </header>
@@ -319,10 +337,10 @@ export function PersonalAnalytics() {
                       backgroundColor: TOKEN_COLORS[index % TOKEN_COLORS.length],
                     }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-xs text-slate-300">
+                  <span className="min-w-0 flex-1 break-words text-xs text-text-secondary [overflow-wrap:anywhere]">
                     {item.ticker}
                   </span>
-                  <span className="font-mono text-[11px] text-slate-500">
+                  <span className="font-mono text-[11px] text-text-muted">
                     {item.rewards}
                   </span>
                 </li>
@@ -333,7 +351,7 @@ export function PersonalAnalytics() {
       </div>
 
       {(!feesKnown || data.feeCoverage.incomplete || !data.fresh) && (
-        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset/50 px-4 py-3 text-xs text-slate-500">
+        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset/50 px-4 py-3 text-xs text-text-muted">
           <IconChartDots3 size={15} stroke={1.6} className="mt-0.5 shrink-0 text-accent" />
           <span>
             {!data.fresh && 'The latest deliveries could not be fetched; this is the archived history. '}
