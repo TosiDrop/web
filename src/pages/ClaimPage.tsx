@@ -10,7 +10,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
-import { limitSelection, nextClaimBatch, toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
+import { MAX_CLAIM_ASSETS, limitSelection, nextClaimBatch, toggleAllSelection, visibleSelection } from '@/features/claim/utils/claimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { partitionPreferences } from '@/features/favorites/utils/partitionPreferences';
 import { useMarketPrices } from '@/features/market/api/market.queries';
@@ -89,8 +89,8 @@ export default function ClaimPage() {
   );
   const configuredMaxAssets = settings?.max_assets_in_request;
   const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
-    ? configuredMaxAssets
-    : 25;
+    ? Math.min(configuredMaxAssets, MAX_CLAIM_ASSETS)
+    : MAX_CLAIM_ASSETS;
   const selectableAssetIds = useMemo(() => visibleAssetIds.slice(0, maxAssets), [visibleAssetIds, maxAssets]);
   const selectedVisible = limitSelection(visibleSelection(selectedAssetIds, visibleAssetIds), maxAssets);
   const rewardAssetIds = useMemo(() => (rewards ?? []).map((reward) => reward.assetId), [rewards]);
