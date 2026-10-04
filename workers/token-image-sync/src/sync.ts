@@ -10,7 +10,7 @@ export interface SyncDeps {
     put(key: string, value: string): Promise<void>;
   };
   bucket: {
-    head(key: string): Promise<unknown | null>;
+    head(key: string): Promise<unknown>;
     put(
       key: string,
       value: ArrayBuffer,
@@ -28,6 +28,7 @@ export interface SyncDeps {
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_SCANS_PER_RUN = 500;
 
+/** Stores a bounded, rotating batch of uncached token logos in the network-specific object bucket. */
 export async function syncTokenImages({
   kv,
   bucket,
@@ -39,10 +40,11 @@ export async function syncTokenImages({
   const deploymentNetwork = normalizeDeploymentNetwork(network);
   const tokensCacheKey = `__internal:tokens_cache:${deploymentNetwork}`;
   const cursorKey = `__internal:image_sync_cursor:${deploymentNetwork}`;
-  const cached = (await kv.get(tokensCacheKey, { type: 'json' })) as Record<
-    string,
-    { logo?: string }
-  > | null;
+  const cachedValue = await kv.get(tokensCacheKey, { type: 'json' });
+  const cached =
+    typeof cachedValue === 'object' && cachedValue !== null && !Array.isArray(cachedValue)
+      ? (cachedValue as Record<string, { logo?: string }>)
+      : null;
   const tokens = cached ?? (await fetchTokens());
 
   const ids = Object.keys(tokens ?? {})

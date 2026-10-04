@@ -65,7 +65,8 @@ function finiteNumber(value: unknown): number {
 
 /** Native-asset quantities exceed int64 in aggregate; sum them as BigInt. */
 function addAmount(total: bigint, raw: unknown): bigint {
-  const text = String(raw ?? '').trim();
+  if (typeof raw !== 'string' && typeof raw !== 'number' && typeof raw !== 'bigint') return total;
+  const text = String(raw).trim();
   if (/^-?\d+$/.test(text)) return total + BigInt(text);
   const number = Number(text);
   return Number.isFinite(number) ? total + BigInt(Math.trunc(number)) : total;

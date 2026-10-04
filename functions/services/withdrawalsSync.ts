@@ -17,6 +17,7 @@ export function toUnixSeconds(raw: string): number | null {
   return Number.isNaN(t) ? null : Math.floor(t / 1000);
 }
 
+/** Converts valid delivered-reward rows into idempotent inserts for the wallet archive. */
 export function buildWithdrawalUpserts(
   db: D1Database,
   network: string,
@@ -30,13 +31,12 @@ export function buildWithdrawalUpserts(
     const epochNum = Number(raw.epoch);
     const deliveredOn = String(raw.delivered_on ?? '');
     const deliveredAt = deliveredOn.trim() ? toUnixSeconds(deliveredOn) : null;
-    const amount = raw.amount as unknown;
-    const amountString = String(amount ?? '');
+    const amount = raw.amount;
+    if (typeof amount !== 'string' && typeof amount !== 'number') continue;
+    const amountString = String(amount);
     const amountNum = Number(amountString);
     if (
       deliveredAt === null ||
-      amount === null ||
-      amount === undefined ||
       amountString.trim() === '' ||
       !Number.isFinite(amountNum)
     ) {

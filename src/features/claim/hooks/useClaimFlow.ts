@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types/api';
 import { useWalletStore } from '@/store/wallet-state';
@@ -20,43 +20,39 @@ function friendlyError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Coordinates claim creation, wallet deposit, and status polling for the initiating stake address. */
 export function useClaimFlow(options: UseClaimFlowOptions = {}) {
   const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const queryClient = useQueryClient();
-  const [state, setState] = useState<ClaimFlowStep>({ step: 'idle' });
+  const [storedState, setState] = useState<ClaimFlowStep>({ step: 'idle' });
+  const [claimStakeAddress, setClaimStakeAddress] = useState<string | null>(null);
   const inFlight = useRef(false);
 
   const { mutateAsync: createAsync } = useClaimCreate();
   const { sendDeposit, canSend } = useWalletDeposit();
 
-  const requestId = 'info' in state ? state.info.requestId : null;
-  const polling = state.step === 'polling';
+  const requestId = 'info' in storedState ? storedState.info.requestId : null;
+  const polling = storedState.step === 'polling';
 
   const statusQuery = useClaimStatus({
     requestId,
-    stakeAddress,
-    enabled: polling,
+    stakeAddress: claimStakeAddress,
+    enabled: polling && stakeAddress === claimStakeAddress,
     refetchIntervalMs: options.pollIntervalMs,
   });
 
-  useEffect(() => {
+  const state = useMemo<ClaimFlowStep>(() => {
     const data = statusQuery.data;
-    if (!data) return;
-
-    setState((s) => {
-      if (s.step !== 'polling') return s;
-      if (data.kind === 'success') {
-        return { step: 'success', info: s.info, txHash: data.txHash || s.txHash || '' };
-      }
-      if (data.kind === 'failure') {
-        return { step: 'error', message: data.reason };
-      }
-      if (data.kind === 'processing' && data.txHash && data.txHash !== s.txHash) {
-        return { step: 'polling', info: s.info, txHash: data.txHash };
-      }
-      return s;
-    });
-  }, [statusQuery.data]);
+    if (storedState.step !== 'polling' || !data) return storedState;
+    if (data.kind === 'success') {
+      return { step: 'success', info: storedState.info, txHash: data.txHash || storedState.txHash || '' };
+    }
+    if (data.kind === 'failure') return { step: 'error', message: data.reason };
+    if (data.kind === 'processing' && data.txHash && data.txHash !== storedState.txHash) {
+      return { step: 'polling', info: storedState.info, txHash: data.txHash };
+    }
+    return storedState;
+  }, [storedState, statusQuery.data]);
 
   useEffect(() => {
     if (state.step === 'success') {
@@ -75,6 +71,8 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
         setState({ step: 'error', message: 'Select at least one reward' });
         return;
       }
+
+      setClaimStakeAddress(stakeAddress);
 
       // Drop any cached status data from a prior claim so stale success/failure
       // results cannot bleed into this fresh attempt if the backend reuses ids.
@@ -130,6 +128,7 @@ export function useClaimFlow(options: UseClaimFlowOptions = {}) {
 
   const reset = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['claim-status'] });
+    setClaimStakeAddress(null);
     setState({ step: 'idle' });
   }, [queryClient]);
 

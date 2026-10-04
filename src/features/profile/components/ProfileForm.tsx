@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
 import { useSaveProfile } from '@/features/profile/api/profile.queries';
@@ -9,16 +9,15 @@ interface ProfileFormProps {
   currentName?: string;
 }
 
+/** Signs and saves a display-name update for the connected wallet. */
 export function ProfileForm({ currentName }: ProfileFormProps) {
   const { wallet, connected, stakeAddress, changeAddress } = useWalletStore();
   const saveProfile = useSaveProfile();
-  const [name, setName] = useState(currentName ?? '');
+  const [nameState, setNameState] = useState({ source: currentName, value: currentName ?? '' });
+  const name = nameState.source === currentName ? nameState.value : currentName ?? '';
+  const setName = (value: string) => setNameState({ source: currentName, value });
   const [signError, setSignError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    setName(currentName ?? '');
-  }, [currentName]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
