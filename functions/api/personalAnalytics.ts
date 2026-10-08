@@ -147,7 +147,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     const [summary, claimsResult, rewardsResult, tokenMixResult] = await Promise.all([
       env.DB.prepare(
         'SELECT ' +
-          'COUNT(DISTINCT COALESCE(withdrawal_request, reward_id)) AS total_claims, ' +
+          "COUNT(DISTINCT COALESCE(NULLIF(TRIM(withdrawal_request), ''), reward_id)) AS total_claims, " +
           'COUNT(DISTINCT token) AS distinct_tokens, ' +
           'MIN(delivered_at) AS active_since ' +
           delivered,
@@ -157,7 +157,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       env.DB.prepare(
         '/* claims_by_month */ ' +
           "SELECT strftime('%Y-%m', datetime(delivered_at, 'unixepoch')) AS month, " +
-          'COUNT(DISTINCT COALESCE(withdrawal_request, reward_id)) AS claims ' +
+          "COUNT(DISTINCT COALESCE(NULLIF(TRIM(withdrawal_request), ''), reward_id)) AS claims " +
           delivered +
           'GROUP BY month ORDER BY month ASC',
       )

@@ -43,8 +43,8 @@ export function useClaimSelection({
 
   useEffect(() => {
     if (!tokens || !lookupAddress || preferencesLoading) return;
-    initSelectionFor(lookupAddress, candidates.selectableAssetIds);
-  }, [tokens, lookupAddress, preferencesLoading, candidates.selectableAssetIds, initSelectionFor]);
+    initSelectionFor(lookupAddress, candidates.selectableAssetIds, candidates.visible.map((token) => token.assetId));
+  }, [tokens, lookupAddress, preferencesLoading, candidates, initSelectionFor]);
 
   return { ...candidates, selectedAssetIds };
 }

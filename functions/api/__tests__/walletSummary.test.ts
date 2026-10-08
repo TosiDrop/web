@@ -34,7 +34,7 @@ describe('GET /api/wallet/summary', () => {
 
   it('combines account, holdings, rewards, and metadata from a configured Koios endpoint', async () => {
     fetchMock.mockImplementation(async (url: string) => {
-      if (url.endsWith('/account_info')) {
+      if (new URL(url).pathname.endsWith('/account_info')) {
         return new Response(JSON.stringify([{
           total_balance: '1234567',
           rewards_available: '42',
@@ -42,23 +42,22 @@ describe('GET /api/wallet/summary', () => {
           status: 'registered',
         }]));
       }
-      if (url.endsWith('/account_assets')) {
+      if (new URL(url).pathname.endsWith('/account_assets')) {
         return new Response(JSON.stringify([{
-          asset_policy: 'policy',
-          asset_name: 'name',
+          policy_id: 'abababababababababababababababababababababababababababab',
+          asset_name: '6e616d65',
           quantity: '2500',
         }]));
       }
-      if (url.endsWith('/account_rewards')) {
-        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id: 'pool1abc', type: 'member' }]));
+      if (new URL(url).pathname.endsWith('/account_reward_history')) {
+        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id_bech32: 'pool1abc', type: 'member' }]));
       }
-      if (url.endsWith('/asset_info')) {
+      if (new URL(url).pathname.endsWith('/asset_info')) {
         return new Response(JSON.stringify([{
-          asset_policy: 'policy',
-          asset_name: 'name',
+          policy_id: 'abababababababababababababababababababababababababababab',
+          asset_name: '6e616d65',
           asset_name_ascii: 'Example Token',
-          decimals: 2,
-          token_registry_metadata: { ticker: 'EX' },
+          token_registry_metadata: { name: 'Example Token', ticker: 'EX', decimals: 2 },
         }]));
       }
       throw new Error(`unexpected URL: ${url}`);
@@ -77,9 +76,10 @@ describe('GET /api/wallet/summary', () => {
       network: 'preview',
       balance: { accountLovelace: '1234567', rewardsAvailableLovelace: '42' },
       delegation: { poolId: 'pool1abc', registered: true },
-      rewards: { totalLovelace: '99' },
-      holdings: [{ unit: 'policyname', quantity: '2500', ticker: 'EX', decimals: 2 }],
+      rewards: { totalLovelace: '99', epochs: [{ epoch: 500, poolId: 'pool1abc' }] },
+      holdings: [{ unit: 'abababababababababababababababababababababababababababab6e616d65', quantity: '2500', ticker: 'EX', decimals: 2 }],
       metadata: { returned: 1, total: 1, complete: true },
+      sources: { account: true, assets: true, rewards: true },
     });
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(fetchMock.mock.calls.every(([url, init]) =>
@@ -87,5 +87,45 @@ describe('GET /api/wallet/summary', () => {
       (init as RequestInit).headers &&
       ((init as RequestInit).headers as Record<string, string>).Authorization === 'Bearer secret-test-key',
     )).toBe(true);
+  });
+
+  it('marks missing Koios account data unknown instead of presenting zero balance', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (new URL(url).pathname.endsWith('/account_info')) return new Response('down', { status: 503 });
+      return new Response('[]');
+    });
+    const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
+    const body = await response.json() as Record<string, unknown>;
+    expect(body).toMatchObject({
+      degraded: true,
+      sources: { account: false, assets: true, rewards: true },
+      balance: { accountLovelace: null, utxoLovelace: null, rewardsAvailableLovelace: null },
+    });
+  });
+
+  it('keeps assets whose Cardano asset name is empty', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (new URL(url).pathname.endsWith('/account_assets')) return new Response(JSON.stringify([
+        { policy_id: 'abababababababababababababababababababababababababababab', asset_name: '', quantity: '1' },
+      ]));
+      return new Response('[]');
+    });
+    const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
+    const body = await response.json() as { holdings: Array<{ unit: string }> };
+    expect(body.holdings).toEqual([expect.objectContaining({ unit: 'abababababababababababababababababababababababababababab' })]);
+  });
+
+  it('keeps unknown decimals unknown when Koios supplies its default zero', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (new URL(url).pathname.endsWith('/account_assets')) return new Response(JSON.stringify([
+        { policy_id: 'ab'.repeat(28), asset_name: '544f5349', quantity: '1000000', decimals: 0 },
+      ]));
+      if (new URL(url).pathname.endsWith('/asset_info')) return new Response(JSON.stringify([
+        { policy_id: 'ab'.repeat(28), asset_name: '544f5349', token_registry_metadata: null },
+      ]));
+      return new Response('[]');
+    });
+    const response = await onRequestGet(ctx(`staking_address=${PREVIEW_STAKE}`));
+    expect(await response.json()).toMatchObject({ holdings: [{ decimals: null, valueUsd: null }], valueHistory: { points: [] } });
   });
 });
