@@ -41,14 +41,14 @@ function SectionLoading({ label }: { label: string }) {
 
 function SectionHeading({
   icon: Icon,
-  eyebrow,
+  id,
   title,
   description,
 }: {
   icon: typeof IconWallet;
-  eyebrow: string;
+  id: string;
   title: string;
-  description: string;
+  description?: string;
 }) {
   return (
     <div className="mb-4 flex items-start gap-3">
@@ -56,8 +56,8 @@ function SectionHeading({
         <Icon size={18} stroke={1.6} aria-hidden />
       </span>
       <div>
-        <h2 id={`${eyebrow.toLowerCase().replaceAll(' ', '-')}-title`} className="text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">{description}</p>
+        <h2 id={id} className="text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
+        {description && <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">{description}</p>}
       </div>
     </div>
   );
@@ -74,7 +74,7 @@ function AccountSection() {
     <section id="account" aria-labelledby="account-title">
       <SectionHeading
         icon={IconSettings}
-        eyebrow="Account"
+        id="account-title"
         title="Settings"
         description="Your connected wallet and display name."
       />
@@ -195,12 +195,12 @@ export default function ProfilePage() {
   }, [connected, location.hash, location.search]);
 
   return (
-    <div ref={pageRef} className="space-y-10 [&_section]:scroll-mt-24">
-      <header className="flex flex-wrap items-end justify-between gap-5">
+    <div ref={pageRef} className="space-y-8 [&_section]:scroll-mt-24">
+      <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your profile</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-              Claim history, saved tokens, and your display name.
+              Wallet balances, claim history, and saved tokens.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -217,12 +217,12 @@ export default function ProfilePage() {
       </header>
 
       {connected ? <>
-      <nav aria-label="Wallet sections" className="flex flex-wrap gap-x-5 gap-y-3 border-b border-border-subtle pb-4 text-sm">
+      <nav aria-label="Wallet sections" className="flex flex-wrap gap-x-6 gap-y-2 border-b border-border-subtle pb-4 text-sm">
         {[
           ['portfolio-visuals', 'Overview'], ['holdings', 'Holdings'], ['activity', 'History'],
           ['saved-assets', 'Favorites'], ['account', 'Settings'],
         ].map(([id, label]) => (
-          <Link key={id} to={`/profile#${id}`} className="min-h-6 text-text-secondary hover:text-accent-light hover:underline">{label}</Link>
+          <Link key={id} to={`/profile#${id}`} className="inline-flex min-h-10 items-center text-text-secondary hover:text-accent-light hover:underline">{label}</Link>
         ))}
       </nav>
       {rewardTokenCount > 0 && (
@@ -241,7 +241,7 @@ export default function ProfilePage() {
       <details onToggle={(event) => setInsightsOpen(event.currentTarget.open)} className="border-y border-border-subtle py-4">
         <summary className="cursor-pointer text-sm text-text-secondary hover:text-text-primary">Reward analytics</summary>
       <section id="claim-analytics" aria-labelledby="claim-analytics-title" className="mt-6">
-        <SectionHeading icon={IconChartLine} eyebrow="Claim analytics" title="Reward analytics" description="Delivered claim trends, fee history, and current reward sources." />
+        <SectionHeading icon={IconChartLine} id="claim-analytics-title" title="Reward analytics" description="Delivered claim trends, fee history, and current reward sources." />
         {insightsOpen && <Suspense fallback={<SectionLoading label="claim analytics" />}>
           <PersonalAnalytics />
         </Suspense>}
@@ -250,7 +250,7 @@ export default function ProfilePage() {
         <section id="rewards" aria-labelledby="rewards-provenance-title" className="mt-8">
           <SectionHeading
             icon={IconChartLine}
-            eyebrow="Rewards provenance"
+            id="rewards-provenance-title"
             title="Current allocations"
             description="Rewards waiting for your next claim, grouped by source."
           />
@@ -263,7 +263,7 @@ export default function ProfilePage() {
         <section id="activity" aria-labelledby="activity-title">
           <SectionHeading
             icon={IconClock}
-            eyebrow="Activity"
+            id="activity-title"
             title="Claim history"
             description="Tokens delivered to your stake address."
           />
@@ -275,9 +275,8 @@ export default function ProfilePage() {
       <section id="saved-assets" aria-labelledby="saved-assets-title">
         <SectionHeading
           icon={IconBookmark}
-          eyebrow="Saved assets"
+          id="saved-assets-title"
           title="Favorites"
-          description="Saved tokens rise to the top of your claimable list."
         />
         <Suspense fallback={<SectionLoading label="saved assets" />}>
           <FavoritesTab />

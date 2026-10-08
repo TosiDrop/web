@@ -45,7 +45,7 @@ function LoadingState() {
     >
       <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4">
         {[0, 1, 2, 3].map((item) => (
-          <div key={item} className="bg-surface-raised px-5 py-5">
+          <div key={item} className="min-w-0 bg-surface-raised p-4 sm:p-6">
             <div className="skeleton-shimmer h-2.5 w-20 rounded" />
             <div className="skeleton-shimmer mt-4 h-7 w-24 rounded" />
           </div>
@@ -69,9 +69,9 @@ function Metric({
   detail?: string;
 }) {
   return (
-    <div className="bg-surface-raised px-5 py-5">
+    <div className="min-w-0 bg-surface-raised p-4 sm:p-6">
       <p className="text-xs text-text-muted">{label}</p>
-      <p className="mt-3 font-mono text-2xl font-medium tracking-tight text-white">
+      <p className="mt-2 break-words font-mono text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]">
         {value}
       </p>
       {detail && <p className="mt-1 text-xs text-text-muted">{detail}</p>}
@@ -146,8 +146,8 @@ export function PersonalAnalytics() {
       >
         <Metric label="Claims delivered" value={String(data.summary.totalClaims)} />
         <Metric
-          label="Reward variety"
-          value={`${data.summary.distinctTokens} token types`}
+          label="Token types claimed"
+          value={String(data.summary.distinctTokens)}
         />
         <Metric
           label="Tracked fees"
@@ -178,12 +178,12 @@ export function PersonalAnalytics() {
               {selectedSeries?.decimalsKnown === false ? 'Quantity in raw units; token decimals unavailable.' : 'A running total for one reward asset at a time.'}
             </p>
           </div>
-          <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+          <label className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-text-muted">
             Reward token
             <select
               value={selectedToken}
               onChange={(event) => setChosenToken(event.target.value)}
-              className="rounded-lg border border-border-default bg-surface-inset px-3 py-2 font-mono text-xs normal-case tracking-normal text-slate-200 outline-none transition focus:border-accent"
+              className="min-h-10 max-w-full rounded-lg border border-border-default bg-surface-inset px-3 py-2 text-sm text-text-secondary transition focus:border-accent"
             >
               {Object.values(data.seriesByToken).map((series) => (
                 <option key={series.token} value={series.token}>
@@ -328,7 +328,7 @@ export function PersonalAnalytics() {
                 <span className="label-eyebrow mt-0.5">rewards</span>
               </div>
             </div>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {data.tokenMix.map((item, index) => (
                 <li key={item.token} className="flex items-center gap-2">
                   <span
@@ -340,7 +340,7 @@ export function PersonalAnalytics() {
                   <span className="min-w-0 flex-1 break-words text-xs text-text-secondary [overflow-wrap:anywhere]">
                     {item.ticker}
                   </span>
-                  <span className="font-mono text-[11px] text-text-muted">
+                  <span className="font-mono text-2xs text-text-muted">
                     {item.rewards}
                   </span>
                 </li>

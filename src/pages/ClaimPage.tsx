@@ -150,8 +150,9 @@ export default function ClaimPage() {
 
   const claimMutation = useMutation({
     mutationFn: getCustomRewards,
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       setRequest({
+        stakeAddress: variables.stakeAddress,
         requestId: result.request_id,
         deposit: result.deposit,
         overheadFee: result.overhead_fee,

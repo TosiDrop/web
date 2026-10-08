@@ -34,7 +34,7 @@ describe('DistributionCard', () => {
   });
 
   it('does not expose VM premium metadata in the claim UI', () => {
-    render(<DistributionCard token={{ ...TOKEN, premium: true }} selected={false} onToggle={() => undefined} />);
+    render(<MemoryRouter><DistributionCard token={{ ...TOKEN, premium: true }} selected={false} onToggle={() => undefined} /></MemoryRouter>);
     expect(screen.queryByText(/premium/i)).not.toBeInTheDocument();
     expect(screen.getByText('Reward')).toBeInTheDocument();
   });

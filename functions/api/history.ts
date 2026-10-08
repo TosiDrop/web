@@ -27,7 +27,7 @@ interface WithdrawalRow {
 const RECEIPT_PRICE_FILTER =
   "p.network = w.network AND p.unit IN (w.token, REPLACE(w.token, '.', '')) AND w.delivered_at IS NOT NULL " +
   'AND p.observed_at <= w.delivered_at AND p.observed_at >= w.delivered_at - 86400 ' +
-  'AND p.price_usd IS NOT NULL';
+  'AND p.price_usd > 0 AND p.price_usd <= 1.7976931348623157e308';
 
 function receiptPriceColumn(column: string, alias: string): string {
   return `(SELECT p.${column} FROM market_asset_price_history p WHERE ${RECEIPT_PRICE_FILTER} ` +

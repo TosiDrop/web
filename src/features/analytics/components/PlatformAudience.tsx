@@ -22,9 +22,9 @@ export function PlatformAudience() {
 
   const { claimingWallets, claims, returningWallets } = data.summary;
   const metrics = [
-    ['Indexed claiming wallets', claimingWallets.toLocaleString(), 'Unique stake addresses in the synced claim archive'],
-    ['Indexed claims', claims.toLocaleString(), 'Distinct delivered claim IDs in the synced archive'],
-    ['Repeat claimers', returningWallets.toLocaleString(), 'Indexed wallets with more than one delivered claim ID'],
+    ['Indexed claiming wallets', claimingWallets.toLocaleString(), 'Unique wallets with a recorded claim'],
+    ['Indexed claims', claims.toLocaleString(), 'Delivered claims recorded in the archive'],
+    ['Repeat claimers', returningWallets.toLocaleString(), 'Wallets with two or more recorded claims'],
   ];
 
   return (
@@ -45,17 +45,17 @@ export function PlatformAudience() {
         </button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
         {metrics.map(([label, value, detail]) => (
           <Card key={label} className="p-4">
             <p className="text-xs text-text-muted">{label}</p>
             <p className="mt-2 font-mono text-2xl tabular-nums text-text-primary">{value}</p>
-            <p className="mt-1 text-2xs leading-5 text-text-faint">{detail}</p>
+            <p className="mt-1 text-xs leading-5 text-text-muted">{detail}</p>
           </Card>
         ))}
       </div>
 
-      <Card className="p-4 sm:p-5">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-sm font-semibold text-text-primary">Indexed claims and wallets by month</h3>
         {data.months.length > 0 ? (
           <>

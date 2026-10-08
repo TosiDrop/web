@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useClaimStore } from '@/store/claim-state';
-import { useWalletStore } from '@/store/wallet-state';
 import { useWalletDeposit } from '@/features/claim/hooks/useWalletDeposit';
 import {
   useClaimStatus,
@@ -44,8 +43,8 @@ const STATUS_COPY: Record<
 
 export default function DepositPage() {
   const navigate = useNavigate();
-  const stakeAddress = useWalletStore((s) => s.stakeAddress);
   const request = useClaimStore((s) => s.request);
+  const stakeAddress = request?.stakeAddress ?? null;
   const reset = useClaimStore((s) => s.reset);
   const queryClient = useQueryClient();
 

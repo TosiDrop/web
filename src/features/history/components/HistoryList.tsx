@@ -63,11 +63,11 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
 
 function HistoryRow({ row }: { row: DeliveredReward }) {
   return (
-    <li className="flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
+    <li className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 transition hover:bg-white/[0.015] sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:px-6">
       <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
         <Link to={`/tokens/${encodeURIComponent(row.token)}`} className="break-words text-sm font-medium text-text-primary hover:text-accent-light [overflow-wrap:anywhere]">{row.ticker}</Link>
-        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
           {row.epoch !== null && <span className="tabular-nums">Epoch {row.epoch}</span>}
           {row.epoch !== null && row.deliveredOn && <span className="text-text-faint">·</span>}
           {row.deliveredOn && (
@@ -77,9 +77,12 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
           )}
         </p>
       </div>
-      <div className="text-right">
-        <p className="font-mono text-sm tabular-nums text-status-success-light">
-          +{formatAmount(row.amount)}
+      <div className="col-start-2 flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 sm:col-start-auto sm:block sm:text-right">
+        <p className="break-words font-mono text-sm tabular-nums text-status-success-light [overflow-wrap:anywhere]">
+          +{row.decimalsKnown === false && row.rawAmount && /^\d+$/.test(row.rawAmount)
+            ? BigInt(row.rawAmount).toLocaleString('en-US')
+            : formatAmount(row.amount)}
+          {row.decimalsKnown === false && <span className="ml-2 font-sans text-xs text-text-muted">raw units</span>}
         </p>
         <p
           className="mt-0.5 text-2xs text-text-muted"
@@ -203,7 +206,7 @@ export function HistoryList() {
 
   return (
     <Card as="section" className="overflow-hidden">
-      <header className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2">
           <p className="label-eyebrow">Delivered</p>
           <span className="rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-2xs tabular-nums text-text-secondary">
@@ -235,8 +238,8 @@ export function HistoryList() {
       </header>
 
       {exportError && <p role="alert" className="border-b border-border-subtle px-5 py-2 text-xs text-status-error-light">{exportError}</p>}
-      <p className="border-b border-border-subtle px-5 py-2 text-2xs text-text-muted">
-        Receipt estimates use the latest indexed USD price from the preceding 24 hours. Missing price history stays blank in CSV.
+      <p className="border-b border-border-subtle px-4 py-3 text-xs leading-5 text-text-muted sm:px-6">
+        Delivery values use indexed prices from the preceding 24 hours. Amounts marked raw units have unknown token decimals.
       </p>
 
       <ul className="divide-y divide-border-subtle">

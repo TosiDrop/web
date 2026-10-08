@@ -68,7 +68,7 @@ export function WalletHoldings({ summary, walletLovelace, stakeAddress, totalUsd
   const filtered = visibleHoldings(summary.holdings, search, sort);
   const visible = showAll ? filtered : filtered.slice(0, 5);
   return (
-    <section id="holdings" aria-labelledby="wallet-holdings-title" className="@container mt-6 border-t border-border-subtle pt-5">
+    <section id="holdings" aria-labelledby="wallet-holdings-title" className="@container mt-6 border-t border-border-subtle pt-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h3 id="wallet-holdings-title" className="text-base font-medium text-text-primary">
           Your tokens <span className="ml-1 font-mono text-sm text-text-muted">{summary.sources?.assets === false ? '—' : summary.holdings.length}</span>
@@ -127,7 +127,7 @@ export function WalletHoldings({ summary, walletLovelace, stakeAddress, totalUsd
                   {detailed && <th scope="col" className="pb-3 text-right font-normal">Share</th>}
                 </tr>
               </thead>
-              <tbody>{visible.map((holding) => <tr key={holding.unit} className="border-b border-border-subtle/50 align-top">
+              <tbody>{visible.map((holding) => <tr key={holding.unit} className="border-b border-border-subtle align-top">
                 <th scope="row" className="py-3 pr-3 text-left font-normal"><AssetName holding={holding} detailed={detailed} /></th>
                 <td className="py-3 pr-3 text-right text-text-secondary"><Quantity holding={holding} /></td>
                 {detailed && <><td className="break-words py-3 pr-3 text-right font-mono text-text-secondary [overflow-wrap:anywhere]">{walletPrice(holding.priceUsd)}</td><td className="py-3 pr-3 text-right"><Change value={holding.priceChange24h} /></td></>}

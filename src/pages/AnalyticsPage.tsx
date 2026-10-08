@@ -9,7 +9,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-5">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
             Analytics
@@ -18,9 +18,6 @@ export default function AnalyticsPage() {
             Explore your claim history, platform usage, network activity, and participating pools.
           </p>
         </div>
-        <span className="rounded-full border border-accent/20 bg-accent/[0.06] px-3 py-1.5 text-2xs font-medium uppercase tracking-[0.14em] text-accent-light">
-          Indexed snapshots
-        </span>
       </header>
 
       {connected && (
@@ -34,7 +31,7 @@ export default function AnalyticsPage() {
         </section>
       )}
 
-      <section className="space-y-5" aria-labelledby="platform-stats">
+      <section className="space-y-4" aria-labelledby="platform-stats">
         <div>
           <h2 id="platform-stats" className="text-2xl font-semibold tracking-tight text-text-primary">
             Platform statistics
@@ -44,7 +41,7 @@ export default function AnalyticsPage() {
         <PlatformStats />
       </section>
 
-      <section className="space-y-5" aria-labelledby="platform-usage">
+      <section className="space-y-4" aria-labelledby="platform-usage">
         <div>
           <h2 id="platform-usage" className="text-2xl font-semibold tracking-tight text-text-primary">Platform usage</h2>
           <p className="mt-1 text-sm text-text-muted">Delivered claims observed in the synced wallet archive.</p>
@@ -52,7 +49,7 @@ export default function AnalyticsPage() {
         <PlatformAudience />
       </section>
 
-      <section className="space-y-5" aria-labelledby="pool-comparison">
+      <section className="space-y-4" aria-labelledby="pool-comparison">
         <div>
           <h2 id="pool-comparison" className="text-2xl font-semibold tracking-tight text-text-primary">
             Pool comparison

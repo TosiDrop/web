@@ -26,7 +26,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 | Price at receipt | Latest indexed USD quote preceding receipt by at most 24 hours; explicitly an estimate. Missing quotes/decimals remain unknown. |
 | CSV extracts | Holdings, staking rewards, claim history, personal trends and public platform trends. Holdings and staking exports include exact raw quantities; reward CSVs identify raw units when metadata is missing. |
 
-## Data fixes added in this pass
+## Data and state safeguards
 
 - Use Koios `policy_id` for assets/metadata, policy/name pairs for bulk metadata, and `account_reward_history` with `pool_id_bech32` for earned rewards.
 - Preserve token quantities when metadata is incomplete; reject malformed quantities and reward amounts.
@@ -39,15 +39,27 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 - Sum reward types within an earned epoch before computing staking chart values.
 - Derive the combined 24h move from prior/current prices for current quantities, with explicit partial coverage.
 
+- Preserve later claim batches when rewards refresh or favorites reorder; hidden tokens remain excluded.
+- Keep edits made while a favorites save is pending, and preserve the active wallet's draft after account switches. Wait for saved preferences before accepting edits.
+- Keep deposit status checks and cache refreshes tied to the wallet that started the claim.
+- Display exact raw quantities when token decimals are unknown, in both archived and fallback history.
+- Reject nonpositive and nonfinite receipt quotes; normalize blank request IDs when counting claims.
+
+## Verification
+
+- Rebased onto `main` at `71c736b`, preserving the wallet, claim, and pool fixes from PR #288.
+- Node 24: all 400 tests pass, including regression cases reproduced before the fixes. Production build and type-aware lint pass; the build retains existing large-bundle warnings.
+- Populated local browser review covers profile, analytics, and claim screens at 1440, 390, and 320 CSS pixels. Spacing follows existing 4px increments, with 16px mobile panel padding and 24px section gaps.
+
 ## Integration work and verification boundaries
 
 - Market readers and migrations exist, but this repository has no scheduled market-price ingestion job. Current valuations, allocation, replay and receipt estimates need populated, network-correct market tables. Preview tokens may have no market price.
-- Public platform counts require the network-scoped withdrawals schema and a populated archive. The earlier preview check returned HTTP 500. The updated preview UI still shows "Platform usage is unavailable." Terminal requests were blocked by Cloudflare HTTP 403; Wrangler was logged out, so the remote schema was not inspected.
+- Public platform counts require the network-scoped withdrawals schema and a populated archive. Remote schema and data population were not verified in this review.
 - Closed-site push notifications require subscriptions and a server delivery flow. Existing browser alerts require the site to remain open.
 - Wallet value history is a price replay of current indexed quantities. Actual historical balances, general on-chain transaction history, cost basis and realized returns remain future work in the platform plan.
 - Visitor and connected-wallet usage tracking is separate from indexed claimant analytics and is not implemented.
 - A real wallet signing, claim delivery, favorites save and browser notification check remains necessary before release. Automated tests exercise these contracts and states; populated layout checks used synthetic wallet data.
-- Browser checks covered 1440, 820, 390 and 320 CSS pixels, search, sorting, full holdings, price-source disclosure, chart ranges and empty/unavailable states. No horizontal overflow was observed. The in-app browser download event timed out; CSV content is covered by automated export tests.
+- Browser interactions cover holdings search, sort, expanded details, chart selection, staking ranges, token navigation, and a downloaded holdings CSV. Populated screens use the local synthetic-data fixture.
 - No shared database migration, production release, wallet signature or claim transaction was performed.
 
 ## References

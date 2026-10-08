@@ -41,18 +41,16 @@ export function WalletMetric({
   label,
   value,
   detail,
-  tone,
 }: {
   label: string;
   value: string;
   detail: string;
-  tone?: string;
 }) {
   return (
     <div className="min-w-0 py-3 sm:px-4">
       <dt className="text-xs text-text-muted">{label}</dt>
       <dd
-        className={`mt-2 break-words font-mono text-xl font-medium tabular-nums [overflow-wrap:anywhere] ${tone ?? 'text-text-primary'}`}
+        className="mt-2 break-words font-mono text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]"
       >
         {value}
       </dd>
@@ -184,7 +182,7 @@ export function WalletPortfolio({
       )}
 
       <div className="mt-6">
-        <div role="group" aria-label="Wallet chart" className="mb-4 flex gap-5 border-b border-border-subtle">
+        <div role="group" aria-label="Wallet chart" className="mb-4 flex gap-6 border-b border-border-subtle">
           {(['history', 'allocation'] as const).map((view) => (
             <button key={view} id={`${gradientId}-${view}`} type="button"
               aria-pressed={chart === view} aria-controls={`${gradientId}-chart`}

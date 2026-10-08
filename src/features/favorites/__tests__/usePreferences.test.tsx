@@ -62,6 +62,19 @@ describe('usePreferences', () => {
     expect(result.current.isDirty).toBe(true);
   });
 
+  it('waits for saved preferences before accepting edits', async () => {
+    let finishLoad!: (value: { favorites: Array<{ assetId: string; ticker: string; logo: string }>; dislikes: [] }) => void;
+    getMock.mockReturnValue(new Promise((resolve) => { finishLoad = resolve; }));
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    act(() => result.current.toggleFavorite({ assetId: 'new', ticker: 'NEW', logo: '' }));
+    act(() => result.current.toggleDislike({ assetId: 'hidden', ticker: 'HIDDEN', logo: '' }));
+    expect(result.current.hasLocalDraft).toBe(false);
+    await act(async () => { finishLoad({ favorites: [{ assetId: 'saved', ticker: 'SAVED', logo: '' }], dislikes: [] }); });
+    await waitFor(() => expect(result.current.preferencesReady).toBe(true));
+    act(() => result.current.toggleFavorite({ assetId: 'new', ticker: 'NEW', logo: '' }));
+    expect([...result.current.favoriteIds]).toEqual(['saved', 'new']);
+  });
+
   it('toggleDislike moves a favorited token into dislikes', async () => {
     getMock.mockResolvedValue({
       favorites: [{ assetId: 'a1', ticker: 'A', logo: '' }],
@@ -148,6 +161,53 @@ describe('usePreferences', () => {
     expect(localStorage.length).toBeGreaterThan(0);
     await act(async () => { await result.current.persist(); });
     expect(localStorage.length).toBe(0);
+  });
+
+  it('preserves edits made while an earlier draft is saving', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    signMock.mockResolvedValue({ signature: 's', key: 'k', message: 'm' });
+    let finishSave!: (value: { success: boolean }) => void;
+    postMock.mockReturnValue(new Promise((resolve) => { finishSave = resolve; }));
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.toggleFavorite({ assetId: 'a1', ticker: 'A', logo: '' }));
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.persist(); });
+    await waitFor(() => expect(postMock).toHaveBeenCalledTimes(1));
+    act(() => result.current.toggleFavorite({ assetId: 'a2', ticker: 'B', logo: '' }));
+    await act(async () => { finishSave({ success: true }); await pending; });
+
+    expect(result.current.isFavorite('a2')).toBe(true);
+    expect(result.current.isDirty).toBe(true);
+    expect(result.current.hasLocalDraft).toBe(true);
+    expect(localStorage.getItem(localStorage.key(0)!)).toContain('a2');
+    expect(postMock.mock.calls[0][1].favorites).toHaveLength(1);
+  });
+
+  it('leaves the active wallet draft intact when a different wallet finishes saving', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    signMock.mockResolvedValue({ signature: 's', key: 'k', message: 'm' });
+    let finishSave!: (value: { success: boolean }) => void;
+    postMock.mockReturnValue(new Promise((resolve) => { finishSave = resolve; }));
+    const { result, rerender } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.toggleFavorite({ assetId: 'a1', ticker: 'A', logo: '' }));
+    let pending!: Promise<void>;
+    await act(async () => { pending = result.current.persist(); });
+    await waitFor(() => expect(postMock).toHaveBeenCalledTimes(1));
+    walletState.stakeAddress = 'stake1' + 'v'.repeat(40);
+    rerender();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.toggleFavorite({ assetId: 'b1', ticker: 'B', logo: '' }));
+    const activeDraft = usePreferencesDraft.getState().draft;
+    const owners: Array<string | null> = [];
+    const unsubscribe = usePreferencesDraft.subscribe((state) => owners.push(state.owner));
+    await act(async () => { finishSave({ success: true }); await pending; });
+    unsubscribe();
+
+    expect(owners.every((owner) => owner === walletState.stakeAddress)).toBe(true);
+    expect(usePreferencesDraft.getState().draft).toBe(activeDraft);
+    expect(result.current.isFavorite('b1')).toBe(true);
   });
 
   it('keeps local favorites scoped to their wallet when switching accounts', async () => {

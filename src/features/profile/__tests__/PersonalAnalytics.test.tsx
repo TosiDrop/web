@@ -141,7 +141,7 @@ describe('PersonalAnalytics', () => {
     render(<PersonalAnalytics />);
 
     expect(within(screen.getByLabelText('Claim summary')).getByText('4')).toBeInTheDocument();
-    expect(screen.getByText('2 token types')).toBeInTheDocument();
+    expect(within(screen.getByText('Token types claimed').parentElement!).getByText('2')).toBeInTheDocument();
     expect(screen.getByText('1.25 ADA')).toBeInTheDocument();
     expect(screen.getByText('0.625 ADA')).toBeInTheDocument();
     expect(screen.getByText('Average cost per claim')).toBeInTheDocument();

@@ -49,7 +49,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
   return (
     <section
       aria-labelledby="wallet-staking-title"
-      className="mt-6 border-t border-border-subtle pt-6"
+      className="mt-4"
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -96,7 +96,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
           <IconDownload size={14} aria-hidden /> Export staking CSV
         </button>
       </header>
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
@@ -126,7 +126,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
               </dd>
             </div>
           </dl>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <h4 className="text-sm text-text-secondary">
               Rewards by earned epoch
             </h4>
@@ -276,7 +276,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
               </div>
             )}
           </dl>
-          <p className="mt-5 text-xs leading-5 text-text-muted">
+          <p className="mt-6 text-xs leading-5 text-text-muted">
             Manage ADA staking and withdrawals in your wallet. TosiDrop claims
             deliver distributor tokens.
           </p>

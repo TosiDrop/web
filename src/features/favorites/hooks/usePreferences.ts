@@ -62,6 +62,7 @@ export function usePreferences() {
   const isDisliked = (assetId: string) => dislikedIds.has(assetId);
 
   const toggleFavorite = (token: TokenRef) => {
+    if (!query.isSuccess) return;
     const base = draft ?? saved;
     const exists = base.favorites.some((f) => f.assetId === token.assetId);
     setDraft({
@@ -73,6 +74,7 @@ export function usePreferences() {
   };
 
   const toggleDislike = (token: TokenRef) => {
+    if (!query.isSuccess) return;
     const base = draft ?? saved;
     const exists = base.dislikes.some((f) => f.assetId === token.assetId);
     setDraft({
@@ -86,7 +88,7 @@ export function usePreferences() {
   const reset = () => setDraft(null);
 
   const persist = async () => {
-    if (!wallet || !stakeAddress || !connected) return;
+    if (!wallet || !stakeAddress || !connected || !query.isSuccess) return;
     setSignError(null);
     const current = draft ?? saved;
     try {
@@ -104,7 +106,14 @@ export function usePreferences() {
         key,
         message,
       });
-      setDraft(null);
+      const localDraft = readLocalDraft(stakeAddress);
+      if (localDraft && samePreferences(localDraft, current)) {
+        writeLocalDraft(stakeAddress, null);
+      }
+      const latest = usePreferencesDraft.getState();
+      if (latest.owner === stakeAddress && latest.draft === current) {
+        latest.setDraft(null, stakeAddress);
+      }
     } catch (e) {
       setSignError(e instanceof Error ? e.message : 'Failed to sign or save preferences');
     }

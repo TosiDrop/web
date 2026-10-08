@@ -23,6 +23,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
 
   const {
     connected,
+    preferencesReady,
     favoriteIds,
     dislikedIds,
     isFavorite,
@@ -57,7 +58,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
         if (selectedAssetIds.includes(token.assetId) || selectedAssetIds.length < maxAssets) toggleAsset(token.assetId);
       }}
       favorite={
-        connected
+        connected && preferencesReady
           ? {
               active: isFavorite(token.assetId),
               onToggle: () =>
@@ -70,7 +71,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
           : undefined
       }
       dislike={
-        connected
+        connected && preferencesReady
           ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
           : undefined
       }

@@ -27,6 +27,7 @@ export interface DeliveredReward {
   ticker: string;
   decimals: number;
   amount: number;
+  rawAmount?: string;
   deliveredOn: Date | null;
   deliveredOnRaw: string;
   epoch: number | null;
@@ -58,7 +59,7 @@ export function tickerFor(token: string, info?: TokenInfo): string {
 
 export function decimalsFor(token: string, info?: TokenInfo): number {
   if (token === 'lovelace') return 6;
-  return Number(info?.decimals ?? 0) || 0;
+  return hasKnownDecimals(token, info) ? Number(info!.decimals) : 0;
 }
 
 export function hasKnownDecimals(token: string, info?: TokenInfo): boolean {
@@ -100,19 +101,24 @@ export function useDeliveredRewards(stakeAddress: string | null) {
         const decimals = decimalsFor(row.token, info);
         const ticker = tickerFor(row.token, info);
         const amount = Number(row.amount) / Math.pow(10, decimals);
-        const key = `${row.delivered_on}_${ticker}`;
+        const key = `${row.delivered_on}_${row.token}`;
         const epochNum = Number(row.epoch);
 
         const existing = grouped.get(key);
         if (existing) {
           existing.amount += amount;
+          if (/^\d+$/.test(existing.rawAmount ?? '') && /^\d+$/.test(row.amount)) {
+            existing.rawAmount = String(BigInt(existing.rawAmount!) + BigInt(row.amount));
+          }
         } else {
           grouped.set(key, {
             key,
             token: row.token,
             ticker,
             decimals,
+            decimalsKnown: hasKnownDecimals(row.token, info),
             amount,
+            rawAmount: row.amount,
             deliveredOn: parseDeliveredOn(row.delivered_on),
             deliveredOnRaw: row.delivered_on,
             epoch: Number.isNaN(epochNum) ? null : epochNum,

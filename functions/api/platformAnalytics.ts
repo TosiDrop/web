@@ -20,7 +20,8 @@ function count(value: number | string | null | undefined): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-const CLAIM_KEY = "stake_address || ':' || COALESCE(withdrawal_request, reward_id)";
+const CLAIM_ID = "COALESCE(NULLIF(TRIM(withdrawal_request), ''), reward_id)";
+const CLAIM_KEY = `stake_address || ':' || ${CLAIM_ID}`;
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get('Origin');
@@ -39,7 +40,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       env.DB.prepare(
         'SELECT COUNT(*) AS returning_wallets FROM (' +
         `SELECT stake_address ${where} GROUP BY stake_address ` +
-        'HAVING COUNT(DISTINCT COALESCE(withdrawal_request, reward_id)) > 1)',
+        `HAVING COUNT(DISTINCT ${CLAIM_ID}) > 1)`,
       ).bind(network).first<ReturningRow>(),
       env.DB.prepare(
         "SELECT strftime('%Y-%m', datetime(delivered_at, 'unixepoch')) AS month, " +

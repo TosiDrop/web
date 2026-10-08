@@ -72,6 +72,7 @@ export function useWithdrawalHistory(
           decimals,
           decimalsKnown: hasKnownDecimals(item.token, info),
           amount: Number(item.amount) / Math.pow(10, decimals),
+          rawAmount: item.amount,
           deliveredOn: parseDeliveredOn(item.deliveredOn),
           deliveredOnRaw: item.deliveredOn,
           epoch: item.epoch,
