@@ -139,26 +139,12 @@ export async function createClaimScene(
     rim.position.set(2, 3, -3);
     scene.add(rim);
 
-    const grain = new Uint8Array(64 * 64 * 4);
-    let seed = 29;
-    for (let i = 0; i < grain.length; i += 4) {
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      const value = 140 + (seed % 90);
-      grain[i] = grain[i + 1] = grain[i + 2] = value;
-      grain[i + 3] = 255;
-    }
-    const leatherTexture = new THREE.DataTexture(grain, 64, 64);
-    leatherTexture.wrapS = leatherTexture.wrapT = THREE.RepeatWrapping;
-    leatherTexture.repeat.set(5, 3);
-    leatherTexture.needsUpdate = true;
-    textures.add(leatherTexture);
-    const leather = new THREE.MeshStandardMaterial({ color: 0x101b2e, roughness: 0.48, metalness: 0.12, bumpMap: leatherTexture, bumpScale: 0.018 });
+    const walletMaterial = new THREE.MeshStandardMaterial({ color: 0x101b2e, roughness: 0.58, metalness: 0.08 });
     const lining = new THREE.MeshStandardMaterial({ color: 0x070e1b, roughness: 0.95 });
     const metal = new THREE.MeshStandardMaterial({ color: 0x29bce9, metalness: 0.88, roughness: 0.25 });
     const brightMetal = new THREE.MeshStandardMaterial({ color: 0x98e5f2, metalness: 0.8, roughness: 0.22 });
     const faceMaterial = new THREE.MeshStandardMaterial({ color: 0x42c9ec, metalness: 0.6, roughness: 0.32 });
     const logoMaterial = new THREE.MeshStandardMaterial({ map: logo, transparent: true, alphaTest: 0.05, roughness: 0.52, metalness: 0.1, depthWrite: false });
-    const cream = new THREE.MeshStandardMaterial({ color: 0xe5d6ae, metalness: 0.75, roughness: 0.3 });
 
     const wallet = new THREE.Group();
     // Anchor the bounce at the wallet's bottom edge.
@@ -168,17 +154,17 @@ export async function createClaimScene(
       new THREE.ExtrudeGeometry(roundedRectangle(width, height, 0.14), { depth, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.035, bevelThickness: 0.025, curveSegments: 16 }),
       material,
     );
-    const back = panel(2.14, 1.24, 0.055, leather);
-    back.position.set(0, 0.64, -0.29);
+    const back = panel(2.14, 1.16, 0.055, walletMaterial);
+    back.position.set(0, 0.60, -0.29);
     wallet.add(back);
-    const inside = panel(2.0, 1.13, 0.025, lining);
-    inside.position.set(0, 0.63, -0.21);
+    const inside = panel(2.0, 1.02, 0.025, lining);
+    inside.position.set(0, 0.60, -0.21);
     wallet.add(inside);
-    const front = panel(2.14, 1.08, 0.07, leather);
+    const front = panel(2.14, 1.08, 0.07, walletMaterial);
     front.position.set(0, 0.56, 0.23);
     wallet.add(front);
     for (const x of [-1.02, 1.02]) {
-      const side = mesh(new THREE.BoxGeometry(0.08, 0.94, 0.5), leather);
+      const side = mesh(new THREE.BoxGeometry(0.08, 0.94, 0.5), walletMaterial);
       side.position.set(x, 0.51, 0);
       wallet.add(side);
     }
@@ -186,26 +172,9 @@ export async function createClaimScene(
     floor.position.y = 0.04;
     wallet.add(floor);
 
-    const stitchGeometry = new THREE.BufferGeometry().setFromPoints(
-      roundedRectangle(1.99, 0.94, 0.12).getPoints(24).map((p) => new THREE.Vector3(p.x, p.y + 0.56, 0.329)),
-    );
-    const stitchMaterial = new THREE.LineDashedMaterial({ color: 0x91b3bc, dashSize: 0.025, gapSize: 0.018, transparent: true, opacity: 0.6 });
-    geometries.add(stitchGeometry);
-    materials.add(stitchMaterial);
-    const stitches = new THREE.Line(stitchGeometry, stitchMaterial);
-    stitches.computeLineDistances();
-    wallet.add(stitches);
-
-    const strap = panel(0.46, 0.33, 0.07, leather);
-    strap.position.set(0.86, 0.59, 0.33);
-    wallet.add(strap);
-    const clasp = mesh(new THREE.CylinderGeometry(0.066, 0.066, 0.025, 32), cream);
-    clasp.rotation.x = Math.PI / 2;
-    clasp.position.set(0.78, 0.59, 0.435);
-    wallet.add(clasp);
-    const walletMark = mesh(new THREE.PlaneGeometry(0.24, 0.24), logoMaterial);
+    const walletMark = mesh(new THREE.PlaneGeometry(0.28, 0.28), logoMaterial);
     walletMark.castShadow = false;
-    walletMark.position.set(-0.69, 0.58, 0.337);
+    walletMark.position.set(0, 0.56, 0.337);
     wallet.add(walletMark);
 
     const coin = new THREE.Group();
@@ -250,12 +219,6 @@ export async function createClaimScene(
       splash.add(drop);
       return drop;
     });
-    const rippleMaterial = new THREE.MeshBasicMaterial({ color: 0x51cdee, transparent: true, opacity: 0, depthWrite: false });
-    const ripple = mesh(new THREE.TorusGeometry(0.42, 0.009, 6, 64), rippleMaterial);
-    ripple.castShadow = false;
-    ripple.rotation.x = Math.PI / 2;
-    ripple.position.y = 0.28;
-    scene.add(ripple);
 
     const shadowPixels = new Uint8Array(64 * 64 * 4);
     for (let y = 0; y < 64; y++) {
@@ -300,9 +263,6 @@ export async function createClaimScene(
         drop.position.set(Math.cos(angle) * spread, 0.28 + (0.55 + (i % 3) * 0.14) * 4 * burst * (1 - burst), Math.sin(angle) * spread * 0.34);
         drop.scale.set(1 - burst * 0.65, (1.6 - burst) * (1 - burst * 0.65), 1 - burst * 0.65);
       });
-      ripple.visible = splash.visible;
-      ripple.scale.setScalar(1 + burst * 1.8);
-      rippleMaterial.opacity = 0.35 * (1 - Math.max(0, burst));
       renderer.render(scene, camera);
     };
 
