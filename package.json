@@ -37,6 +37,7 @@
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.1.8",
+    "three": "^0.186.1",
     "vite-plugin-wasm": "^3.6.0",
     "vm-sdk": "git+https://github.com/TosiDrop/vm-sdk.git#7d9da848fe07b4b2094452e464ce25b097c07cb1",
     "zustand": "^5.0.15"
@@ -50,6 +51,7 @@
     "@types/node": "^26.6.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.5",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
     "drizzle-kit": "^0.31.11",
     "jsdom": "^30.0.1",

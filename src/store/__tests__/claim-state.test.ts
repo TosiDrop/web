@@ -65,6 +65,17 @@ describe('initSelectionFor', () => {
 });
 
 describe('reset', () => {
+  it('ignores a signing result for a replaced request or a different wallet', () => {
+    const s = useClaimStore.getState();
+    const request = { stakeAddress: 'stake1', requestId: 'r1', deposit: 3, overheadFee: 0, withdrawalAddress: 'addr1' };
+    s.setRequest({ ...request, requestId: 'r2' });
+    s.setDepositTransaction(request, { status: 'submitted', txHash: 'old-tx' });
+    expect(useClaimStore.getState().request?.depositTransaction).toBeUndefined();
+    s.setRequest({ ...request, stakeAddress: 'stake-other' });
+    s.setDepositTransaction(request, { status: 'submitted', txHash: 'other-wallet-tx' });
+    expect(useClaimStore.getState().request?.depositTransaction).toBeUndefined();
+  });
+
   it('clears selection, request, and init bookkeeping but keeps lookupAddress', () => {
     const s = useClaimStore.getState();
     s.setLookupAddress('stake1uxabc');
