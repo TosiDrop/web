@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { IconCheck, IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
+import { IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import logo from '@/assets/tosidrop_logo.png';
-import type { ClaimScene } from './claimScene';
+import type { ClaimScene, ClaimProgressStage } from './claimScene';
 
-export type ClaimProgressStage = 'preparing' | 'signing' | 'confirmation' | 'delivery' | 'complete';
+export type { ClaimProgressStage } from './claimScene';
 
 const COPY: Record<ClaimProgressStage, { title: string; description: string }> = {
   preparing: { title: 'Preparing your claim', description: 'Creating your deposit request.' },
@@ -23,7 +23,7 @@ export function ClaimProgress({ stage }: { stage: ClaimProgressStage }) {
   const complete = stage === 'complete';
   // Stay still until the device preference has been read.
   const playing = reducedMotion === false && !paused && !complete;
-  const currentState = useRef({ playing, complete });
+  const currentState = useRef({ playing, stage });
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,9 +34,9 @@ export function ClaimProgress({ stage }: { stage: ClaimProgressStage }) {
   }, []);
 
   useEffect(() => {
-    currentState.current = { playing, complete };
+    currentState.current = { playing, stage };
     scene.current?.setState(currentState.current);
-  }, [playing, complete]);
+  }, [playing, stage]);
 
   useEffect(() => {
     const element = container.current;
@@ -93,9 +93,13 @@ export function ClaimProgress({ stage }: { stage: ClaimProgressStage }) {
           {paused ? <IconPlayerPlay size={16} aria-hidden /> : <IconPlayerPause size={16} aria-hidden />}
         </button>
       )}
-      <div role="status" aria-live="polite" aria-atomic="true" className="mx-auto max-w-sm text-center">
-        <h2 className="flex items-center justify-center gap-2 text-lg font-semibold text-text-primary">
-          {complete && <IconCheck size={20} className="text-accent" aria-hidden />}
+      {renderer === 'ready' && stage === 'signing' && (
+        <p aria-hidden="true" className="absolute inset-x-5 bottom-5 text-center text-sm text-text-secondary">
+          Approve in your wallet
+        </p>
+      )}
+      <div role="status" aria-live="polite" aria-atomic="true" className={renderer === 'ready' ? 'sr-only' : 'mx-auto max-w-sm text-center'}>
+        <h2 className="text-lg font-semibold text-text-primary">
           {COPY[stage].title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-text-secondary">{COPY[stage].description}</p>

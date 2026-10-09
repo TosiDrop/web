@@ -17,13 +17,13 @@ beforeEach(() => {
 
 it('pauses on request and stops the loop as soon as delivery completes', async () => {
   const { rerender, unmount } = render(<ClaimProgress stage="confirmation" />);
-  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, complete: false }));
+  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'confirmation' }));
   fireEvent.click(screen.getByRole('button', { name: 'Pause animation' }));
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, complete: false });
+  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'confirmation' });
   fireEvent.click(screen.getByRole('button', { name: 'Play animation' }));
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, complete: false });
+  expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'confirmation' });
   rerender(<ClaimProgress stage="complete" />);
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, complete: true });
+  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'complete' });
   expect(screen.getByRole('status')).toHaveTextContent('Rewards delivered');
   expect(screen.queryByRole('button')).toBeNull();
   unmount();
@@ -33,19 +33,19 @@ it('pauses on request and stops the loop as soon as delivery completes', async (
 it('honors reduced motion without hiding the transaction status', async () => {
   preference.matches = true;
   render(<ClaimProgress stage="signing" />);
-  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, complete: false }));
+  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'signing' }));
   expect(screen.getByRole('status')).toHaveTextContent('Confirm in your wallet');
   expect(screen.queryByRole('button')).toBeNull();
 });
 
 it('stops immediately when the device switches to reduced motion', async () => {
   render(<ClaimProgress stage="delivery" />);
-  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, complete: false }));
+  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'delivery' }));
   act(() => {
     preference.matches = true;
     preference.dispatchEvent(new Event('change'));
   });
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, complete: false });
+  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'delivery' });
   expect(screen.queryByRole('button')).toBeNull();
 });
 
@@ -65,7 +65,20 @@ it('keeps useful status text when WebGL fails', async () => {
   render(<ClaimProgress stage="delivery" />);
   await waitFor(() => expect(screen.getByTestId('claim-artwork')).toHaveAttribute('data-renderer', 'fallback'));
   expect(screen.getByRole('status')).toHaveTextContent('Delivering your rewards');
+  expect(screen.getByRole('status')).not.toHaveClass('sr-only');
   expect(screen.queryByRole('button')).toBeNull();
+});
+
+it('passes each stage to the scene even when playback stays active', async () => {
+  const { rerender } = render(<ClaimProgress stage="preparing" />);
+  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'preparing' }));
+  for (const stage of ['signing', 'confirmation', 'delivery'] as const) {
+    rerender(<ClaimProgress stage={stage} />);
+    expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage });
+    expect(screen.getByRole('status')).toHaveClass('sr-only');
+    if (stage === 'signing') expect(screen.getByText('Approve in your wallet')).toBeVisible();
+    else expect(screen.queryByText('Approve in your wallet')).toBeNull();
+  }
 });
 
 it('releases the active scene and falls back when its graphics context is lost', async () => {

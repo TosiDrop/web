@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+export type ClaimProgressStage = 'preparing' | 'signing' | 'confirmation' | 'delivery' | 'complete';
+
 export interface ClaimScene {
-  setState: (state: { playing: boolean; complete: boolean }) => void;
+  setState: (state: { playing: boolean; stage: ClaimProgressStage }) => void;
   dispose: () => void;
 }
 
@@ -44,7 +46,9 @@ export async function createClaimScene(
   let disposed = false;
   let contextLost = false;
   let playing = false;
-  let complete = false;
+  let stage: ClaimProgressStage = 'preparing';
+  let initialized = false;
+  let stageElapsed = 0;
   let visible = true;
   let phase = 0.28;
   let previousTime = 0;
@@ -89,7 +93,11 @@ export async function createClaimScene(
   let draw = () => {};
   function tick(time: number) {
     frame = 0;
-    if (previousTime) phase = (phase + Math.min((time - previousTime) / 1000, 0.05)) % CYCLE;
+    if (previousTime) {
+      const delta = Math.min((time - previousTime) / 1000, 0.05);
+      phase = (phase + delta) % CYCLE;
+      stageElapsed += delta;
+    }
     previousTime = time;
     draw();
     frame = requestAnimationFrame(tick);
@@ -98,7 +106,7 @@ export async function createClaimScene(
     stop();
     if (disposed || contextLost || document.hidden || !visible) return;
     draw();
-    if (playing && !complete) frame = requestAnimationFrame(tick);
+    if (playing && stage !== 'complete') frame = requestAnimationFrame(tick);
   }
 
   try {
@@ -139,7 +147,7 @@ export async function createClaimScene(
     rim.position.set(2, 3, -3);
     scene.add(rim);
 
-    const walletMaterial = new THREE.MeshStandardMaterial({ color: 0x101b2e, roughness: 0.58, metalness: 0.08 });
+    const walletMaterial = new THREE.MeshStandardMaterial({ color: 0x101b2e, roughness: 0.58, metalness: 0.08, emissive: 0x083c56, emissiveIntensity: 0 });
     const lining = new THREE.MeshStandardMaterial({ color: 0x070e1b, roughness: 0.95 });
     const metal = new THREE.MeshStandardMaterial({ color: 0x29bce9, metalness: 0.88, roughness: 0.25 });
     const brightMetal = new THREE.MeshStandardMaterial({ color: 0x98e5f2, metalness: 0.8, roughness: 0.22 });
@@ -177,8 +185,25 @@ export async function createClaimScene(
     walletMark.position.set(0, 0.745, 0.337);
     wallet.add(walletMark);
 
+    const checkShape = new THREE.Shape();
+    checkShape.moveTo(-0.18, 0);
+    checkShape.lineTo(-0.065, -0.115);
+    checkShape.lineTo(0.19, 0.15);
+    checkShape.lineTo(0.235, 0.105);
+    checkShape.lineTo(-0.065, -0.20);
+    checkShape.lineTo(-0.225, -0.045);
+    checkShape.closePath();
+    const check = mesh(
+      new THREE.ExtrudeGeometry(checkShape, { depth: 0.012, bevelEnabled: false }),
+      new THREE.MeshBasicMaterial({ color: 0x22d3ee }),
+    );
+    check.position.set(0, 0.77, 0.337);
+    check.castShadow = false;
+    wallet.add(check);
+
     const coin = new THREE.Group();
     scene.add(coin);
+    let transitionFrom: { position: THREE.Vector3; rotation: THREE.Quaternion } | null = null;
     const profile = [[0, -0.075], [0.455, -0.075], [0.50, -0.055], [0.515, -0.032], [0.515, 0.032], [0.50, 0.055], [0.455, 0.075], [0, 0.075]];
     const body = mesh(new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), 128), metal);
     body.rotation.x = Math.PI / 2;
@@ -240,23 +265,60 @@ export async function createClaimScene(
 
     draw = () => {
       if (!renderer || disposed || contextLost) return;
+      const complete = stage === 'complete';
+      const delivering = stage === 'delivery';
       const t = phase;
+      const pulse = Math.sin(t / CYCLE * Math.PI * 2);
       const fall = THREE.MathUtils.clamp((t - 0.48) / 0.98, 0, 1);
       const reveal = THREE.MathUtils.smoothstep(t, 0, 0.24);
-      coin.visible = !complete && t < 1.49;
-      coin.scale.setScalar(reveal);
-      coin.position.set(-0.08 + 0.08 * fall, 1.48 - 1.96 * fall * fall, 0);
-      // Finish the turn before the rim enters the wallet's narrow opening.
-      const turn = THREE.MathUtils.clamp(fall / 0.43, 0, 1);
-      const aligned = THREE.MathUtils.smoothstep(fall, 0.14, 0.43);
-      coin.rotation.set(0.08 * (1 - aligned), 0.25 * (1 - aligned) + 0.9 * Math.sin(turn * Math.PI), -0.12 * (1 - fall));
+      coin.visible = !complete && (!delivering || t < 1.49);
+      coin.scale.setScalar(1);
+      switch (stage) {
+        case 'preparing': {
+          const formed = THREE.MathUtils.smoothstep(stageElapsed, 0, 0.7);
+          coin.scale.setScalar(0.12 + 0.88 * formed);
+          coin.position.set(0, 1.38, 0);
+          coin.rotation.set(0.06, 0.25 + (1 - formed) * Math.PI * 1.5 + 0.12 * pulse, -0.06);
+          break;
+        }
+        case 'signing':
+          coin.position.set(0, 1.35 + 0.04 * pulse, 0);
+          coin.rotation.set(0.04, 0.25 + 0.05 * pulse, -0.06);
+          break;
+        case 'confirmation':
+          coin.position.set(0, 0.65 + 0.012 * pulse, 0);
+          coin.rotation.set(0, 0, 0);
+          break;
+        case 'delivery': {
+          coin.scale.setScalar(reveal);
+          coin.position.set(-0.08 + 0.08 * fall, 1.48 - 1.96 * fall * fall, 0);
+          // Finish the turn before the rim enters the wallet's narrow opening.
+          const turn = THREE.MathUtils.clamp(fall / 0.43, 0, 1);
+          const aligned = THREE.MathUtils.smoothstep(fall, 0.14, 0.43);
+          coin.rotation.set(0.08 * (1 - aligned), 0.25 * (1 - aligned) + 0.9 * Math.sin(turn * Math.PI), -0.12 * (1 - fall));
+          break;
+        }
+        case 'complete':
+          break;
+      }
+      if (transitionFrom && stageElapsed < 0.45 && !complete) {
+        const blend = THREE.MathUtils.smoothstep(stageElapsed, 0, 0.45);
+        coin.position.lerp(transitionFrom.position, 1 - blend);
+        coin.quaternion.slerp(transitionFrom.rotation, 1 - blend);
+      }
 
       const afterImpact = t - IMPACT;
-      const bounce = !complete && afterImpact > 0 ? Math.sin(afterImpact * 15) * Math.exp(-afterImpact * 6) : 0;
-      wallet.scale.set(1 + 0.055 * bounce, 1 - 0.09 * bounce, 1 + 0.04 * bounce);
+      const bounce = delivering && afterImpact > 0 ? Math.sin(afterImpact * 15) * Math.exp(-afterImpact * 6) : 0;
+      wallet.position.y = complete ? -0.43 : -0.97;
+      wallet.scale.set(1 + 0.055 * bounce, 1 - 0.09 * bounce, complete ? 0.55 : 1 + 0.04 * bounce);
       wallet.rotation.z = -0.018 * bounce;
+      walletMaterial.emissiveIntensity = stage === 'confirmation' ? 0.15 + 0.07 * pulse : 0;
+      walletMark.visible = !complete;
+      check.visible = complete;
+      shadow.position.y = wallet.position.y - 0.065;
+      shadow.scale.y = complete ? 0.6 : 1;
       const burst = afterImpact / 0.68;
-      splash.visible = !complete && burst > 0 && burst < 1;
+      splash.visible = delivering && burst > 0 && burst < 1;
       droplets.forEach((drop, i) => {
         const angle = (i / droplets.length) * Math.PI * 2;
         const spread = 0.35 + burst * 0.67;
@@ -290,8 +352,15 @@ export async function createClaimScene(
     fit();
     return {
       setState: (state) => {
+        if (!initialized || stage !== state.stage) {
+          const continueDrop = stage === 'confirmation' && state.stage === 'delivery';
+          transitionFrom = initialized && !continueDrop ? { position: coin.position.clone(), rotation: coin.quaternion.clone() } : null;
+          phase = continueDrop ? 1.1 : 0.28;
+          stageElapsed = state.playing ? 0 : 0.7;
+          stage = state.stage;
+          initialized = true;
+        }
         playing = state.playing;
-        complete = state.complete;
         syncPlayback();
       },
       dispose,
