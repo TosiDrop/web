@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
+import { ClaimProgress } from '@/features/claim/components/ClaimProgress';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { useRewards } from '@/features/rewards/api/rewards.queries';
 import { useWalletStore } from '@/store/wallet-state';
@@ -219,7 +220,9 @@ export default function ClaimPage() {
 
       {lookupAddress ? <h1 className="sr-only">Claim rewards</h1> : <ClaimWelcome />}
 
-      {lookupAddress && !loading && hasRewards && (
+      {claimMutation.isPending && <ClaimProgress stage="preparing" />}
+
+      {lookupAddress && !loading && hasRewards && !claimMutation.isPending && (
         <ClaimHero
           selectedCount={selectedVisible.length}
           totalCount={total}
