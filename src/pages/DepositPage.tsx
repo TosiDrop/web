@@ -11,7 +11,7 @@ import { QRCode } from '@/components/common/QRCode';
 import { CopyButton } from '@/components/common/CopyButton';
 import { FeedbackBanner } from '@/components/common/FeedbackBanner';
 import { GradientButton } from '@/components/common/GradientButton';
-import { truncateHash, formatAda } from '@/utils/format';
+import { formatAda } from '@/utils/format';
 
 export default function DepositPage() {
   const navigate = useNavigate();
@@ -141,7 +141,7 @@ export default function DepositPage() {
   );
 
   return (
-    <main className="mx-auto max-w-xl space-y-6" aria-labelledby="deposit-title">
+    <main className={`mx-auto max-w-xl space-y-6 ${progressStage ? 'pb-52 lg:pb-0' : ''}`} aria-labelledby="deposit-title">
       <GradientButton variant="ghost" size="sm" className="-ml-3.5" onClick={handleCancel} disabled={isSending}>
         <IconArrowLeft size={14} stroke={1.6} aria-hidden />
         Back to claim
@@ -156,8 +156,6 @@ export default function DepositPage() {
           detected.</>}
         </p>
       </header>
-
-      {progressStage && <ClaimProgress stage={progressStage} />}
 
       {hasSubmitted || isTerminal ? (
         <details>
@@ -191,9 +189,9 @@ export default function DepositPage() {
           {txHash && (
             <div>
               <p className="label-eyebrow">Your deposit transaction</p>
-              <div className="mt-1 flex items-center gap-2">
-                <p className="font-mono text-xs text-text-secondary">
-                  {truncateHash(txHash, 12, 8)}
+              <div className="mt-1 flex items-start gap-2">
+                <p className="min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-text-secondary">
+                  {txHash}
                 </p>
                 <CopyButton value={txHash} ariaLabel="Copy deposit transaction hash" />
               </div>
@@ -218,6 +216,11 @@ export default function DepositPage() {
         <GradientButton variant="secondary" className="w-full" onClick={handleCancel}>
           Done
         </GradientButton>
+      )}
+      {progressStage && (
+        <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-3 z-30 w-44 sm:right-6 sm:w-52" data-testid="claim-widget">
+          <ClaimProgress stage={progressStage} />
+        </div>
       )}
     </main>
   );

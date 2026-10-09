@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
-import { Card } from '@/components/common/Card';
 import logo from '@/assets/tosidrop_logo.png';
 import type { ClaimScene, ClaimProgressStage } from './claimScene';
 
 export type { ClaimProgressStage } from './claimScene';
 
 const COPY: Record<ClaimProgressStage, { title: string; description: string }> = {
-  preparing: { title: 'Preparing your claim', description: 'Creating your deposit request.' },
   signing: { title: 'Confirm in your wallet', description: 'Approve the deposit in your wallet to continue.' },
   confirmation: { title: 'Confirming your deposit', description: 'Deposit submitted. Waiting for confirmation on Cardano.' },
   delivery: { title: 'Delivering your rewards', description: 'Deposit received. TosiDrop is preparing your reward delivery.' },
@@ -18,11 +15,10 @@ export function ClaimProgress({ stage }: { stage: ClaimProgressStage }) {
   const container = useRef<HTMLDivElement>(null);
   const scene = useRef<ClaimScene | null>(null);
   const [reducedMotion, setReducedMotion] = useState(true);
-  const [paused, setPaused] = useState(false);
   const [renderer, setRenderer] = useState<'loading' | 'ready' | 'fallback'>('loading');
   const complete = stage === 'complete';
   // Stay still until the device preference has been read.
-  const playing = reducedMotion === false && !paused && !complete;
+  const playing = reducedMotion === false && !complete;
   const currentState = useRef({ playing, stage });
 
   useEffect(() => {
@@ -69,41 +65,31 @@ export function ClaimProgress({ stage }: { stage: ClaimProgressStage }) {
   }, []);
 
   return (
-    <Card className="relative overflow-hidden px-5 pb-6 sm:px-6">
+    <div className="relative" aria-label="Claim progress">
       <div
         ref={container}
         aria-hidden="true"
         data-testid="claim-artwork"
         data-renderer={renderer}
-        className="relative mx-auto h-64 w-full max-w-md sm:h-72 [&>canvas]:block [&>canvas]:h-full [&>canvas]:w-full"
+        className="relative h-48 w-full sm:h-56 [&>canvas]:block [&>canvas]:h-full [&>canvas]:w-full"
       >
         {renderer !== 'ready' && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <img src={logo} alt="" className="h-24 w-24 object-contain" />
+            <img src={logo} alt="" className="h-12 w-12 object-contain" />
           </div>
         )}
       </div>
-      {renderer === 'ready' && !reducedMotion && !complete && (
-        <button
-          type="button"
-          onClick={() => setPaused((value) => !value)}
-          aria-label={paused ? 'Play animation' : 'Pause animation'}
-          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-overlay hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          {paused ? <IconPlayerPlay size={16} aria-hidden /> : <IconPlayerPause size={16} aria-hidden />}
-        </button>
-      )}
       {renderer === 'ready' && stage === 'signing' && (
-        <p aria-hidden="true" className="absolute inset-x-5 bottom-5 text-center text-sm text-text-secondary">
+        <p aria-hidden="true" className="absolute inset-x-0 bottom-0 text-center text-xs text-text-secondary">
           Approve in your wallet
         </p>
       )}
-      <div role="status" aria-live="polite" aria-atomic="true" className={renderer === 'ready' ? 'sr-only' : 'mx-auto max-w-sm text-center'}>
-        <h2 className="text-lg font-semibold text-text-primary">
+      <div role="status" aria-live="polite" aria-atomic="true" className={renderer === 'ready' ? 'sr-only' : 'rounded-lg bg-surface-base px-3 py-2 text-center'}>
+        <h2 className="text-sm font-semibold text-text-primary">
           {COPY[stage].title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-text-secondary">{COPY[stage].description}</p>
+        <p className="mt-1 text-xs leading-relaxed text-text-secondary">{COPY[stage].description}</p>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ClaimProgress } from './ClaimProgress';
 
@@ -15,13 +15,10 @@ beforeEach(() => {
   createScene.mockResolvedValue(scene);
 });
 
-it('pauses on request and stops the loop as soon as delivery completes', async () => {
+it('plays without controls and stops the loop as soon as delivery completes', async () => {
   const { rerender, unmount } = render(<ClaimProgress stage="confirmation" />);
   await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'confirmation' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Pause animation' }));
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'confirmation' });
-  fireEvent.click(screen.getByRole('button', { name: 'Play animation' }));
-  expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'confirmation' });
+  expect(screen.queryByRole('button')).toBeNull();
   rerender(<ClaimProgress stage="complete" />);
   expect(scene.setState).toHaveBeenLastCalledWith({ playing: false, stage: 'complete' });
   expect(screen.getByRole('status')).toHaveTextContent('Rewards delivered');
@@ -52,7 +49,7 @@ it('stops immediately when the device switches to reduced motion', async () => {
 it('disposes a scene that finishes loading after the component unmounts', async () => {
   let resolve!: (value: typeof scene) => void;
   createScene.mockImplementation(() => new Promise((done) => { resolve = done; }));
-  const { unmount } = render(<ClaimProgress stage="preparing" />);
+  const { unmount } = render(<ClaimProgress stage="signing" />);
   await waitFor(() => expect(createScene).toHaveBeenCalledOnce());
   unmount();
   await act(async () => { resolve(scene); });
@@ -70,8 +67,8 @@ it('keeps useful status text when WebGL fails', async () => {
 });
 
 it('passes each stage to the scene even when playback stays active', async () => {
-  const { rerender } = render(<ClaimProgress stage="preparing" />);
-  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'preparing' }));
+  const { rerender } = render(<ClaimProgress stage="signing" />);
+  await waitFor(() => expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage: 'signing' }));
   for (const stage of ['signing', 'confirmation', 'delivery'] as const) {
     rerender(<ClaimProgress stage={stage} />);
     expect(scene.setState).toHaveBeenLastCalledWith({ playing: true, stage });

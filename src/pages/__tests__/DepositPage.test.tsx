@@ -41,8 +41,10 @@ it('shows the wallet prompt and then confirmation, preventing a second deposit a
   expect(screen.queryByTestId('claim-progress')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Send from wallet' }));
   expect(screen.getByTestId('claim-progress')).toHaveTextContent('signing');
-  await act(async () => { resolve('tx-deposit'); });
+  const hash = '0123456789abcdef'.repeat(4);
+  await act(async () => { resolve(hash); });
   expect(screen.getByTestId('claim-progress')).toHaveTextContent('confirmation');
+  expect(screen.getByText(hash)).toBeVisible();
   fireEvent.click(screen.getByText('Deposit details'));
   expect(screen.getByRole('button', { name: 'Deposit submitted' })).toBeDisabled();
   expect(sendDeposit).toHaveBeenCalledOnce();

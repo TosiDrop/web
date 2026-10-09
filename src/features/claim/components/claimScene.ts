@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-export type ClaimProgressStage = 'preparing' | 'signing' | 'confirmation' | 'delivery' | 'complete';
+export type ClaimProgressStage = 'signing' | 'confirmation' | 'delivery' | 'complete';
 
 export interface ClaimScene {
   setState: (state: { playing: boolean; stage: ClaimProgressStage }) => void;
@@ -46,7 +46,7 @@ export async function createClaimScene(
   let disposed = false;
   let contextLost = false;
   let playing = false;
-  let stage: ClaimProgressStage = 'preparing';
+  let stage: ClaimProgressStage = 'signing';
   let initialized = false;
   let stageElapsed = 0;
   let visible = true;
@@ -111,7 +111,7 @@ export async function createClaimScene(
 
   try {
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    logo.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -136,7 +136,7 @@ export async function createClaimScene(
     const key = new THREE.DirectionalLight(0xe5f7ff, 3);
     key.position.set(-3, 6, 5);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.mapSize.set(2048, 2048);
     key.shadow.camera.left = key.shadow.camera.bottom = -3;
     key.shadow.camera.right = key.shadow.camera.top = 3;
     key.shadow.normalBias = 0.025;
@@ -274,13 +274,6 @@ export async function createClaimScene(
       coin.visible = !complete && (!delivering || t < 1.49);
       coin.scale.setScalar(1);
       switch (stage) {
-        case 'preparing': {
-          const formed = THREE.MathUtils.smoothstep(stageElapsed, 0, 0.7);
-          coin.scale.setScalar(0.12 + 0.88 * formed);
-          coin.position.set(0, 1.38, 0);
-          coin.rotation.set(0.06, 0.25 + (1 - formed) * Math.PI * 1.5 + 0.12 * pulse, -0.06);
-          break;
-        }
         case 'signing':
           coin.position.set(0, 1.35 + 0.04 * pulse, 0);
           coin.rotation.set(0.04, 0.25 + 0.05 * pulse, -0.06);
@@ -338,6 +331,7 @@ export async function createClaimScene(
       camera.top = halfHeight;
       camera.bottom = -halfHeight;
       camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio || 1, 2), 3));
       renderer.setSize(width, height, false);
       draw();
     };
