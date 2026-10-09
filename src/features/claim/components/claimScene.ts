@@ -154,27 +154,27 @@ export async function createClaimScene(
       new THREE.ExtrudeGeometry(roundedRectangle(width, height, 0.14), { depth, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.035, bevelThickness: 0.025, curveSegments: 16 }),
       material,
     );
-    const back = panel(2.14, 1.16, 0.055, walletMaterial);
-    back.position.set(0, 0.60, -0.29);
+    const back = panel(1.45, 1.53, 0.055, walletMaterial);
+    back.position.set(0, 0.785, -0.29);
     wallet.add(back);
-    const inside = panel(2.0, 1.02, 0.025, lining);
-    inside.position.set(0, 0.60, -0.21);
+    const inside = panel(1.31, 1.39, 0.025, lining);
+    inside.position.set(0, 0.785, -0.21);
     wallet.add(inside);
-    const front = panel(2.14, 1.08, 0.07, walletMaterial);
-    front.position.set(0, 0.56, 0.23);
+    const front = panel(1.45, 1.45, 0.07, walletMaterial);
+    front.position.set(0, 0.745, 0.23);
     wallet.add(front);
-    for (const x of [-1.02, 1.02]) {
-      const side = mesh(new THREE.BoxGeometry(0.08, 0.94, 0.5), walletMaterial);
-      side.position.set(x, 0.51, 0);
+    for (const x of [-0.675, 0.675]) {
+      const side = mesh(new THREE.BoxGeometry(0.08, 1.31, 0.5), walletMaterial);
+      side.position.set(x, 0.695, 0);
       wallet.add(side);
     }
-    const floor = mesh(new THREE.BoxGeometry(2, 0.09, 0.5), lining);
+    const floor = mesh(new THREE.BoxGeometry(1.31, 0.09, 0.5), lining);
     floor.position.y = 0.04;
     wallet.add(floor);
 
     const walletMark = mesh(new THREE.PlaneGeometry(0.28, 0.28), logoMaterial);
     walletMark.castShadow = false;
-    walletMark.position.set(0, 0.56, 0.337);
+    walletMark.position.set(0, 0.745, 0.337);
     wallet.add(walletMark);
 
     const coin = new THREE.Group();
@@ -231,7 +231,7 @@ export async function createClaimScene(
     shadowTexture.magFilter = THREE.LinearFilter;
     shadowTexture.needsUpdate = true;
     textures.add(shadowTexture);
-    const shadow = mesh(new THREE.PlaneGeometry(3.2, 1.8), new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
+    const shadow = mesh(new THREE.PlaneGeometry(2.3, 1.8), new THREE.MeshBasicMaterial({ map: shadowTexture, transparent: true, depthWrite: false }));
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = -1.035;
     shadow.castShadow = false;
@@ -247,8 +247,8 @@ export async function createClaimScene(
       coin.scale.setScalar(reveal);
       coin.position.set(-0.08 + 0.08 * fall, 1.48 - 1.96 * fall * fall, 0);
       // Finish the turn before the rim enters the wallet's narrow opening.
-      const turn = THREE.MathUtils.clamp(fall / 0.62, 0, 1);
-      const aligned = THREE.MathUtils.smoothstep(fall, 0.25, 0.62);
+      const turn = THREE.MathUtils.clamp(fall / 0.43, 0, 1);
+      const aligned = THREE.MathUtils.smoothstep(fall, 0.14, 0.43);
       coin.rotation.set(0.08 * (1 - aligned), 0.25 * (1 - aligned) + 0.9 * Math.sin(turn * Math.PI), -0.12 * (1 - fall));
 
       const afterImpact = t - IMPACT;
@@ -260,7 +260,7 @@ export async function createClaimScene(
       droplets.forEach((drop, i) => {
         const angle = (i / droplets.length) * Math.PI * 2;
         const spread = 0.35 + burst * 0.67;
-        drop.position.set(Math.cos(angle) * spread, 0.28 + (0.55 + (i % 3) * 0.14) * 4 * burst * (1 - burst), Math.sin(angle) * spread * 0.34);
+        drop.position.set(Math.cos(angle) * spread, 0.65 + (0.55 + (i % 3) * 0.14) * 4 * burst * (1 - burst), Math.sin(angle) * spread * 0.34);
         drop.scale.set(1 - burst * 0.65, (1.6 - burst) * (1 - burst * 0.65), 1 - burst * 0.65);
       });
       renderer.render(scene, camera);
