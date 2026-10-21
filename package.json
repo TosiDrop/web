@@ -53,7 +53,7 @@
     "drizzle-kit": "^0.31.11",
     "jsdom": "^30.0.1",
     "oxlint": "^1.85.0",
-    "oxlint-tsgolint": "^7.0.2002",
+    "oxlint-tsgolint": "^7.0.2003",
     "typescript": "~7.0.2",
     "vite": "^8.3.0",
     "vite-plugin-node-polyfills": "^0.28.0",
