@@ -1,5 +1,7 @@
+import { decimalAmountToNumber } from '@/shared/amounts';
 import {
   decimalsFor,
+  hasKnownDecimals,
   tickerFor,
   type TokenMap,
 } from '@/features/history/api/history.queries';
@@ -40,6 +42,7 @@ export interface RewardPoint {
 }
 
 export interface TokenRewardSeries {
+  decimalsKnown?: boolean;
   token: string;
   ticker: string;
   logo?: string;
@@ -117,8 +120,8 @@ export function normalizePersonalAnalytics(
 
   const monthlyByToken = new Map<string, Map<string, number>>();
   for (const row of raw.rewardsByMonth) {
-    const decimals = decimalsFor(row.token, tokens[row.token]);
-    const amount = Number(row.amount) / Math.pow(10, decimals);
+    const decimals = hasKnownDecimals(row.token, tokens[row.token]) ? decimalsFor(row.token, tokens[row.token]) : 0;
+    const amount = decimalAmountToNumber(row.amount, decimals);
     const rows = monthlyByToken.get(row.token) ?? new Map<string, number>();
     rows.set(row.month, (rows.get(row.month) ?? 0) + (Number.isFinite(amount) ? amount : 0));
     monthlyByToken.set(row.token, rows);
@@ -131,6 +134,7 @@ export function normalizePersonalAnalytics(
     const firstMonth = [...rows.keys()].sort()[0];
     seriesByToken[token] = {
       token,
+      decimalsKnown: hasKnownDecimals(token, info),
       ticker: tickerFor(token, info),
       logo: info?.logo,
       points: monthRange(firstMonth, lastMonth).map((month) => {

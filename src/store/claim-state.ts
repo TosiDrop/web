@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export interface ClaimRequestInfo {
+  stakeAddress: string;
   requestId: string;
   deposit: number;
   overheadFee: number;
@@ -17,7 +18,7 @@ interface ClaimState {
   toggleAsset: (id: string) => void;
   setRequest: (info: ClaimRequestInfo) => void;
   setLookupAddress: (address: string | null) => void;
-  initSelectionFor: (address: string, assetIds: string[]) => void;
+  initSelectionFor: (address: string, initialIds: string[], validIds?: string[]) => void;
   reset: () => void;
 }
 
@@ -36,11 +37,11 @@ export const useClaimStore = create<ClaimState>((set) => ({
     })),
   setRequest: (request) => set({ request }),
   setLookupAddress: (lookupAddress) => set({ lookupAddress }),
-  initSelectionFor: (address, assetIds) =>
+  initSelectionFor: (address, initialIds, validIds = initialIds) =>
     set((s) => {
       if (s.initializedFor !== address)
-        return { initializedFor: address, selectedAssetIds: assetIds };
-      const pruned = s.selectedAssetIds.filter((id) => assetIds.includes(id));
+        return { initializedFor: address, selectedAssetIds: initialIds };
+      const pruned = s.selectedAssetIds.filter((id) => validIds.includes(id));
       return pruned.length === s.selectedAssetIds.length ? s : { selectedAssetIds: pruned };
     }),
   reset: () => set({ selectedAssetIds: [], request: null, initializedFor: null }),

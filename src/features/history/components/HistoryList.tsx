@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { IconArrowsSort, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
+import { IconArrowsSort, IconChevronLeft, IconChevronRight, IconDownload } from '@tabler/icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/common/Card';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -9,6 +10,7 @@ import { useDeliveredRewards, type DeliveredReward } from '@/features/history/ap
 import { tokenImageSrc } from '@/shared/tokenImage';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { useWithdrawalHistory, type HistoryOrder } from '@/features/history/hooks/useWithdrawalHistory';
+import { exportHistoryCsv } from '@/features/history/utils/exportHistory';
 
 const PAGE_SIZE = 12;
 
@@ -61,11 +63,11 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
 
 function HistoryRow({ row }: { row: DeliveredReward }) {
   return (
-    <li className="flex items-center gap-4 px-5 py-3.5 transition hover:bg-white/[0.015]">
+    <li className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 transition hover:bg-white/[0.015] sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:px-6">
       <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text-primary">{row.ticker}</p>
-        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
+        <Link to={`/tokens/${encodeURIComponent(row.token)}`} className="break-words text-sm font-medium text-text-primary hover:text-accent-light [overflow-wrap:anywhere]">{row.ticker}</Link>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted">
           {row.epoch !== null && <span className="tabular-nums">Epoch {row.epoch}</span>}
           {row.epoch !== null && row.deliveredOn && <span className="text-text-faint">·</span>}
           {row.deliveredOn && (
@@ -75,12 +77,22 @@ function HistoryRow({ row }: { row: DeliveredReward }) {
           )}
         </p>
       </div>
-      <div className="text-right">
-        <p className="font-mono text-sm tabular-nums text-status-success-light">
-          +{formatAmount(row.amount)}
+      <div className="col-start-2 flex min-w-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 sm:col-start-auto sm:block sm:text-right">
+        <p className="break-words font-mono text-sm tabular-nums text-status-success-light [overflow-wrap:anywhere]">
+          +{row.decimalsKnown === false && row.rawAmount && /^\d+$/.test(row.rawAmount)
+            ? BigInt(row.rawAmount).toLocaleString('en-US')
+            : formatAmount(row.amount)}
+          {row.decimalsKnown === false && <span className="ml-2 font-sans text-xs text-text-muted">raw units</span>}
         </p>
-        <p className="mt-0.5 font-mono text-2xs uppercase tracking-wider text-text-muted">
-          {row.ticker}
+        <p
+          className="mt-0.5 text-2xs text-text-muted"
+          title={row.receiptPriceObservedAt
+            ? `Indexed ${new Date(row.receiptPriceObservedAt * 1000).toLocaleString()} · ${row.receiptPriceSource ?? 'source unknown'}`
+            : undefined}
+        >
+          {row.receiptPriceUsd === null || row.receiptPriceUsd === undefined || row.decimalsKnown === false
+            ? 'Receipt value unavailable'
+            : `≈${(row.amount * row.receiptPriceUsd).toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })} at delivery`}
         </p>
       </div>
     </li>
@@ -132,6 +144,8 @@ export function HistoryList() {
   const setPage = (nextPage: number | ((page: number) => number)) =>
     setPageState({ stakeAddress, page: typeof nextPage === 'function' ? nextPage(page) : nextPage });
   const [order, setOrder] = useState<HistoryOrder>('desc');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const history = useWithdrawalHistory(stakeAddress, page, order);
 
   // First visit: the delivered-rewards fetch also syncs D1 server-side, so
@@ -178,15 +192,33 @@ export function HistoryList() {
   const clientHasMore = !serverMode && !!data && data.length > rows.length;
   const count = serverMode ? history.data!.total : data!.length;
 
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportHistoryCsv(stakeAddress);
+    } catch (cause) {
+      setExportError(cause instanceof Error ? cause.message : 'Could not export claim history.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card as="section" className="overflow-hidden">
-      <header className="flex items-center justify-between border-b border-border-subtle px-5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2">
           <p className="label-eyebrow">Delivered</p>
           <span className="rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-2xs tabular-nums text-text-secondary">
             {count}
           </span>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        {serverMode && (
+          <GradientButton variant="ghost" size="sm" disabled={exporting} onClick={() => { void handleExport(); }}>
+            <IconDownload size={14} stroke={1.6} aria-hidden /> {exporting ? 'Exporting…' : 'Export CSV'}
+          </GradientButton>
+        )}
         {serverMode ? (
           <GradientButton
             variant="ghost"
@@ -202,7 +234,13 @@ export function HistoryList() {
         ) : (
           <p className="text-2xs text-text-muted">Most recent first</p>
         )}
+        </div>
       </header>
+
+      {exportError && <p role="alert" className="border-b border-border-subtle px-5 py-2 text-xs text-status-error-light">{exportError}</p>}
+      <p className="border-b border-border-subtle px-4 py-3 text-xs leading-5 text-text-muted sm:px-6">
+        Delivery values use indexed prices from the preceding 24 hours. Amounts marked raw units have unknown token decimals.
+      </p>
 
       <ul className="divide-y divide-border-subtle">
         {rows.map((row) => (
