@@ -47,14 +47,14 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 
 ## Verification
 
-- Rebased onto `main` at `71c736b`, preserving the wallet, claim, and pool fixes from PR #288.
-- Node 24: all 400 tests pass, including regression cases reproduced before the fixes. Production build and type-aware lint pass; the build retains existing large-bundle warnings.
+- Updated with `main` at `5375ca6`, preserving the wallet, claim, and pool fixes from PR #288 and all subsequent dependency updates.
+- Verified on 2026-10-28 with Node 24.22.1 after a clean `npm ci`: all 400 tests pass across 86 files. Production build, type-aware lint, and whitespace checks pass; the build retains existing large-bundle warnings.
 - Populated local browser review covers profile, analytics, and claim screens at 1440, 390, and 320 CSS pixels. Spacing follows existing 4px increments, with 16px mobile panel padding and 24px section gaps.
 
 ## Integration work and verification boundaries
 
 - Market readers and migrations exist, but this repository has no scheduled market-price ingestion job. Current valuations, allocation, replay and receipt estimates need populated, network-correct market tables. Preview tokens may have no market price.
-- Public platform counts require the network-scoped withdrawals schema and a populated archive. Remote schema and data population were not verified in this review.
+- Public platform counts require the network-scoped withdrawals schema and a populated archive. The branch preview returned HTTP 500 from `/api/platformAnalytics` on 2026-10-28; remote schema and data population remain unverified. The market-price endpoint returned an empty degraded response for preview-network ADA.
 - Closed-site push notifications require subscriptions and a server delivery flow. Existing browser alerts require the site to remain open.
 - Wallet value history is a price replay of current indexed quantities. Actual historical balances, general on-chain transaction history, cost basis and realized returns remain future work in the platform plan.
 - Visitor and connected-wallet usage tracking is separate from indexed claimant analytics and is not implemented.
