@@ -35,6 +35,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 - Resolve catalog IDs and concatenated wallet units to the same market quotes/history, counting each contributing source once. Retry wallet section navigation when asynchronous chart content mounts.
 - Exclude stale/invalid current quotes; report the oldest contributing quote time for an aggregate.
 - Read large asset lists through a JSON SQL parameter to stay within D1's 100-bound-parameter limit.
+- Escape formula-like CSV text, including control-character prefixes, leading whitespace, and full-width formula markers; retain numeric values for calculations.
 - Historical replay requires known decimals and price coverage for every indexed holding; charts omit incomplete buckets.
 - Sum reward types within an earned epoch before computing staking chart values.
 - Derive the combined 24h move from prior/current prices for current quantities, with explicit partial coverage.
@@ -48,7 +49,7 @@ Audited against the original feedback, `wallet-data-platform-plan.md`, and the a
 ## Verification
 
 - Updated with `main` at `5375ca6`, preserving the wallet, claim, and pool fixes from PR #288 and all subsequent dependency updates.
-- Verified on 2026-10-28 with Node 24.22.1 after a clean `npm ci`: all 400 tests pass across 86 files. Production build, type-aware lint, and whitespace checks pass; the build retains existing large-bundle warnings.
+- Verified on 2026-10-28 with Node 24.22.1 after a clean `npm ci`: all 414 tests pass across 86 files. Production build, type-aware lint, and whitespace checks pass; the build retains existing large-bundle warnings.
 - Populated local browser review covers profile, analytics, and claim screens at 1440, 390, and 320 CSS pixels. Spacing follows existing 4px increments, with 16px mobile panel padding and 24px section gaps.
 
 ## Integration work and verification boundaries
