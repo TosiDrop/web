@@ -17,19 +17,19 @@ import { stakeAddressError } from '../../../src/shared/stakeAddress';
 import { decimalAmountToNumber } from '../../../src/shared/amounts';
 
 const MAX_METADATA_ASSETS = 100;
-const MAX_PRICED_ASSETS = 25;
+const MAX_PRICED_ASSETS = 100;
 
 function unitFor(asset: KoiosAccountAsset): string | null {
-  const policy = asset.asset_policy?.trim();
+  const policy = asset.policy_id?.trim();
   const name = asset.asset_name?.trim();
-  return policy && name ? `${policy}${name}` : null;
+  return policy ? `${policy}${name ?? ''}` : null;
 }
 
 function metadataByUnit(rows: KoiosAssetInfo[]): Map<string, KoiosAssetInfo> {
   return new Map(
     rows
       .map((row) => {
-        const unit = row.asset_policy && row.asset_name ? `${row.asset_policy}${row.asset_name}` : null;
+        const unit = row.policy_id ? `${row.policy_id}${row.asset_name ?? ''}` : null;
         return unit ? [unit, row] as const : null;
       })
       .filter((entry): entry is readonly [string, KoiosAssetInfo] => entry !== null),
@@ -62,6 +62,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const accounts = accountResult.status === 'fulfilled' ? accountResult.value : [];
     const assets = assetsResult.status === 'fulfilled' ? assetsResult.value : [];
     const rewards = rewardsResult.status === 'fulfilled' ? rewardsResult.value : [];
+    const sources = {
+      account: accountResult.status === 'fulfilled',
+      assets: assetsResult.status === 'fulfilled',
+      rewards: rewardsResult.status === 'fulfilled',
+    };
     const degraded = accountResult.status === 'rejected' ||
       assetsResult.status === 'rejected' ||
       rewardsResult.status === 'rejected';
@@ -90,11 +95,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       const unit = unitFor(asset)!;
       const info = metadataMap.get(unit);
       const registry = info?.token_registry_metadata;
-      const decimals = registry?.decimals ?? info?.decimals ?? null;
-      const price = marketByUnit.get(unit)?.priceUsd ?? null;
+      // account_assets fills missing registry decimals with zero; it cannot confirm precision.
+      const registryDecimals = registry?.decimals;
+      const decimals = typeof registryDecimals === 'number' && Number.isInteger(registryDecimals) && registryDecimals >= 0 && registryDecimals <= 38
+        ? registryDecimals : null;
+      const quote = marketByUnit.get(unit);
+      const price = quote?.priceUsd ?? null;
       return {
         unit,
-        policyId: asset.asset_policy,
+        policyId: asset.policy_id,
         assetNameHex: asset.asset_name,
         quantity: asset.quantity ?? '0',
         name: registry?.name ?? info?.asset_name_ascii ?? null,
@@ -104,49 +113,60 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         metadataPending: !info,
         priceUsd: price,
         priceChange24h: marketByUnit.get(unit)?.priceChange24h ?? null,
+        priceObservedAt: quote?.observedAt ?? null,
+        priceSource: quote?.source ?? null,
+        priceSourceCount: quote?.sourceCount ?? 0,
         valueUsd: price === null || decimals === null
           ? null
           : decimalAmountToNumber(asset.quantity ?? '0', decimals) * price,
         pricePending: price === null,
       };
     });
-    const history = await readValueHistory(
+    const history = sources.account && sources.assets && holdings.every((holding) => holding.decimals !== null) && holdings.length <= MAX_PRICED_ASSETS ? await readValueHistory(
       env,
       network,
       holdings.flatMap((holding) => {
         const decimals = holding.decimals;
         if (decimals === null) return [];
-        const amount = Number(holding.quantity) / 10 ** decimals;
+        const amount = decimalAmountToNumber(holding.quantity, decimals);
         return Number.isFinite(amount) ? [{ unit: holding.unit, amount }] : [];
       }),
       decimalAmountToNumber(account.utxo ?? account.total_balance ?? '0', 6),
-    );
+    ) : [];
     const observedAt = Math.floor(Date.now() / 1000);
     const payload = {
       network,
       stakeAddress,
       observedAt,
       degraded,
+      sources,
       balance: {
-        accountLovelace: account.total_balance ?? '0',
-        utxoLovelace: account.utxo ?? '0',
-        rewardsAvailableLovelace: account.rewards_available ?? '0',
+        accountLovelace: sources.account ? account.total_balance ?? '0' : null,
+        utxoLovelace: sources.account ? account.utxo ?? account.total_balance ?? '0' : null,
+        rewardsAvailableLovelace: sources.account ? account.rewards_available ?? '0' : null,
         adaPriceUsd,
         adaPriceChange24h,
-        accountValueUsd: adaPriceUsd === null
+        adaPriceObservedAt: adaMarket?.observedAt ?? null,
+        adaPriceSource: adaMarket?.source ?? null,
+        adaPriceSourceCount: adaMarket?.sourceCount ?? 0,
+        withdrawnLovelace: sources.account ? account.withdrawals ?? '0' : null,
+        stakeDepositLovelace: sources.account ? account.deposit ?? '0' : null,
+        accountValueUsd: adaPriceUsd === null || !sources.account
           ? null
           : decimalAmountToNumber(account.total_balance ?? '0', 6) * adaPriceUsd,
       },
       delegation: {
         poolId: account.delegated_pool ?? null,
-        registered: account.status === 'registered',
+        registered: sources.account ? account.status === 'registered' : null,
+        drepId: account.delegated_drep ?? null,
       },
       rewards: {
-        totalLovelace: rewardTotal(rewards),
+        totalLovelace: sources.rewards ? rewardTotal(rewards) : null,
         epochs: rewards.map((reward) => ({
           epoch: reward.earned_epoch ?? null,
+          spendableEpoch: reward.spendable_epoch ?? null,
           amountLovelace: reward.amount ?? '0',
-          poolId: reward.pool_id ?? null,
+          poolId: reward.pool_id_bech32 ?? null,
           type: reward.type ?? null,
         })),
       },
@@ -154,7 +174,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       metadata: {
         returned: metadata.length,
         total: units.length,
-        complete: metadata.length >= units.length,
+        complete: sources.assets && metadata.length >= units.length,
       },
       market: {
         configured: env.DB !== undefined,

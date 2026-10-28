@@ -10,7 +10,7 @@ import { DEPLOYMENT_NETWORK } from '@/config/network';
 import { networkFromId } from '@/shared/network';
 import { isAdaHandle, resolveAdaHandle } from '@/utils/ada-handle';
 import { getCustomRewards } from '@/features/claim/api/customRewards';
-import { toggleAllSelection } from '@/features/claim/utils/claimSelection';
+import { MAX_CLAIM_ASSETS, nextClaimBatch, toggleAllSelection } from '@/features/claim/utils/claimSelection';
 import { useClaimSelection } from '@/features/claim/hooks/useClaimSelection';
 import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { useMarketPrices } from '@/features/market/api/market.queries';
@@ -90,9 +90,10 @@ export default function ClaimPage() {
   const { favoriteIds, dislikedIds, isLoading: preferencesLoading } = usePreferences();
   const configuredMaxAssets = settings?.max_assets_in_request;
   const maxAssets = typeof configuredMaxAssets === 'number' && Number.isInteger(configuredMaxAssets) && configuredMaxAssets > 0
-    ? configuredMaxAssets
-    : 25;
+    ? Math.min(configuredMaxAssets, MAX_CLAIM_ASSETS)
+    : MAX_CLAIM_ASSETS;
   const {
+    visible,
     selectableAssetIds,
     selectedAssetIds: selectedVisible,
   } = useClaimSelection({
@@ -103,6 +104,7 @@ export default function ClaimPage() {
     preferencesLoading,
     maxAssets,
   });
+  const visibleAssetIds = useMemo(() => visible.map((token) => token.assetId), [visible]);
   const rewardAssetIds = useMemo(() => (rewards ?? []).map((reward) => reward.assetId), [rewards]);
   const { data: marketPrices = {} } = useMarketPrices(rewardAssetIds);
   const selectedRewards = useMemo(
@@ -113,8 +115,10 @@ export default function ClaimPage() {
     () => estimateClaimValue(selectedRewards, marketPrices),
     [selectedRewards, marketPrices],
   );
-  const total = selectableAssetIds.length;
-  const allSelected = total > 0 && selectedVisible.length === total;
+  const total = visibleAssetIds.length;
+  const allSelected = selectableAssetIds.length > 0 &&
+    selectedVisible.length === selectableAssetIds.length &&
+    selectableAssetIds.every((id) => selectedVisible.includes(id));
 
   const handleLookup = useCallback(
     async (input: string) => {
@@ -146,8 +150,9 @@ export default function ClaimPage() {
 
   const claimMutation = useMutation({
     mutationFn: getCustomRewards,
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       setRequest({
+        stakeAddress: variables.stakeAddress,
         requestId: result.request_id,
         deposit: result.deposit,
         overheadFee: result.overhead_fee,
@@ -164,6 +169,10 @@ export default function ClaimPage() {
 
   const toggleAll = () => {
     setSelected(toggleAllSelection(allSelected, selectableAssetIds));
+  };
+
+  const selectNextBatch = () => {
+    setSelected(nextClaimBatch(visibleAssetIds, selectedVisible, maxAssets));
   };
 
   const claimDisabled = !canClaim || selectedVisible.length === 0 || claimMutation.isPending;
@@ -216,10 +225,12 @@ export default function ClaimPage() {
           totalCount={total}
           allSelected={allSelected}
           onToggleAll={toggleAll}
+          onSelectNextBatch={selectNextBatch}
           onClaim={handleClaim}
           claimDisabled={claimDisabled}
           isPending={claimMutation.isPending}
           canClaim={canClaim}
+          maxAssets={maxAssets}
         />
       )}
 

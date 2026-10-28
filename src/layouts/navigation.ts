@@ -11,7 +11,7 @@ export const NAV_GROUPS = [
   {
     label: 'Your wallet',
     links: [
-      { name: 'Portfolio', href: '/profile', icon: IconWallet },
+      { name: 'Profile', href: '/profile', icon: IconWallet },
       { name: 'Claim rewards', href: '/claim', icon: IconGift },
     ],
   },
@@ -35,7 +35,7 @@ export const NAV_GROUPS = [
 export const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
   '/claim': 'Claim rewards',
-  '/profile': 'Portfolio',
+  '/profile': 'Profile',
   '/tokens': 'Discover',
   '/token': 'Discover',
   '/team': 'Pools',

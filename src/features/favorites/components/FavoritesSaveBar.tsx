@@ -18,7 +18,7 @@ export function FavoritesSaveBar() {
   return (
     <Card className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
       <div>
-        <p className="text-sm text-text-secondary">You have unsaved changes.</p>
+        <p className="text-sm text-text-secondary">Changes kept in this browser until you save them.</p>
         {!connected && (
           <p className="mt-0.5 text-xs text-text-muted">Connect your wallet to save them.</p>
         )}

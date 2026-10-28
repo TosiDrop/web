@@ -23,6 +23,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
 
   const {
     connected,
+    preferencesReady,
     favoriteIds,
     dislikedIds,
     isFavorite,
@@ -52,11 +53,12 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
       key={token.assetId}
       token={token}
       selected={selectedAssetIds.includes(token.assetId)}
+      selectionDisabled={!selectedAssetIds.includes(token.assetId) && selectedAssetIds.length >= maxAssets}
       onToggle={() => {
         if (selectedAssetIds.includes(token.assetId) || selectedAssetIds.length < maxAssets) toggleAsset(token.assetId);
       }}
       favorite={
-        connected
+        connected && preferencesReady
           ? {
               active: isFavorite(token.assetId),
               onToggle: () =>
@@ -69,7 +71,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
           : undefined
       }
       dislike={
-        connected
+        connected && preferencesReady
           ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
           : undefined
       }
@@ -89,6 +91,12 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
       </div>
 
       <FavoritesSaveBar />
+
+      {visible.length > maxAssets && (
+        <p className="text-xs text-text-muted">
+          The claim service accepts {maxAssets} token types per request. Clear one selection to pick a different token, or use Select next batch above.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {visible.map(renderCard)}

@@ -152,4 +152,12 @@ describe('normalizePersonalAnalytics', () => {
     expect(data.tokenMix).toEqual([]);
     expect(data.summary.activeSince).toBeNull();
   });
+
+  it('identifies raw reward units when metadata cannot confirm token decimals', () => {
+    const data = normalizePersonalAnalytics(RAW, {});
+    expect(data.seriesByToken['policy.746f7369'].decimalsKnown).toBe(false);
+    expect(data.seriesByToken['policy.746f7369'].points[0].amount).toBe(8);
+    expect(data.seriesByToken.lovelace.decimalsKnown).toBe(true);
+    expect(data.seriesByToken.lovelace.points[0].amount).toBe(1);
+  });
 });
