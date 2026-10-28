@@ -1,7 +1,8 @@
 function cell(value: string | number | null | undefined): string {
   const raw = value === null || value === undefined ? '' : String(value);
-  // Prevent spreadsheet software from treating an untrusted token name as a formula.
-  const safe = /^[=+@-]/.test(raw) ? `'${raw}` : raw;
+  // Guard untrusted text, including control prefixes and full-width formula markers.
+  const formulaLike = typeof value === 'string' && /^(?:[\t\r\n]|\s*[=+@\-＝＋－＠])/u.test(raw);
+  const safe = formulaLike ? `'${raw}` : raw;
   return `"${safe.replaceAll('"', '""')}"`;
 }
 
