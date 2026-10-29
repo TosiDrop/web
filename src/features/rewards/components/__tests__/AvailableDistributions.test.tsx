@@ -23,7 +23,9 @@ describe('AvailableDistributions NFT gallery', () => {
   afterEach(cleanup);
   it('renders NFT art and identity alongside fungible rewards, keeping NFT quantities outside market estimates', () => {
     render(<Harness tokens={[NFT, FT, { ...FT, assetId: 'lovelace', ticker: 'ADA', amount: 2, native: true }]} />);
-    expect(screen.getByRole('heading', { name: 'NFT rewards' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Claimable assets' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Token rewards 2' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'NFT rewards 1' })).toBeInTheDocument();
     expect(screen.getByText('Gallery')).toBeInTheDocument();
     expect(screen.getByText(ID)).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Art 1' })).toHaveAttribute('src', 'https://example.com/art.png');
@@ -68,7 +70,7 @@ describe('AvailableDistributions NFT gallery', () => {
     preferences.hidden = new Set([ID]);
     render(<Harness />);
     expect(screen.queryByText('Art 1')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Hidden tokens (1)' }));
+    await user.click(screen.getByRole('button', { name: 'Hidden assets (1)' }));
     expect(screen.getByRole('button', { name: 'Select Art 1' })).toBeInTheDocument();
   });
   it('keeps selection and details available when artwork fails and offers a retry', async () => {

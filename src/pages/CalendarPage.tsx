@@ -121,7 +121,16 @@ export default function CalendarPage() {
               <div className="grid grid-cols-7 border-b border-border-subtle bg-surface-inset">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day} className="px-3 py-3 text-center text-xs font-medium text-text-muted">{day}</span>)}</div>
               <div className="grid grid-cols-7">{monthDays(month).map((date) => {
                 const key = dayKey(date, timeZone); const items = byDay.get(key) ?? []; const inMonth = date.getMonth() === month.getMonth(); const today = key === dayKey(new Date(), timeZone);
-                return <button key={key} type="button" disabled={!inMonth} aria-pressed={selectedDay === key} aria-label={`${date.toLocaleDateString(undefined, { dateStyle: 'full' })}, ${items.length} dates`} onClick={() => { setSelectedDay(selectedDay === key ? null : key); setExpanded(null); }} className={cn('min-h-24 min-w-0 border-b border-r border-border-subtle p-2 text-left transition last:border-r-0 hover:bg-surface-inset disabled:cursor-default disabled:opacity-30', selectedDay === key && 'bg-accent/[0.09]')}><span className={cn('inline-flex h-7 w-7 items-center justify-center rounded-full text-xs tabular-nums', today ? 'bg-accent font-semibold text-accent-contrast' : 'text-text-secondary')}>{date.getDate()}</span>{items.length > 0 && <span className="mt-1 block truncate rounded-md bg-surface-inset px-1.5 py-1 text-xs text-text-secondary">{items[0]!.title}</span>}{items.length > 1 && <span className="mt-1 block text-xs text-text-muted">+{items.length - 1} more</span>}</button>;
+                const firstEvent = items[0];
+                const certaintyLabel = firstEvent?.certainty === 'confirmed' ? 'Announced' : 'Estimate';
+                return <button key={key} type="button" disabled={!inMonth} aria-pressed={selectedDay === key} aria-label={`${date.toLocaleDateString(undefined, { dateStyle: 'full' })}, ${items.length} dates${firstEvent ? `, ${firstEvent.title}, ${certaintyLabel}` : ''}`} onClick={() => { setSelectedDay(selectedDay === key ? null : key); setExpanded(null); }} className={cn('min-h-24 min-w-0 border-b border-r border-border-subtle p-2 text-left transition last:border-r-0 hover:bg-surface-inset disabled:cursor-default disabled:opacity-30', selectedDay === key && 'bg-accent/[0.09]')}>
+                  <span className={cn('inline-flex h-7 w-7 items-center justify-center rounded-full text-xs tabular-nums', today ? 'bg-accent font-semibold text-accent-contrast' : 'text-text-secondary')}>{date.getDate()}</span>
+                  {firstEvent && <span className="mt-1 block rounded-md bg-surface-inset px-1.5 py-1 text-xs">
+                    <span className="block truncate text-text-secondary">{firstEvent.title}</span>
+                    <span className={cn('mt-0.5 block', firstEvent.certainty === 'confirmed' ? 'text-cream-light' : 'text-status-pending-light')}>{certaintyLabel}</span>
+                  </span>}
+                  {items.length > 1 && <span className="mt-1 block text-xs text-text-muted">+{items.length - 1} more</span>}
+                </button>;
               })}</div>
             </div>}
 

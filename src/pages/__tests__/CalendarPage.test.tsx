@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CalendarResponse } from '@/shared/calendar';
 import * as calendarUtils from '@/features/calendar/utils/calendar';
@@ -75,6 +75,15 @@ describe('reward calendar', () => {
     fireEvent.click(screen.getByRole('button', { name: /Wednesday, November 4, 2026, 1 date/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Add dates to calendar' }));
     expect(download).toHaveBeenCalledWith([state.data!.events[0]]);
+  });
+
+  it('labels certainty inside month cells before a date is opened', () => {
+    page();
+    fireEvent.click(screen.getByRole('button', { name: 'Month' }));
+    const announced = screen.getByRole('button', { name: /Wednesday, November 4, 2026, 1 date/ });
+    const estimated = screen.getByRole('button', { name: /Thursday, November 5, 2026, 1 date/ });
+    expect(within(announced).getByText('Announced')).toBeInTheDocument();
+    expect(within(estimated).getByText('Estimate')).toBeInTheDocument();
   });
 
   it('explains empty and unavailable sources without inventing dates', () => {

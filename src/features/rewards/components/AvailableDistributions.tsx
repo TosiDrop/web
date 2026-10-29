@@ -84,11 +84,13 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
   };
 
   const HiddenChevron = showHidden ? IconChevronDown : IconChevronRight;
+  const fungibleTokens = visible.filter((token) => token.assetType !== 'nft');
+  const nftTokens = visible.filter((token) => token.assetType === 'nft');
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <h2 className="text-base font-semibold text-text-primary">Claimable tokens</h2>
+        <h2 className="text-base font-semibold text-text-primary">Claimable assets</h2>
         <span className="rounded-md bg-white/[0.05] px-2 py-0.5 font-mono text-2xs text-text-muted">
           {visible.length}
         </span>
@@ -98,22 +100,25 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
 
       {visible.length > maxAssets && (
         <p className="text-xs text-text-muted">
-          The claim service accepts {maxAssets} token types per request. Clear one selection to pick a different token, or use Select next batch above.
+          The claim service accepts {maxAssets} assets per request. Clear one selection to pick a different asset, or use Select next batch above.
         </p>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {visible.filter((token) => token.assetType !== 'nft').map(renderCard)}
-      </div>
+      {fungibleTokens.length > 0 && <section className="space-y-3" aria-labelledby="token-rewards-heading">
+        <h3 id="token-rewards-heading" className="text-sm font-medium text-text-secondary">Token rewards <span className="ml-1 font-mono text-xs text-text-muted">{fungibleTokens.length}</span></h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {fungibleTokens.map(renderCard)}
+        </div>
+      </section>}
 
-      {visible.some((token) => token.assetType === 'nft') && (
+      {nftTokens.length > 0 && (
         <section className="space-y-3 pt-3" aria-labelledby="nft-rewards-heading">
           <div>
-            <h3 id="nft-rewards-heading" className="text-base font-semibold text-text-primary">NFT rewards</h3>
+            <h3 id="nft-rewards-heading" className="text-sm font-medium text-text-secondary">NFT rewards <span className="ml-1 font-mono text-xs text-text-muted">{nftTokens.length}</span></h3>
             <p className="mt-1 text-xs leading-relaxed text-text-muted">Select artwork to include it in your claim. Each asset counts toward the same {maxAssets}-asset limit.</p>
           </div>
           <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visible.filter((token) => token.assetType === 'nft').map(renderCard)}
+            {nftTokens.map(renderCard)}
           </div>
         </section>
       )}
@@ -127,7 +132,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
             aria-expanded={showHidden}
           >
             <HiddenChevron size={16} stroke={1.8} />
-            Hidden tokens ({hidden.length})
+            Hidden assets ({hidden.length})
           </GradientButton>
           {showHidden && (
             <div className="grid grid-cols-1 gap-4 opacity-70 sm:grid-cols-2 xl:grid-cols-3">
