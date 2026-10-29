@@ -46,8 +46,11 @@ async function epochTiming(env: Partial<Env>, fetcher: typeof fetch): Promise<un
   const config = koiosConfig(env);
   const headers = { Accept: 'application/json', ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}) };
   async function read(path: string): Promise<unknown> {
-    const response = await fetcher(`${config.baseUrl}/${path}`, { headers, signal: AbortSignal.timeout(8000), redirect: 'error' });
-    if (!response.ok) throw new Error('Epoch source unavailable');
+    const response = await fetcher(`${config.baseUrl}/${path}`, { headers, signal: AbortSignal.timeout(8000), redirect: 'manual' });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error('Epoch source unavailable');
+    }
     const body = await readResponseBodyWithLimit(response, 32_768);
     if (!body) throw new Error('Epoch response exceeded limit');
     return JSON.parse(new TextDecoder().decode(body)) as unknown;

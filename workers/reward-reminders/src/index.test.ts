@@ -25,14 +25,26 @@ async function fanout(count:number) {
 }
 describe('scheduled reminder delivery',()=>{
   it('encrypts with maintained web-push and uses fetch without redirecting',async()=>{
-    const request=vi.fn<typeof fetch>(async()=>new Response(null,{status:201}));
+    const request=vi.fn<typeof fetch>(async(_url,init)=>{
+      if(init?.redirect==='error') throw new TypeError('Invalid redirect value: Workers supports follow or manual');
+      return new Response(null,{status:201});
+    });
     expect(await sendWebPush(subscription,{title:'TosiDrop',body:'Reward opens',url:'/calendar',tag:'reminder:1'},config({} as D1Database),'0123456789abcdef',request)).toBe(201);
     const options=request.mock.calls[0]?.[1];
     if (!options) throw new Error('Expected a transport request');
-    expect(options.redirect).toBe('error');
+    expect(options.redirect).toBe('manual');
     expect(new Headers(options.headers).get('Content-Encoding')).toBe('aes128gcm');
     expect(new Headers(options.headers).get('Authorization')).toMatch(/^vapid /);
     expect(options.body).toBeInstanceOf(Uint8Array);
+  });
+  it('does not follow redirected push destinations and permanently fails that delivery',async()=>{
+    const request=vi.fn<typeof fetch>(async()=>new Response(null,{status:302,headers:{Location:'https://untrusted.example/push'}}));
+    const {db,sqlite}=await fixture();
+    await runReminderDelivery(config(db),now,async()=>event,(sub,payload,topic)=>sendWebPush(sub,payload,config(db),topic,request));
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls[0]?.[0]).toBe(subscription.endpoint);
+    expect(request.mock.calls[0]?.[1]?.redirect).toBe('manual');
+    expect(sqlite.prepare('SELECT state FROM reward_reminders').get()?.state).toBe('failed');
   });
   it('claims atomically and sends a due reminder once across overlapping cron runs',async()=>{
     const {db,sqlite}=await fixture();const send=vi.fn(async(_subscription:unknown,_payload:unknown,_topic:string)=>201);

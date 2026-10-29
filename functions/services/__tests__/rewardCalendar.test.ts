@@ -43,6 +43,24 @@ describe('reward calendar boundaries', () => {
     expect(partial.sources).toEqual({announcements:'available',epochs:'unavailable'});
     expect(partial.events.map(event=>event.id)).toEqual(['announcement:preview']);
   });
+  it('reads epochs with Workers-supported manual redirects', async () => {
+    const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+      // Workers throws before dispatch for redirect:error, unlike browser/Node.
+      if (init?.redirect === 'error') throw new TypeError('Invalid redirect value: Workers supports follow or manual');
+      return Response.json((typeof input==='string' && input.endsWith('/tip'))?[{epoch_no:100}]:[{epoch_no:100,start_time:now.getTime()/1000-3600,end_time:now.getTime()/1000+3600}]);
+    });
+    const response=await loadCalendar({VITE_NETWORK:'preview'},{from:now.getTime(),to:now.getTime()+7200_000},now,fetcher);
+    expect(response.sources.epochs).toBe('available');
+    expect(response.events).toHaveLength(1);
+    expect(fetcher.mock.calls.every(([,init])=>init?.redirect==='manual')).toBe(true);
+  });
+  it('rejects a redirected epoch source without fetching its destination', async () => {
+    const fetcher=vi.fn<typeof fetch>(async()=>new Response(null,{status:302,headers:{Location:'https://untrusted.example/epoch'}}));
+    const response=await loadCalendar({VITE_NETWORK:'preview'},{from:now.getTime(),to:now.getTime()+7200_000},now,fetcher);
+    expect(response.sources.epochs).toBe('unavailable');expect(response.events).toEqual([]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe('manual');
+  });
   it('keeps the just-started current epoch resolvable for due reminders', () => {
     const events = buildEpochEvents('preview', {epoch_no:100,start_time:now.getTime()/1000-10,end_time:now.getTime()/1000+1000},{from:now.getTime()-60000,to:now.getTime()+60000},now);
     expect(events.map(event=>event.id)).toEqual(['epoch:preview:100']);

@@ -19,7 +19,7 @@ export async function sendWebPush(subscription: PushSubscriptionData, payload: R
   });
   const response = await fetcher(subscription.endpoint, {
     method: 'POST', headers: details.headers, body: new Uint8Array(details.body ?? []),
-    redirect: 'error', signal: AbortSignal.timeout(10_000),
+    redirect: 'manual', signal: AbortSignal.timeout(10_000),
   });
   // Do not read provider error bodies: these can echo endpoint or subscription details.
   await response.body?.cancel();
