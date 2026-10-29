@@ -8,7 +8,9 @@ describe('application navigation', () => {
     expect(destinations.map((link) => link.href)).toEqual([
       '/profile',
       '/claim',
+      '/watchlist',
       '/tokens',
+      '/calendar',
       '/analytics',
       '/team',
       'https://docs.tosidrop.me/',

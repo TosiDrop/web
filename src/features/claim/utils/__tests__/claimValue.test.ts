@@ -24,3 +24,10 @@ describe('estimateClaimValue', () => {
     expect(result).toEqual({ usd: null, ada: 3.125, usdPricedCount: 0, adaPricedCount: 1, pricedCount: 1, totalCount: 2 });
   });
 });
+
+it('keeps NFT units out of fungible market estimates while counting incomplete coverage', () => {
+  const price = { priceUsd: 2, priceAda: 1, priceChange24h: null, source: 'index', sourceCount: 1, observedAt: 1 };
+  const result = estimateClaimValue([TOKEN, { ...TOKEN, assetId: 'nft', assetType: 'nft', amount: 1 }], { asset1: price, nft: price });
+  expect(result).toEqual({ usd: 25, ada: 12.5, usdPricedCount: 1, adaPricedCount: 1, pricedCount: 1, totalCount: 2 });
+  expect(estimateClaimValue([{ ...TOKEN, assetType: 'nft' }], { asset1: price })).toEqual({ usd: null, ada: null, usdPricedCount: 0, adaPricedCount: 0, pricedCount: 0, totalCount: 1 });
+});

@@ -21,4 +21,11 @@ export interface Env {
   DB?: D1Database;
   // R2 token-image cache is optional; /api/tokenImage degrades to a redirect.
   TOKEN_IMAGES?: R2Bucket;
+  /** Closed-site calendar reminders are enabled only after sender setup. */
+  REWARD_REMINDERS_ENABLED?: string;
+  /** Omit for the bounded free-tier default; verify budget before raising. */
+  REWARD_REMINDERS_MAX_PER_RUN?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
 }

@@ -1,9 +1,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { useWalletStore } from '@/store/wallet-state';
+import { DEPLOYMENT_NETWORK } from '@/config/network';
+import { bech32 } from 'bech32';
 import { TokenCatalog } from '../TokenCatalog';
 
 const publicTokensMock = vi.fn();
+const watchedRewardsMock = vi.fn();
+const walletState = useWalletStore.getState();
+vi.mock('@/features/watchlist/api/watchedRewards.queries', () => ({ useWatchedRewards: () => watchedRewardsMock() }));
 vi.mock('../../api/tokens.queries', () => ({
   usePublicTokens: () => publicTokensMock(),
 }));
@@ -20,7 +26,8 @@ const TOKEN = {
 };
 
 describe('TokenCatalog', () => {
-  afterEach(() => { cleanup(); vi.clearAllMocks(); });
+  beforeEach(() => { watchedRewardsMock.mockReturnValue({ data: undefined, isPending: false, error: null, refetch: vi.fn() }); });
+  afterEach(() => { cleanup(); useWalletStore.setState(walletState, true); vi.clearAllMocks(); });
 
   it('renders approved tokens and filters by ticker', () => {
     publicTokensMock.mockReturnValue({ data: {
@@ -41,6 +48,36 @@ describe('TokenCatalog', () => {
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Search tokens' }), { target: { value: 'missing' } });
     expect(screen.getByText('No matching tokens')).toBeInTheDocument();
+  });
+
+  it('restores combined filters from URL and clears them', () => {
+    publicTokensMock.mockReturnValue({ data: { projects: [TOKEN, { ...TOKEN, id: '2', name: 'Other token', poolId: 'pool-other' }], degraded: false }, isLoading: false, error: null });
+    render(<MemoryRouter initialEntries={['/tokens?q=Tosi&project=1&sort=newest']}><TokenCatalog /></MemoryRouter>);
+    expect(screen.getByRole('textbox', { name: 'Search tokens' })).toHaveValue('Tosi');
+    expect(screen.queryByRole('heading', { name: 'Other token' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reset filters' }));
+    expect(screen.getByRole('textbox', { name: 'Search tokens' })).toHaveValue('');
+    expect(screen.getByRole('heading', { name: 'Other token' })).toBeInTheDocument();
+  });
+
+  it('explains that claimable filtering needs a connected wallet', () => {
+    publicTokensMock.mockReturnValue({ data: { projects: [TOKEN], degraded: false }, isLoading: false, error: null });
+    render(<MemoryRouter initialEntries={['/tokens?claimable=1']}><TokenCatalog /></MemoryRouter>);
+    expect(screen.getByText('Connect your wallet to find available rewards')).toBeInTheDocument();
+    expect(screen.queryByText('No matching tokens')).not.toBeInTheDocument();
+  });
+
+  it('keeps eligibility errors separate from zero results and retries the check', () => {
+    const address = bech32.encode(DEPLOYMENT_NETWORK === 'mainnet' ? 'stake' : 'stake_test', bech32.toWords(Uint8Array.from([DEPLOYMENT_NETWORK === 'mainnet' ? 225 : 224, ...Array<number>(28).fill(8)])), 128);
+    useWalletStore.setState({ connected: true, stakeAddress: address });
+    const retry = vi.fn();
+    watchedRewardsMock.mockReturnValue({ error: new Error('offline'), isPending: false, refetch: retry });
+    publicTokensMock.mockReturnValue({ data: { projects: [TOKEN], degraded: false }, isLoading: false, error: null });
+    render(<MemoryRouter initialEntries={['/tokens?claimable=1']}><TokenCatalog /></MemoryRouter>);
+    expect(screen.getByRole('alert')).toHaveTextContent('Available rewards could not be checked');
+    expect(screen.queryByText('No matching tokens')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it('distinguishes degraded storage from an empty catalog', () => {

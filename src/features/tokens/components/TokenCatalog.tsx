@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { IconExternalLink, IconSearch } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -11,6 +11,14 @@ import { describeDistribution } from '@/features/projects/utils/describeDistribu
 import { truncateHash } from '@/utils/format';
 import { MarkdownContent } from '@/components/common/MarkdownContent';
 import type { Project } from '@/shared/projects';
+import { watchedAddressError } from '@/features/watchlist/validation';
+import { useWalletStore } from '@/store/wallet-state';
+import { useOnboardingStore } from '@/store/onboarding-state';
+import { GradientButton } from '@/components/common/GradientButton';
+import { useWatchedRewards } from '@/features/watchlist/api/watchedRewards.queries';
+import { addedAt, discoverTokens, readDiscoveryFilters, writeDiscoveryFilters, type DiscoveryFilters } from '../utils/discovery';
+import type { PublicTokensResponse } from '../api/tokens.queries';
+import type { TokenMap } from '@/features/history/api/history.queries';
 
 function TokenMark({ token }: { token: Project }) {
   const [failed, setFailed] = useState(false);
@@ -42,7 +50,7 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
           <h2 className="break-words text-base font-semibold text-text-primary [overflow-wrap:anywhere]">
             <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="hover:text-accent-light">{token.name}</Link>
           </h2>
-          <p className="mt-1 font-mono text-[11px] text-text-muted">
+          <p className="mt-1 break-all font-mono text-[11px] text-text-muted">
             {ticker} · {truncateHash(token.tokenId, 10, 6)}
           </p>
         </div>
@@ -51,8 +59,8 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-border-subtle py-3">
         <div>
           <p className="label-eyebrow">Market price</p>
-          <p className="mt-1 font-mono text-sm tabular-nums text-text-primary">{formatPrice(marketPrice?.priceUsd, 'USD')}</p>
-          <p className="mt-0.5 font-mono text-2xs text-text-faint">{formatPrice(marketPrice?.priceAda, 'ADA')}</p>
+          <p className="mt-1 break-all font-mono text-sm tabular-nums text-text-primary">{formatPrice(marketPrice?.priceUsd, 'USD')}</p>
+          <p className="mt-0.5 break-all font-mono text-2xs text-text-faint">{formatPrice(marketPrice?.priceAda, 'ADA')}</p>
         </div>
         <div className="text-right">
           <p className="label-eyebrow">24h</p>
@@ -68,13 +76,13 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
           {info?.decimals !== undefined ? `${info.decimals} decimal places` : 'Token metadata'}
         </p>
       </div>
-      <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="mt-4 text-xs font-medium text-accent-light hover:underline">View token details</Link>
+      <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="mt-4 inline-flex min-h-11 items-center text-xs font-medium text-accent-light hover:underline">View token details</Link>
       {token.website && (
         <a
           href={token.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-accent-light hover:text-white"
+          className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-xs font-medium text-accent-light hover:text-white"
         >
           Visit token website <IconExternalLink size={13} stroke={1.7} aria-hidden />
           <span className="sr-only">(opens in new tab)</span>
@@ -85,19 +93,8 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
 }
 
 export function TokenCatalog() {
-  const [search, setSearch] = useState('');
   const { data, isLoading, error, refetch } = usePublicTokens();
   const { data: fallbackTokens } = useTokenMap();
-  const tokens = data?.tokens ?? fallbackTokens;
-  const visibleTokens = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return (data?.projects ?? []).filter((token) => {
-      if (!query) return true;
-      const ticker = tickerFor(token.tokenId, tokens?.[token.tokenId]);
-      return [token.name, token.description, ticker, token.tokenId].some((value) => value.toLowerCase().includes(query));
-    });
-  }, [data?.projects, search, tokens]);
-
   if (isLoading) {
     return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading tokens">{[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton-shimmer h-56 rounded-2xl" />)}</div>;
   }
@@ -111,25 +108,85 @@ export function TokenCatalog() {
     return <StateMessage title="No tokens listed yet" message="Token metadata and approved distribution programs will appear here." />;
   }
 
+  return <DiscoveryResults data={data} tokens={data.tokens ?? fallbackTokens} />;
+}
+
+const filterControl = 'h-11 w-full min-w-0 rounded-xl border border-border-subtle bg-surface-inset px-3 text-sm text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent';
+
+function DiscoveryResults({ data, tokens }: { data: PublicTokensResponse; tokens?: TokenMap }) {
+  const [params, setParams] = useSearchParams();
+  const filters = readDiscoveryFilters(params);
+  const stakeAddress = useWalletStore((state) => state.stakeAddress);
+  const connected = useWalletStore((state) => state.connected);
+  const openModal = useOnboardingStore((state) => state.openModal);
+  const rewards = useWatchedRewards(connected ? stakeAddress : null, filters.claimable);
+  const update = (patch: Partial<DiscoveryFilters>) => setParams(writeDiscoveryFilters(params, { ...filters, ...patch }), { replace: true });
+  const reset = () => setParams(writeDiscoveryFilters(params, readDiscoveryFilters(new URLSearchParams())), { replace: true });
+  const visibleTokens = useMemo(() => discoverTokens(data.projects, readDiscoveryFilters(params), tokens, rewards.data), [data.projects, params, tokens, rewards.data]);
+  const pools = [...new Set(data.projects.map((token) => token.poolId).filter(Boolean))].sort();
+  const hasFilters = Boolean(filters.search || filters.pool || filters.project || filters.claimable || filters.sort !== 'name');
+  const awaitingWallet = filters.claimable && (!connected || !stakeAddress || !!watchedAddressError(stakeAddress));
+  const checkingRewards = filters.claimable && !awaitingWallet && rewards.isPending;
+  const rewardsFailed = filters.claimable && !awaitingWallet && !!rewards.error;
+
   return (
     <div className="space-y-5">
-      <label className="relative block max-w-md">
-        <span className="sr-only">Search tokens</span>
-        <IconSearch size={16} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50" />
-      </label>
-      {data.metadataDegraded && (
-        <p role="status" className="text-xs text-text-muted">
-          Some token details are temporarily unavailable; the catalog is showing the data it could retrieve.
-        </p>
-      )}
-      {visibleTokens.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visibleTokens.map((token) => <TokenCard key={token.id} token={token} ticker={tickerFor(token.tokenId, tokens?.[token.tokenId])} info={tokens?.[token.tokenId]} marketPrice={data.marketPrices?.[token.tokenId]} />)}
+      <div className="space-y-4 rounded-2xl border border-border-subtle bg-surface-inset/40 p-4 sm:p-5">
+        <label className="relative block">
+          <span className="sr-only">Search tokens</span>
+          <IconSearch size={18} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input value={filters.search} onChange={(event) => update({ search: event.target.value })} placeholder="Search name, ticker, pool or token ID" className={`${filterControl} pl-10 placeholder:text-text-muted`} />
+        </label>
+        <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+          <label className="min-w-0 space-y-1.5 text-xs text-text-secondary">Pool
+            <select value={filters.pool} onChange={(event) => update({ pool: event.target.value })} className={filterControl}>
+              <option value="">All pools</option>
+              {filters.pool && !pools.includes(filters.pool) && <option value={filters.pool}>Pool unavailable</option>}
+              {pools.map((pool) => <option key={pool} value={pool}>{truncateHash(pool, 14, 8)}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 space-y-1.5 text-xs text-text-secondary">Project
+            <select value={filters.project} onChange={(event) => update({ project: event.target.value })} className={filterControl}>
+              <option value="">All projects</option>
+              {filters.project && !data.projects.some((project) => project.id === filters.project) && <option value={filters.project}>Project unavailable</option>}
+              {[...data.projects].sort((a, b) => a.name.localeCompare(b.name)).map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 space-y-1.5 text-xs text-text-secondary">Sort by
+            <select value={filters.sort} onChange={(event) => update({ sort: event.target.value === 'newest' ? 'newest' : 'name' })} className={filterControl}>
+              <option value="name">Name A–Z</option><option value="newest">Recently added</option>
+            </select>
+          </label>
         </div>
-      ) : (
-        <StateMessage title="No matching tokens" message="Try a different name, ticker, or token ID." />
-      )}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-text-secondary">
+            <input type="checkbox" checked={filters.claimable} onChange={(event) => update({ claimable: event.target.checked })} className="h-4 w-4 accent-accent focus-visible:outline-2 focus-visible:outline-accent" />
+            Currently claimable by my wallet
+          </label>
+          {hasFilters && <GradientButton variant="ghost" onClick={reset}>Reset filters</GradientButton>}
+        </div>
+        {filters.sort === 'newest' && <p className="text-xs leading-5 text-text-muted">Uses approval or creation dates. Programs with unknown dates appear last.</p>}
+      </div>
+      {data.metadataDegraded && <p role="status" className="text-xs text-text-muted">Some token details are temporarily unavailable; the catalog is showing the data it could retrieve.</p>}
+      {awaitingWallet ? (
+        <div className="rounded-xl border border-border-subtle p-5">
+          <h2 className="text-base font-medium text-text-primary">Connect your wallet to find available rewards</h2>
+          <p className="mt-2 text-sm leading-6 text-text-muted">This filter checks current rewards for your connected wallet. You can also explore read-only wallets in your <Link to="/watchlist" className="text-accent-light underline underline-offset-4">watchlist</Link>.</p>
+          <GradientButton className="mt-4" onClick={openModal}>Connect wallet</GradientButton>
+        </div>
+      ) : checkingRewards ? <p role="status" className="py-8 text-sm text-text-muted">Checking your currently claimable rewards…</p>
+        : rewardsFailed ? <DataUnavailable title="Available rewards could not be checked" message="Retry the wallet check or reset filters to browse all programs." onRetry={() => { void rewards.refetch(); }} />
+        : <>
+          <p role="status" className="text-sm text-text-muted">{visibleTokens.length} {visibleTokens.length === 1 ? 'program' : 'programs'} found{filters.claimable ? ' with rewards available now' : ''}</p>
+          {visibleTokens.length ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleTokens.map((token) => <div key={token.id} className="min-w-0">
+                {filters.sort === 'newest' && <p className="mb-2 text-xs text-text-muted">{addedAt(token) === null ? 'Added date unknown' : `Added ${new Date(addedAt(token)!).toLocaleDateString()}`}</p>}
+                <TokenCard token={token} ticker={tickerFor(token.tokenId, tokens?.[token.tokenId])} info={tokens?.[token.tokenId]} marketPrice={data.marketPrices?.[token.tokenId]} />
+              </div>)}
+            </div>
+          ) : <div className="py-4"><StateMessage title="No matching tokens" message={filters.claimable ? 'Your wallet has no current rewards matching these filters. Reset filters to explore other programs.' : 'Try another name, ticker or pool, or reset your filters to explore all programs.'} /></div>}
+        </>}
     </div>
   );
 }

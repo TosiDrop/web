@@ -26,7 +26,7 @@ export function ClaimHero({
   canClaim,
   maxAssets,
 }: ClaimHeroProps) {
-  const noun = selectedCount === 1 ? 'token' : 'tokens';
+  const noun = selectedCount === 1 ? 'asset' : 'assets';
 
   return (
     <Card as="section" aria-labelledby="claim-hero-title" className="relative overflow-hidden p-6">
@@ -45,7 +45,7 @@ export function ClaimHero({
           </div>
           {totalCount > maxAssets && (
             <p className="mt-2 text-xs text-text-muted">
-              Up to {maxAssets} token types per claim. You can claim another batch afterward.
+              Up to {maxAssets} assets per claim. You can claim another batch afterward.
             </p>
           )}
         </div>

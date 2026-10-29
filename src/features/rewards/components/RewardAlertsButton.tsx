@@ -38,6 +38,9 @@ export function RewardAlertsButton({ stakeAddress }: { stakeAddress: string }) {
         <Link to="/claim" className="mt-3 inline-flex text-xs font-medium text-accent-light hover:underline">
           Review rewards
         </Link>
+        <Link to="/calendar" className="mt-2 flex min-h-11 items-center text-xs font-medium text-accent-light hover:underline">
+          Calendar and date reminders
+        </Link>
         <div className="mt-4 border-t border-border-subtle pt-3">
           <p className="text-xs leading-5 text-text-muted">In-app alerts appear when this wallet gains rewards. Browser alerts run while TosiDrop is open in this browser.</p>
           <button
