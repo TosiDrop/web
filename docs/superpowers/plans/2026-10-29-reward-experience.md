@@ -58,7 +58,7 @@ Own `src/pages/CalendarPage.tsx`, frontend calendar features, App/navigation/Top
 
 - [x] Write failing calendar utility tests for local-day grouping, month boundaries, invalid dates, ICS escaping and timezone-independent event instants.
 - [x] Build calendar query/hooks, agenda/month/event detail, filters, reminder controls and owner announcement form against frozen shared contracts.
-- [x] Add routes/navigation, watchlist links, calendar links from token details and existing alerts; avoid duplicated information and accidental permission requests.
+- [x] Add routes/navigation, watched-wallet links and a calendar entry from existing alerts; avoid duplicated information and accidental permission requests.
 - [x] Run the full suite/build/lint, inspect merged diff and verify all error/edge states.
 - [ ] Start a persistent local QA preview with explicitly synthetic fixtures; perform a bounded desktop/mobile interaction and screenshot review.
 - [ ] Obtain independent code/UI reviews, fix material findings, rerun affected/full checks as justified, and leave a reviewable feature branch with accurate setup/verification notes.
