@@ -1,5 +1,7 @@
 import {
   IconChartLine,
+  IconCalendarMonth,
+  IconEye,
   IconCoins,
   IconFileText,
   IconGift,
@@ -13,12 +15,14 @@ export const NAV_GROUPS = [
     links: [
       { name: 'Profile', href: '/profile', icon: IconWallet },
       { name: 'Claim rewards', href: '/claim', icon: IconGift },
+      { name: 'Watched wallets', href: '/watchlist', icon: IconEye },
     ],
   },
   {
     label: 'Discover',
     links: [
       { name: 'Discover', href: '/tokens', icon: IconCoins },
+      { name: 'Reward calendar', href: '/calendar', icon: IconCalendarMonth },
       { name: 'Analytics', href: '/analytics', icon: IconChartLine },
     ],
   },
@@ -40,6 +44,8 @@ export const PAGE_TITLES: Record<string, string> = {
   '/token': 'Discover',
   '/team': 'Pools',
   '/analytics': 'Analytics',
+  '/calendar': 'Reward calendar',
+  '/watchlist': 'Watched wallets',
   '/deposit': 'Deposit',
 };
 

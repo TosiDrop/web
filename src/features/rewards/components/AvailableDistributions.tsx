@@ -7,6 +7,7 @@ import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { deriveClaimCandidates } from '@/features/claim/utils/deriveClaimSelection';
 import { FavoritesSaveBar } from '@/features/favorites/components/FavoritesSaveBar';
 import { DistributionCard } from './DistributionCard';
+import { NftRewardCard } from './NftRewardCard';
 import type { PublicMarketPrice } from '@/features/market/api/market.queries';
 
 interface AvailableDistributionsProps {
@@ -48,36 +49,39 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
     toggleDislike({ assetId: token.assetId, ticker: token.ticker, logo: token.logo });
   };
 
-  const renderCard = (token: ClaimableToken) => (
-    <DistributionCard
-      key={token.assetId}
-      token={token}
-      selected={selectedAssetIds.includes(token.assetId)}
-      selectionDisabled={!selectedAssetIds.includes(token.assetId) && selectedAssetIds.length >= maxAssets}
-      onToggle={() => {
-        if (selectedAssetIds.includes(token.assetId) || selectedAssetIds.length < maxAssets) toggleAsset(token.assetId);
-      }}
-      favorite={
-        connected && preferencesReady
-          ? {
-              active: isFavorite(token.assetId),
-              onToggle: () =>
-                toggleFavorite({
-                  assetId: token.assetId,
-                  ticker: token.ticker,
-                  logo: token.logo,
-                }),
-            }
-          : undefined
-      }
-      dislike={
-        connected && preferencesReady
-          ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
-          : undefined
-      }
-      marketPrice={marketPrices[token.assetId]}
-    />
-  );
+  const renderCard = (token: ClaimableToken) => {
+    const RewardCard = token.assetType === 'nft' ? NftRewardCard : DistributionCard;
+    return (
+      <RewardCard
+        key={token.assetId}
+        token={token}
+        selected={selectedAssetIds.includes(token.assetId)}
+        selectionDisabled={!selectedAssetIds.includes(token.assetId) && selectedAssetIds.length >= maxAssets}
+        onToggle={() => {
+          if (selectedAssetIds.includes(token.assetId) || selectedAssetIds.length < maxAssets) toggleAsset(token.assetId);
+        }}
+        favorite={
+          connected && preferencesReady
+            ? {
+                active: isFavorite(token.assetId),
+                onToggle: () =>
+                  toggleFavorite({
+                    assetId: token.assetId,
+                    ticker: token.ticker,
+                    logo: token.logo,
+                  }),
+              }
+            : undefined
+        }
+        dislike={
+          connected && preferencesReady
+            ? { active: isDisliked(token.assetId), onToggle: () => handleDislike(token) }
+            : undefined
+        }
+        marketPrice={token.assetType === 'nft' ? undefined : marketPrices[token.assetId]}
+      />
+    );
+  };
 
   const HiddenChevron = showHidden ? IconChevronDown : IconChevronRight;
 
@@ -99,8 +103,20 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {visible.map(renderCard)}
+        {visible.filter((token) => token.assetType !== 'nft').map(renderCard)}
       </div>
+
+      {visible.some((token) => token.assetType === 'nft') && (
+        <section className="space-y-3 pt-3" aria-labelledby="nft-rewards-heading">
+          <div>
+            <h3 id="nft-rewards-heading" className="text-base font-semibold text-text-primary">NFT rewards</h3>
+            <p className="mt-1 text-xs leading-relaxed text-text-muted">Select artwork to include it in your claim. Each asset counts toward the same {maxAssets}-asset limit.</p>
+          </div>
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.filter((token) => token.assetType === 'nft').map(renderCard)}
+          </div>
+        </section>
+      )}
 
       {hidden.length > 0 && (
         <div className="space-y-3 pt-2">
