@@ -52,7 +52,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "drizzle-kit": "^0.31.11",
     "jsdom": "^30.0.1",
-    "oxlint": "^1.85.0",
+    "oxlint": "^1.90.0",
     "oxlint-tsgolint": "^7.0.2003",
     "typescript": "~7.0.2",
     "vite": "^8.3.5",
