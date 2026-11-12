@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IconAlertCircle, IconPencil, IconRocket } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import { GradientButton } from '@/components/common/GradientButton';
 import { useWalletStore } from '@/store/wallet-state';
 import { tickerFor } from '@/features/history/api/history.queries';
 import { truncateHash } from '@/utils/format';
@@ -13,16 +14,16 @@ import { DistributionFields, ProjectDetailsFields } from './ProjectFields';
 import { StateMessage } from '@/features/profile/components/StateMessage';
 
 const STATUS_STYLE: Record<ProjectStatus, string> = {
-  pending: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  approved: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  rejected: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
+  pending: 'border-status-pending-line bg-status-pending-soft text-status-pending-light',
+  approved: 'border-status-success-line bg-status-success-soft text-status-success-light',
+  rejected: 'border-status-error-line bg-status-error-soft text-status-error-light',
 };
 
 function StatusBadge({ status }: { status: ProjectStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize',
+        'inline-flex rounded-full border px-2 py-0.5 text-2xs font-medium capitalize',
         STATUS_STYLE[status],
       )}
     >
@@ -59,25 +60,25 @@ function ProjectCard({ project, ticker }: { project: Project; ticker: string }) 
         {project.logoUrl ? (
           <img src={project.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-full border border-border-subtle object-cover" />
         ) : (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-[11px] uppercase text-slate-300">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset text-2xs uppercase text-text-secondary">
             {project.name.slice(0, 3)}
           </span>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-medium text-white">{project.name}</p>
+            <p className="truncate text-sm font-medium text-text-primary">{project.name}</p>
             <StatusBadge status={project.status} />
           </div>
-          <p className="mt-1 font-mono text-[11px] text-slate-400">
+          <p className="mt-1 font-mono text-2xs text-text-muted">
             {ticker} · {truncateHash(project.tokenId, 10, 6)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">{describeDistribution(project, ticker)}</p>
+          <p className="mt-1 text-xs text-text-muted">{describeDistribution(project, ticker)}</p>
         </div>
         {!editing && (
           <button
             type="button"
             onClick={startEdit}
-            className="flex items-center gap-1.5 text-xs text-slate-400 transition hover:text-white"
+            className="flex items-center gap-1.5 text-xs text-text-muted transition hover:text-text-primary"
           >
             <IconPencil size={13} stroke={1.7} />
             Edit
@@ -86,30 +87,21 @@ function ProjectCard({ project, ticker }: { project: Project; ticker: string }) 
       </div>
 
       {editing && (
-        <div className="space-y-5 border-t border-border-subtle bg-surface-inset/30 px-5 py-5">
+        <div className="space-y-5 border-t border-border-subtle bg-surface-inset px-5 py-5">
           <ProjectDetailsFields value={draft} onChange={patch} />
           <DistributionFields value={draft.distribution} poolId={draft.poolId} onChange={patch} />
           {error && (
-            <p role="alert" className="flex items-center gap-2 text-xs text-rose-300">
+            <p role="alert" className="flex items-center gap-2 text-xs text-status-error-light">
               <IconAlertCircle size={14} /> {error}
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="rounded-lg px-3 py-2 text-xs text-slate-400 hover:text-white"
-            >
+            <GradientButton variant="ghost" size="sm" onClick={() => setEditing(false)}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={save}
-              disabled={isPending}
-              className="rounded-lg bg-brand-cyan px-4 py-2 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-40"
-            >
+            </GradientButton>
+            <GradientButton size="sm" onClick={save} disabled={isPending}>
               {isPending ? 'Signing…' : 'Sign & save'}
-            </button>
+            </GradientButton>
           </div>
         </div>
       )}
@@ -135,7 +127,7 @@ export function ProjectDashboard() {
   }
   if (error) {
     return (
-      <div role="alert" className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-rose-200">
+      <div role="alert" className="card-premium flex items-start gap-3 px-5 py-4 text-sm text-status-error-light">
         <IconAlertCircle size={18} className="mt-0.5 shrink-0" />
         {error.message}
       </div>
@@ -154,7 +146,7 @@ export function ProjectDashboard() {
       <StateMessage title="No tokens yet" message="Register a token to start distributing rewards through TosiDrop.">
         <Link
           to="/projects/new"
-          className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light hover:text-white"
+          className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent-light hover:text-text-primary"
         >
           <IconRocket size={16} stroke={1.7} /> Register a token
         </Link>

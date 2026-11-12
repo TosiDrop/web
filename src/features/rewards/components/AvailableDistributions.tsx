@@ -85,7 +85,7 @@ export function AvailableDistributions({ tokens, maxAssets, selectedAssetIds, ma
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
         <h2 className="text-base font-semibold text-text-primary">Claimable tokens</h2>
-        <span className="rounded-md bg-white/[0.05] px-2 py-0.5 font-mono text-2xs text-text-muted">
+        <span className="text-sm tabular-nums text-text-muted">
           {visible.length}
         </span>
       </div>

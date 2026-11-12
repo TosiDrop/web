@@ -39,7 +39,7 @@ export function PlatformAudience() {
             ['month', 'indexed_claiming_wallets', 'indexed_delivered_claims'],
             ...data.months.map((month) => [month.month, month.claimingWallets, month.claims]),
           ])}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent-line hover:text-text-primary"
         >
           <IconDownload size={14} aria-hidden /> Export CSV
         </button>
@@ -49,7 +49,7 @@ export function PlatformAudience() {
         {metrics.map(([label, value, detail]) => (
           <Card key={label} className="p-4">
             <p className="text-xs text-text-muted">{label}</p>
-            <p className="mt-2 font-mono text-2xl tabular-nums text-text-primary">{value}</p>
+            <p className="mt-2 text-2xl tabular-nums text-text-primary">{value}</p>
             <p className="mt-1 text-xs leading-5 text-text-muted">{detail}</p>
           </Card>
         ))}

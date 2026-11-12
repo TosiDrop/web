@@ -31,7 +31,7 @@ function Identicon({ seed }: { seed: string }) {
   return (
     <span
       aria-hidden
-      className="h-5 w-5 shrink-0 rounded-full ring-1 ring-white/10"
+      className="h-5 w-5 shrink-0 rounded-full ring-1 ring-border-subtle"
       style={{ background: `linear-gradient(135deg, ${a} 50%, ${b} 50%)` }}
     />
   );
@@ -47,7 +47,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
     <Menu>
       <MenuButton
         aria-label="Wallet menu"
-        className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-white/[0.03] pl-2 pr-3 transition hover:bg-white/[0.06] data-[open]:bg-white/[0.06]"
+        className="group flex h-10 items-center gap-2 rounded-full border border-border-default bg-tint pl-2 pr-3 transition hover:bg-tint-strong data-[open]:bg-tint-strong"
       >
         <Identicon seed={stakeAddress} />
         <span className="hidden max-w-[9rem] truncate text-xs font-medium text-text-secondary group-hover:text-text-primary sm:inline">
@@ -62,7 +62,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
       <MenuItems
         anchor={{ to: 'bottom end', gap: 8 }}
         transition
-        className="z-50 w-[280px] max-w-[calc(100vw-2rem)] origin-top rounded-xl border border-border-subtle bg-surface-overlay/95 p-1 shadow-pop backdrop-blur-md transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+        className="z-50 w-[280px] max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-border-subtle bg-surface-overlay p-1 shadow-pop transition duration-200 ease-out data-[leave]:duration-[160ms] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
       >
         <div className="px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
@@ -85,11 +85,11 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
         </div>
         <Link
           to="/team"
-          className="mx-2 flex items-center gap-2 rounded-lg bg-surface-inset/60 px-2.5 py-2 transition hover:bg-surface-inset"
+          className="mx-2 flex items-center gap-2 rounded-lg bg-surface-inset px-2.5 py-2 transition hover:bg-tint-strong"
         >
           <IconShieldCheck size={14} stroke={1.7} className="shrink-0 text-accent-light" aria-hidden />
           <span className="min-w-0 flex-1">
-            <span className="block text-2xs uppercase tracking-wider text-text-faint">Current delegation</span>
+            <span className="block text-2xs text-text-muted">Current delegation</span>
             <span className="mt-0.5 block truncate font-mono text-2xs text-text-secondary">
               {delegationLoading ? 'Checking…' : delegationError ? 'Temporarily unavailable' : poolId ? truncateHash(poolId, 10, 6) : 'Not delegated'}
             </span>
@@ -110,7 +110,7 @@ function AccountMenu({ stakeAddress, networkId, displayName }: { stakeAddress: s
           <button
             type="button"
             onClick={disconnect}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error/10"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs text-status-error-light transition data-[focus]:bg-status-error-soft"
           >
             <IconLogout size={14} stroke={1.6} />
             Disconnect
@@ -135,17 +135,19 @@ export function TopBar() {
           <button
             type="button"
             onClick={openMobileMenu}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-white/[0.04] hover:text-text-primary lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-tint hover:text-text-primary lg:hidden"
             aria-label="Open menu"
           >
             <IconMenu2 size={20} stroke={1.5} />
           </button>
-          <p className="truncate text-sm font-medium text-text-muted">{title}</p>
+          <p className="truncate text-sm font-medium text-text-muted lg:hidden">{title}</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden rounded-full border border-border-subtle bg-surface-inset px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-text-muted sm:inline-flex">
-            {networkLabel(DEPLOYMENT_NETWORK)}
+          <span
+            className={`hidden text-xs font-medium sm:inline ${DEPLOYMENT_NETWORK === 'mainnet' ? 'text-text-muted' : 'text-status-pending-light'}`}
+          >
+            {DEPLOYMENT_NETWORK === 'mainnet' ? 'Mainnet' : `${networkLabel(DEPLOYMENT_NETWORK)} testnet`}
           </span>
           {connected && stakeAddress ? (
             <>

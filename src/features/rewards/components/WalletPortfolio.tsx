@@ -50,7 +50,7 @@ export function WalletMetric({
     <div className="min-w-0 py-3 sm:px-4">
       <dt className="text-xs text-text-muted">{label}</dt>
       <dd
-        className="mt-2 break-words font-mono text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]"
+        className="mt-2 break-words text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]"
       >
         {value}
       </dd>
@@ -107,7 +107,7 @@ export function WalletPortfolio({
     <Card className="min-w-0 overflow-hidden p-4 sm:p-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">
+          <h2 className="text-xl font-semibold text-text-primary">
             Wallet at a glance
           </h2>
           <p className="mt-1 text-xs text-text-muted">
@@ -214,7 +214,7 @@ export function WalletPortfolio({
                   type="button"
                   aria-pressed={range === days}
                   onClick={() => setRange(days)}
-                  className={`min-h-8 rounded-md px-3 text-xs ${range === days ? 'bg-accent/15 font-medium text-accent-light' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`min-h-8 rounded-md px-3 text-xs ${range === days ? 'bg-accent-soft font-medium text-accent-light' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   {days}D
                 </button>
@@ -362,7 +362,7 @@ export function WalletPortfolio({
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-mono text-lg text-text-primary">
+                  <span className="text-lg text-text-primary tabular-nums">
                     {metrics.allocation.length}
                   </span>
                   <span className="text-xs text-text-muted">valued assets</span>

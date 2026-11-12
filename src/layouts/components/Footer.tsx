@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { IconArrowUpRight, IconHelpCircle, IconSend, IconX } from '@tabler/icons-react';
 import { buildFeedbackMailto, isSafeExternalUrl, SUPPORT_LINKS } from '@/config/support';
 
@@ -21,7 +21,7 @@ export function Footer() {
   return (
     <>
       <footer className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 border-t border-border-subtle px-5 py-5 text-xs lg:px-9">
-        <p className="text-text-faint">TosiDrop · Cardano rewards</p>
+        <p className="text-text-muted">TosiDrop · Cardano rewards</p>
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
           <button
             type="button"
@@ -48,15 +48,15 @@ export function Footer() {
       </footer>
 
       <Dialog open={open} onClose={() => setOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" aria-hidden="true" />
+        <DialogBackdrop transition className="fixed inset-0 bg-scrim backdrop-blur-sm transition-opacity duration-[280ms] ease-out data-[leave]:duration-[220ms] data-[closed]:opacity-0" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-lg rounded-2xl border border-border-default bg-surface-overlay p-6 shadow-pop">
+          <DialogPanel transition className="w-full max-w-lg rounded-2xl border border-border-default bg-surface-overlay p-6 shadow-pop transition duration-[280ms] ease-out data-[leave]:duration-[220ms] data-[closed]:scale-95 data-[closed]:opacity-0">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <DialogTitle className="text-lg font-semibold text-text-primary">Send feedback</DialogTitle>
                 <p className="mt-1 text-sm text-text-muted">Tell us what would make token distribution better.</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close feedback form" className="rounded-lg p-1 text-text-muted hover:bg-white/[0.05] hover:text-text-primary">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close feedback form" className="rounded-lg p-1 text-text-muted hover:bg-tint hover:text-text-primary">
                 <IconX size={18} aria-hidden />
               </button>
             </div>

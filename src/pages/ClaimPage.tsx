@@ -180,6 +180,10 @@ export default function ClaimPage() {
 
   return (
     <div className="space-y-6">
+      {lookupAddress && (
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Claim rewards</h1>
+      )}
+
       {connected && (
         <GlobalClaimCard
           onLookup={handleLookup}
@@ -217,7 +221,7 @@ export default function ClaimPage() {
         />
       )}
 
-      {lookupAddress ? <h1 className="sr-only">Claim rewards</h1> : <ClaimWelcome />}
+      {!lookupAddress && <ClaimWelcome />}
 
       {lookupAddress && !loading && hasRewards && (
         <ClaimHero

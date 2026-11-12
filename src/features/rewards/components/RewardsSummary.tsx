@@ -15,7 +15,7 @@ function FeeRow({ label, value, hint }: { label: string; value: string; hint?: s
     <div className="flex items-baseline justify-between gap-3 text-xs">
       <span className="text-text-muted">
         {label}
-        {hint && <span className="ml-1 text-text-faint">{hint}</span>}
+        {hint && <span className="ml-1 text-text-muted">{hint}</span>}
       </span>
       <span className="tabular-nums text-text-secondary">{value}</span>
     </div>
@@ -29,7 +29,7 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
     return (
       <Card className="p-5">
         <div className="border-b border-border-subtle pb-4">
-          <p className="label-eyebrow">Estimated market value</p>
+          <p className="field-label">Estimated market value</p>
           <p className="mt-2 text-sm text-text-muted">Select tokens to see an indexed estimate.</p>
         </div>
         <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
@@ -41,10 +41,10 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
   return (
     <Card className="p-5">
       <div className="border-b border-border-subtle pb-4">
-        <p className="label-eyebrow">Estimated market value</p>
+        <p className="field-label">Estimated market value</p>
         {estimate.pricedCount > 0 ? (
           <>
-            <p className="mt-2 font-mono text-2xl font-semibold tabular-nums text-text-primary">
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-text-primary">
               {estimate.usd !== null ? formatEstimatedUsd(estimate.usd) : formatEstimatedAda(estimate.ada ?? 0)}
             </p>
             <p className="mt-1 font-mono text-xs tabular-nums text-text-muted">
@@ -55,7 +55,7 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
         ) : (
           <p className="mt-2 text-sm text-text-muted">No indexed prices available yet.</p>
         )}
-        <p className="mt-2 text-2xs leading-snug text-text-faint">Display-only estimate from the market index; it does not change the claim deposit.</p>
+        <p className="mt-2 text-2xs leading-snug text-text-muted">Display-only estimate from the market index; it does not change the claim deposit.</p>
       </div>
       <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
 

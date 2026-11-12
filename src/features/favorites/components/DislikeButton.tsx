@@ -21,8 +21,8 @@ export function DislikeButton({ active, onToggle, ticker, className }: DislikeBu
       className={cn(
         'flex h-10 w-10 items-center justify-center rounded-lg transition',
         active
-          ? 'text-text-secondary hover:bg-white/[0.06]'
-          : 'text-text-muted hover:bg-white/[0.06] hover:text-text-secondary',
+          ? 'text-text-secondary hover:bg-tint-strong'
+          : 'text-text-muted hover:bg-tint-strong hover:text-text-secondary',
         className,
       )}
     >

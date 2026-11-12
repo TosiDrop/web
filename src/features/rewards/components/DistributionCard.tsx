@@ -46,7 +46,7 @@ export function DistributionCard({ token, selected, selectionDisabled = false, o
     <Card
       className={cn(
         'group relative transition',
-        selected ? 'border-accent/40' : 'hover:border-border-default',
+        selected ? 'border-accent-line' : 'hover:border-border-default',
       )}
     >
       <button
@@ -60,7 +60,7 @@ export function DistributionCard({ token, selected, selectionDisabled = false, o
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg text-xs font-bold tracking-tight text-accent-contrast ring-1 ring-white/10"
+              className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg text-xs font-bold text-accent-contrast ring-1 ring-border-subtle"
               style={hasImage ? undefined : { backgroundColor: colorFor(token.ticker) }}
             >
               {hasImage ? (
@@ -74,11 +74,8 @@ export function DistributionCard({ token, selected, selectionDisabled = false, o
                 token.ticker.slice(0, 2).toUpperCase()
               )}
             </span>
-            <span className="min-w-0">
-              <span className="block break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">
-                {token.ticker}
-              </span>
-              <span className="mt-0.5 block text-2xs text-text-muted">Reward</span>
+            <span className="min-w-0 break-words text-sm font-semibold text-text-primary [overflow-wrap:anywhere]">
+              {token.ticker}
             </span>
           </div>
 
@@ -88,7 +85,7 @@ export function DistributionCard({ token, selected, selectionDisabled = false, o
               'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition',
               selected
                 ? 'bg-accent text-accent-contrast'
-                : 'border-2 border-border-strong group-hover:border-accent/50',
+                : 'border-2 border-border-strong group-hover:border-accent-line',
             )}
           >
             {selected && <IconCheck size={12} stroke={3.2} />}
@@ -96,22 +93,19 @@ export function DistributionCard({ token, selected, selectionDisabled = false, o
         </div>
 
         <span className="mt-5 block">
-          <span className="block break-words text-2xl font-semibold leading-none tabular-nums tracking-tight text-text-primary [overflow-wrap:anywhere]">
+          <span className="block break-words text-2xl font-semibold leading-none tabular-nums text-text-primary [overflow-wrap:anywhere]">
             {formattedAmount}
-          </span>
-          <span className="mt-2 block font-mono text-2xs uppercase tracking-wider text-text-muted">
-            {token.ticker}
           </span>
           {hasMarketPrice && (
             <>
               {estimatedUsd !== null && (
                 <span className="mt-3 flex items-baseline justify-between gap-3 border-t border-border-subtle pt-3">
                   <span className="text-2xs text-text-muted">Est. claim value</span>
-                  <span className="font-mono text-xs tabular-nums text-text-secondary">{formatEstimatedUsd(estimatedUsd)}</span>
+                  <span className="text-xs tabular-nums text-text-secondary">{formatEstimatedUsd(estimatedUsd)}</span>
                 </span>
               )}
               {(estimatedAda !== null || estimatedUsd !== null) && (
-                <span className="mt-1 block text-right font-mono text-2xs tabular-nums text-text-faint">
+                <span className="mt-1 block text-right text-2xs tabular-nums text-text-muted">
                   {estimatedAda !== null && `${formatEstimatedAda(estimatedAda)} · `}
                   {marketPrice?.priceUsd !== null && marketPrice?.priceUsd !== undefined
                     ? `${formatMarketPrice(marketPrice.priceUsd, 'USD')} / token`
