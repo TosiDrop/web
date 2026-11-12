@@ -102,4 +102,23 @@ describe('syncTokenImages', () => {
     expect(fetchTokens).not.toHaveBeenCalled();
     expect(d.r2Store.has('z:preview')).toBe(true);
   });
+
+  it('stores registry logos for tokens with a broken or missing logo', async () => {
+    const registryPng = new Uint8Array([9, 9]).buffer;
+    const fetchRegistryLogo = vi.fn(async (id: string) => (id === 'c' ? null : registryPng));
+    const d = deps({
+      fetchImage: vi.fn(async (url: string) =>
+        url.includes('/a.png') ? { ok: false, contentType: 'text/html', bytes: PNG } : { ok: true, contentType: 'image/png', bytes: PNG },
+      ),
+      fetchRegistryLogo,
+    });
+
+    const result = await syncTokenImages(d);
+
+    expect(result.stored).toBe(3); // a (registry), b (own logo), d (registry)
+    expect(d.r2Store.get('a:preview')).toBe(registryPng);
+    expect(d.r2Store.get('b:preview')).toBe(PNG);
+    expect(d.r2Store.get('d:preview')).toBe(registryPng);
+    expect(fetchRegistryLogo.mock.calls.map(([id]) => id)).toEqual(['a', 'c', 'd']);
+  });
 });

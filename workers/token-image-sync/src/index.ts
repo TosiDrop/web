@@ -1,4 +1,6 @@
 import { readResponseBodyWithLimit } from '../../../src/shared/readLimitedBody';
+import { normalizeDeploymentNetwork } from '../../../src/shared/network';
+import { fetchRegistryLogo } from '../../../src/shared/tokenRegistry';
 import { vmConfig, vmGet } from '../../../functions/services/vmClient';
 import { MAX_IMAGE_BYTES, syncTokenImages } from './sync';
 
@@ -35,6 +37,8 @@ export default {
             bytes,
           };
         },
+        fetchRegistryLogo: (assetId) =>
+          fetchRegistryLogo(assetId, normalizeDeploymentNetwork(env.VITE_NETWORK), MAX_IMAGE_BYTES),
       }).then((result) =>
         console.log(`image sync: scanned ${result.scanned}, stored ${result.stored}`),
       ),
