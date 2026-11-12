@@ -21,6 +21,8 @@ export interface VmDistribution {
   min_stake?: string;
   min_age?: string;
   stake_cap?: string;
+  /** VM summary of the latest run, e.g. "Successfuly distributed 10 of <token> to 1127 targets". */
+  last_results?: string;
   audience?: string;
 }
 

@@ -6,6 +6,10 @@ const publicTokensMock = vi.fn();
 vi.mock('../../api/tokens.queries', () => ({
   usePublicTokens: () => publicTokensMock(),
 }));
+const poolDataMock = vi.fn(() => ({ data: undefined }));
+vi.mock('@/features/analytics/hooks/usePoolData', () => ({
+  usePoolData: () => poolDataMock(),
+}));
 vi.mock('@/features/projects/api/projects.queries', () => ({
   useTokenMap: () => ({ data: { 'policy.544f5349': { ticker: 'TOSI' } } }),
 }));
@@ -47,5 +51,29 @@ describe('TokenCatalog', () => {
     render(<TokenCatalog />);
     expect(screen.getByText('Token catalog unavailable')).toBeInTheDocument();
     expect(screen.queryByText('No tokens listed yet')).not.toBeInTheDocument();
+  });
+
+  it('ranks by reach or recency and filters by pool', () => {
+    const second = { ...TOKEN, id: '2', name: 'Min Rewards', tokenId: 'policy.4d494e' };
+    publicTokensMock.mockReturnValue({ data: { projects: [TOKEN, second], degraded: false, scope: 'public' }, isLoading: false, error: null });
+    poolDataMock.mockReturnValue({ data: {
+      distributions: [
+        { id: '7', token_id: TOKEN.tokenId, amount: '1', pool_id: 'pool1a', enabled: 't', last_results: 'Successfuly distributed 1 of x to 40 targets' },
+        { id: '3', token_id: second.tokenId, amount: '1', pool_id: 'pool1b', enabled: 't', last_results: 'Successfuly distributed 1 of y to 900 targets' },
+      ],
+      rows: [
+        { kind: 'pool', poolId: 'pool1a', ticker: 'AAA', name: 'Pool A', delegators: 1, partner: null, offerings: [{ token: TOKEN.tokenId }] },
+        { kind: 'pool', poolId: 'pool1b', ticker: 'BBB', name: 'Pool B', delegators: 1, partner: null, offerings: [{ token: second.tokenId }] },
+      ],
+      unavailable: [],
+    } } as never);
+    render(<TokenCatalog />);
+    const headings = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+
+    expect(headings()).toEqual(['Min Rewards', 'Tosi Rewards']);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sort tokens' }), { target: { value: 'recent' } });
+    expect(headings()).toEqual(['Tosi Rewards', 'Min Rewards']);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by pool or project' }), { target: { value: 'pool1b' } });
+    expect(headings()).toEqual(['Min Rewards']);
   });
 });
