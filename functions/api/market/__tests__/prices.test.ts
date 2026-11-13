@@ -31,6 +31,7 @@ describe('GET /api/market/prices', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('rejects malformed or excessive unit lists', async () => {
@@ -42,6 +43,8 @@ describe('GET /api/market/prices', () => {
   });
 
   it('returns the D1 read model without contacting a market provider', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000_000);
     const response = await onRequestGet(ctx('/api/market/prices?units=asset1', {
       DB: db([
         { unit: 'asset1', priceUsd: 1, priceAda: 2, priceChange24h: 4, source: 'provider-a', observedAt: 10 },
@@ -60,7 +63,7 @@ describe('GET /api/market/prices', () => {
           priceAda: 3,
           priceChange24h: 6,
           sourceCount: 2,
-          observedAt: 20,
+          observedAt: 10,
         },
       },
     });

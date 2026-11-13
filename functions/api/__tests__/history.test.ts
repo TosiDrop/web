@@ -77,9 +77,45 @@ describe('GET /api/history', () => {
       items: [{
         rewardId: 'r1', token: 'lovelace', amount: '1000000', epoch: 500,
         deliveredOn: '1750000000', deliveredAt: 1750000000, withdrawalRequest: 'w1',
+        receiptPriceUsd: null, receiptPriceObservedAt: null, receiptPriceSource: null,
       }],
       page: 1, limit: 50, total: 1, hasMore: false,
     });
+  });
+
+  it('includes a historical indexed price observed before delivery', async () => {
+    const db = fakeDb([{
+      ...ROW,
+      receipt_price_usd: 0.75,
+      receipt_price_observed_at: 1749999900,
+      receipt_price_source: 'index-a',
+    }], 1);
+    const res = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await res.json()) as { items: Array<Record<string, unknown>> };
+    expect(body.items[0]).toMatchObject({
+      receiptPriceUsd: 0.75,
+      receiptPriceObservedAt: 1749999900,
+      receiptPriceSource: 'index-a',
+    });
+    const dataSql = db.__calls.find((call) => !call.sql.includes('COUNT'))!.sql;
+    expect(dataSql).toContain('market_asset_price_history');
+    expect(dataSql).toContain('w.delivered_at - 86400');
+  });
+
+  it('keeps claim history available before the market history migration is applied', async () => {
+    const prepare = (sql: string) => ({
+      bind() { return this; },
+      async all() {
+        if (sql.includes('market_asset_price_history')) throw new Error('no such table: market_asset_price_history');
+        return { results: [ROW] };
+      },
+      async first() { return { total: 1 }; },
+    });
+    const db = { prepare } as unknown as D1Database;
+    const res = await onRequestGet(ctx(`staking_address=${STAKE}`, { DB: db }));
+    const body = (await res.json()) as { items: Array<Record<string, unknown>> };
+    expect(res.status).toBe(200);
+    expect(body.items[0].receiptPriceUsd).toBeNull();
   });
 
   it('derives hasMore from the limit+1 probe row', async () => {

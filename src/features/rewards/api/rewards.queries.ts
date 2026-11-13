@@ -17,5 +17,8 @@ export function useRewards(stakeAddress: string | null) {
       return data.rewards;
     },
     enabled: !!stakeAddress,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 }

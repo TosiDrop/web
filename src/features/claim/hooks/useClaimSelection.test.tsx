@@ -65,11 +65,26 @@ describe('useClaimSelection', () => {
       preferencesLoading: false,
       maxAssets: 2,
     };
-    const { result } = renderHook((input) => useClaimSelection(input), { initialProps: props });
+    const { result, rerender } = renderHook((input) => useClaimSelection(input), { initialProps: props });
 
     await waitFor(() => expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-b']));
     act(() => useClaimStore.getState().setSelected(['regular-a', 'regular-c']));
 
     expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-c']);
+    rerender({ ...props, tokens: [...tokens] });
+    expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-c']);
+    rerender({ ...props, favoriteIds: new Set(['regular-b']) });
+    expect(result.current.selectedAssetIds).toEqual(['regular-a', 'regular-c']);
+    rerender({ ...props, dislikedIds: new Set(['regular-c']) });
+    expect(result.current.selectedAssetIds).toEqual(['regular-a']);
   });
+  it('reduces the stored selection when the limit falls so deselection stays deselected', () => {
+    const props = { tokens: TOKENS, favoriteIds: new Set<string>(), dislikedIds: new Set<string>(), lookupAddress: 'stake1account', preferencesLoading: false, maxAssets: 4 };
+    const { result, rerender } = renderHook((input) => useClaimSelection(input), { initialProps: props });
+    rerender({ ...props, maxAssets: 2 });
+    act(() => useClaimStore.getState().toggleAsset(result.current.selectedAssetIds[0]));
+    expect(result.current.selectedAssetIds).toHaveLength(1);
+    expect(useClaimStore.getState().selectedAssetIds).toHaveLength(1);
+  });
+
 });

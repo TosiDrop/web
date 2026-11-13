@@ -27,10 +27,15 @@ export interface DeliveredReward {
   ticker: string;
   decimals: number;
   amount: number;
+  rawAmount?: string;
   deliveredOn: Date | null;
   deliveredOnRaw: string;
   epoch: number | null;
   logo?: string;
+  decimalsKnown?: boolean;
+  receiptPriceUsd?: number | null;
+  receiptPriceObservedAt?: number | null;
+  receiptPriceSource?: string | null;
 }
 
 function hexToUtf8(hex: string): string {
@@ -41,7 +46,7 @@ function hexToUtf8(hex: string): string {
     }
     return new TextDecoder().decode(bytes);
   } catch {
-    return hex.slice(0, 12);
+    return hex;
   }
 }
 
@@ -49,12 +54,20 @@ export function tickerFor(token: string, info?: TokenInfo): string {
   if (token === 'lovelace') return 'ADA';
   if (info?.ticker) return info.ticker;
   const parts = token.split('.');
-  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token.slice(0, 12);
+  return parts.length === 2 ? hexToUtf8(parts[1]) || token : token;
 }
 
 export function decimalsFor(token: string, info?: TokenInfo): number {
   if (token === 'lovelace') return 6;
-  return Number(info?.decimals ?? 0) || 0;
+  return hasKnownDecimals(token, info) ? Number(info!.decimals) : 0;
+}
+
+export function hasKnownDecimals(token: string, info?: TokenInfo): boolean {
+  if (token === 'lovelace') return true;
+  if (info?.decimals === undefined || info.decimals === null) return false;
+  if (typeof info.decimals === 'string' && info.decimals.trim() === '') return false;
+  const decimals = Number(info.decimals);
+  return Number.isInteger(decimals) && decimals >= 0 && decimals <= 18;
 }
 
 export function parseDeliveredOn(raw: string): Date | null {
@@ -71,6 +84,7 @@ export function useDeliveredRewards(stakeAddress: string | null) {
     queryKey: ['delivered-rewards', stakeAddress],
     enabled: !!stakeAddress,
     staleTime: 60_000,
+    refetchInterval: 300_000,
     queryFn: async () => {
       if (!stakeAddress) throw new Error('stakeAddress is required');
 
@@ -87,19 +101,24 @@ export function useDeliveredRewards(stakeAddress: string | null) {
         const decimals = decimalsFor(row.token, info);
         const ticker = tickerFor(row.token, info);
         const amount = Number(row.amount) / Math.pow(10, decimals);
-        const key = `${row.delivered_on}_${ticker}`;
+        const key = `${row.delivered_on}_${row.token}`;
         const epochNum = Number(row.epoch);
 
         const existing = grouped.get(key);
         if (existing) {
           existing.amount += amount;
+          if (/^\d+$/.test(existing.rawAmount ?? '') && /^\d+$/.test(row.amount)) {
+            existing.rawAmount = String(BigInt(existing.rawAmount!) + BigInt(row.amount));
+          }
         } else {
           grouped.set(key, {
             key,
             token: row.token,
             ticker,
             decimals,
+            decimalsKnown: hasKnownDecimals(row.token, info),
             amount,
+            rawAmount: row.amount,
             deliveredOn: parseDeliveredOn(row.delivered_on),
             deliveredOnRaw: row.delivered_on,
             epoch: Number.isNaN(epochNum) ? null : epochNum,

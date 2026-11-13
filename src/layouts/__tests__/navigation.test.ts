@@ -13,7 +13,7 @@ describe('application navigation', () => {
       '/team',
       'https://docs.tosidrop.me/',
     ]);
-    expect(pageTitle('/profile')).toBe('Portfolio');
+    expect(pageTitle('/profile')).toBe('Profile');
     expect(pageTitle('/analytics/pools')).toBe('Analytics');
     expect(pageTitle('/unknown')).toBe('');
   });

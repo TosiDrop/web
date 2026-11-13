@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useWalletStore } from '@/store/wallet-state';
 import {
   usePreferencesQuery,
@@ -7,6 +7,7 @@ import {
 import { usePreferencesDraft } from '@/features/favorites/store/preferences-draft';
 import { signPreferencesUpdateMessage } from '@/features/favorites/utils/signPreferencesUpdate';
 import { EMPTY_PREFERENCES, type TokenPreferences, type TokenRef } from '@/features/favorites/types';
+import { readLocalDraft, writeLocalDraft } from '@/features/favorites/utils/localDraft';
 
 function sameIds(a: TokenRef[], b: TokenRef[]): boolean {
   if (a.length !== b.length) return false;
@@ -21,6 +22,8 @@ function samePreferences(a: TokenPreferences, b: TokenPreferences): boolean {
 const without = (list: TokenRef[], assetId: string) =>
   list.filter((f) => f.assetId !== assetId);
 
+const savingOwners = new Set<string>();
+
 export function usePreferences() {
   const wallet = useWalletStore((s) => s.wallet);
   const connected = useWalletStore((s) => s.connected);
@@ -33,10 +36,25 @@ export function usePreferences() {
   const draftOwner = usePreferencesDraft((s) => s.owner);
   const setDraftState = usePreferencesDraft((s) => s.setDraft);
   const draft = draftOwner === stakeAddress ? rawDraft : null;
-  const setDraft = (next: TokenPreferences | null) => setDraftState(next, stakeAddress);
+  const setDraft = (next: TokenPreferences | null) => {
+    if (next && query.isSuccess && stakeAddress && !savingOwners.has(stakeAddress) && samePreferences(next, saved)) next = null;
+    if (stakeAddress) writeLocalDraft(stakeAddress, next);
+    setDraftState(next, stakeAddress);
+  };
+
+  useEffect(() => {
+    if (!stakeAddress || draftOwner === stakeAddress) return;
+    setDraftState(readLocalDraft(stakeAddress), stakeAddress);
+  }, [draftOwner, setDraftState, stakeAddress]);
 
   const save = useSavePreferencesMutation();
   const [signError, setSignError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!stakeAddress || !query.isSuccess || !draft || savingOwners.has(stakeAddress) || !samePreferences(draft, saved)) return;
+    writeLocalDraft(stakeAddress, null);
+    setDraftState(null, stakeAddress);
+  }, [stakeAddress, query.isSuccess, draft, saved, setDraftState]);
 
   const effective = draft ?? saved;
   const favoriteIds = useMemo(
@@ -53,6 +71,7 @@ export function usePreferences() {
   const isDisliked = (assetId: string) => dislikedIds.has(assetId);
 
   const toggleFavorite = (token: TokenRef) => {
+    if (!query.isSuccess) return;
     const base = draft ?? saved;
     const exists = base.favorites.some((f) => f.assetId === token.assetId);
     setDraft({
@@ -64,6 +83,7 @@ export function usePreferences() {
   };
 
   const toggleDislike = (token: TokenRef) => {
+    if (!query.isSuccess) return;
     const base = draft ?? saved;
     const exists = base.dislikes.some((f) => f.assetId === token.assetId);
     setDraft({
@@ -77,9 +97,10 @@ export function usePreferences() {
   const reset = () => setDraft(null);
 
   const persist = async () => {
-    if (!wallet || !stakeAddress || !connected) return;
+    if (!wallet || !stakeAddress || !connected || !query.isSuccess || savingOwners.has(stakeAddress)) return;
     setSignError(null);
     const current = draft ?? saved;
+    savingOwners.add(stakeAddress);
     try {
       const { signature, key, message } = await signPreferencesUpdateMessage({
         wallet,
@@ -95,9 +116,18 @@ export function usePreferences() {
         key,
         message,
       });
-      setDraft(null);
+      const localDraft = readLocalDraft(stakeAddress);
+      if (localDraft && samePreferences(localDraft, current)) {
+        writeLocalDraft(stakeAddress, null);
+      }
+      const latest = usePreferencesDraft.getState();
+      if (latest.owner === stakeAddress && latest.draft === current) {
+        latest.setDraft(null, stakeAddress);
+      }
     } catch (e) {
       setSignError(e instanceof Error ? e.message : 'Failed to sign or save preferences');
+    } finally {
+      savingOwners.delete(stakeAddress);
     }
   };
 
@@ -114,6 +144,7 @@ export function usePreferences() {
     toggleDislike,
     reset,
     isDirty,
+    hasLocalDraft: draft !== null,
     persist,
     saving: save.isPending,
     error: signError ?? (save.error instanceof Error ? save.error.message : null),

@@ -11,31 +11,33 @@ export interface KoiosAccountInfo {
   deposit?: string;
   rewards_available?: string;
   delegated_pool?: string | null;
+  delegated_drep?: string | null;
 }
 
 export interface KoiosAccountAsset {
-  asset_policy?: string;
+  decimals?: number | null;
+  policy_id?: string;
   asset_name?: string;
   quantity?: string;
 }
 
 export interface KoiosAssetInfo {
-  asset_policy?: string;
+  policy_id?: string;
   asset_name?: string;
-  decimals?: number | null;
   asset_name_ascii?: string | null;
   token_registry_metadata?: {
     name?: string;
     ticker?: string;
-    decimals?: number;
+    decimals?: number | null;
     logo?: string;
   } | null;
 }
 
 export interface KoiosReward {
   earned_epoch?: number;
+  spendable_epoch?: number;
   amount?: string;
-  pool_id?: string | null;
+  pool_id_bech32?: string | null;
   type?: string | null;
 }
 
@@ -43,6 +45,10 @@ const DEFAULT_BASES = {
   mainnet: 'https://api.koios.rest/api/v1',
   preview: 'https://preview.koios.rest/api/v1',
 } as const;
+
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 10;
+const MAX_METADATA_BODY_BYTES = 1000;
 
 export interface KoiosConfig {
   baseUrl: string;
@@ -92,14 +98,15 @@ function validatePayload(endpoint: string, payload: unknown): unknown {
   }
   if (endpoint === 'account_assets') {
     for (const row of payload) {
-      if (typeof row.asset_policy !== 'string' || typeof row.asset_name !== 'string' || typeof row.quantity !== 'string') {
+      if (typeof row.policy_id !== 'string' || typeof row.asset_name !== 'string' || typeof row.quantity !== 'string') {
         throw new Error('Koios account_assets returned an incomplete asset row');
       }
+      if (!/^\d+$/.test(row.quantity)) throw new Error('Koios account_assets returned an invalid quantity');
     }
   }
   if (endpoint === 'asset_info') {
     for (const row of payload) {
-      if (typeof row.asset_policy !== 'string' || typeof row.asset_name !== 'string') {
+      if (typeof row.policy_id !== 'string' || typeof row.asset_name !== 'string') {
         throw new Error('Koios asset_info returned an incomplete asset row');
       }
       if ('decimals' in row && row.decimals !== null && typeof row.decimals !== 'number') {
@@ -128,9 +135,10 @@ function validatePayload(endpoint: string, payload: unknown): unknown {
       }
     }
   }
-  if (endpoint === 'account_rewards') {
+  if (endpoint === 'account_reward_history') {
     for (const row of payload) {
-      if ('amount' in row && typeof row.amount !== 'string') throw new Error('Koios account_rewards returned an invalid amount');
+      if (typeof row.amount !== 'string' || !/^\d+$/.test(row.amount)) throw new Error('Koios account_reward_history returned an invalid amount');
+      if (!Number.isSafeInteger(row.earned_epoch) || Number(row.earned_epoch) < 0) throw new Error('Koios account_reward_history returned an invalid epoch');
     }
   }
   return payload;
@@ -162,7 +170,7 @@ export class KoiosClient {
         if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
         continue;
       }
-      if (response.ok) return validatePayload(endpoint, await response.json()) as T;
+      if (response.ok) return validatePayload(endpoint.split('?')[0], await response.json()) as T;
       const error = new Error(`Koios ${endpoint} failed (${response.status})`);
       if (response.status < 500 && response.status !== 408 && response.status !== 429) throw error;
       lastError = error;
@@ -176,14 +184,38 @@ export class KoiosClient {
   }
 
   accountAssets(stakeAddress: string) {
-    return this.post<KoiosAccountAsset[]>('account_assets', { _stake_addresses: [stakeAddress] });
+    return this.pages<KoiosAccountAsset>('account_assets', { _stake_addresses: [stakeAddress] }, 'policy_id.asc,asset_name.asc');
   }
 
   accountRewards(stakeAddress: string) {
-    return this.post<KoiosReward[]>('account_rewards', { _stake_addresses: [stakeAddress] });
+    return this.pages<KoiosReward>('account_reward_history', { _stake_addresses: [stakeAddress] }, 'earned_epoch.asc,spendable_epoch.asc,type.asc,pool_id_bech32.asc');
   }
 
-  assetInfo(units: string[]) {
-    return this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: units });
+  private async pages<T>(endpoint: string, body: Record<string, unknown>, order: string): Promise<T[]> {
+    const rows: T[] = [];
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const query = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(page * PAGE_SIZE), order });
+      const batch = await this.post<T[]>(`${endpoint}?${query}`, body);
+      rows.push(...batch);
+      if (batch.length < PAGE_SIZE) return rows;
+    }
+    // A bounded read must fail as unavailable rather than return an incomplete total.
+    throw new Error(`Koios ${endpoint} exceeded the ${MAX_PAGES * PAGE_SIZE}-row read limit`);
+  }
+
+  async assetInfo(units: string[]): Promise<KoiosAssetInfo[]> {
+    const rows: KoiosAssetInfo[] = [];
+    let batch: string[][] = [];
+    const bytes = (pairs: string[][]) => new TextEncoder().encode(JSON.stringify({ _asset_list: pairs })).length;
+    for (const unit of units) {
+      const pair = [unit.slice(0, 56), unit.slice(56)];
+      if (batch.length && bytes([...batch, pair]) > MAX_METADATA_BODY_BYTES) {
+        rows.push(...await this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: batch }));
+        batch = [];
+      }
+      batch.push(pair);
+    }
+    if (batch.length) rows.push(...await this.post<KoiosAssetInfo[]>('asset_info', { _asset_list: batch }));
+    return rows;
   }
 }

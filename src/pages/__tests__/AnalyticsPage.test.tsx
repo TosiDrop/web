@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/features/analytics/hooks/usePlatformStats', () => ({
   usePlatformStats: () => ({ data: undefined, isLoading: true, error: null }),
 }));
+vi.mock('@/features/analytics/components/PlatformAudience', () => ({
+  PlatformAudience: () => <div>Platform usage content</div>,
+}));
 const poolsMock = vi.fn();
 vi.mock('@/features/analytics/hooks/usePoolData', () => ({ usePoolData: () => poolsMock() }));
 
@@ -34,8 +37,9 @@ describe('AnalyticsPage', () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Analytics' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Pool performance' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Platform pulse' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pool comparison' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Platform statistics' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Platform usage' })).toBeInTheDocument();
     expect(screen.getByLabelText('Loading platform statistics')).toBeInTheDocument();
 
     expect(screen.getAllByRole('progressbar')).toHaveLength(2);

@@ -3,15 +3,17 @@ import { cn } from '@/lib/utils';
 
 interface FavoriteStarButtonProps {
   active: boolean;
+  disabled?: boolean;
   onToggle: () => void;
   ticker?: string;
   className?: string;
 }
 
-export function FavoriteStarButton({ active, onToggle, ticker, className }: FavoriteStarButtonProps) {
+export function FavoriteStarButton({ active, onToggle, ticker, className, disabled }: FavoriteStarButtonProps) {
   return (
     <button
       type="button"
+      disabled={disabled}
       aria-pressed={active}
       aria-label={ticker ? `Favorite ${ticker}` : 'Favorite token'}
       onClick={(e) => {

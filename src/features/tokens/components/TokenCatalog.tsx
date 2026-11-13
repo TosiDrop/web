@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { IconExternalLink, IconSearch } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { DataUnavailable } from '@/components/common/DataUnavailable';
@@ -8,6 +9,7 @@ import { tickerFor, type TokenInfo } from '@/features/history/api/history.querie
 import { usePublicTokens, type PublicMarketPrice } from '../api/tokens.queries';
 import { describeDistribution } from '@/features/projects/utils/describeDistribution';
 import { truncateHash } from '@/utils/format';
+import { MarkdownContent } from '@/components/common/MarkdownContent';
 import type { Project } from '@/shared/projects';
 
 function TokenMark({ token }: { token: Project }) {
@@ -37,15 +39,15 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
       <div className="flex items-start gap-3">
         <TokenMark token={token} />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold text-text-primary">{token.name}</h2>
+          <h2 className="break-words text-base font-semibold text-text-primary [overflow-wrap:anywhere]">
+            <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="hover:text-accent-light">{token.name}</Link>
+          </h2>
           <p className="mt-1 font-mono text-[11px] text-text-muted">
             {ticker} · {truncateHash(token.tokenId, 10, 6)}
           </p>
         </div>
       </div>
-      <p className="mt-4 line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-text-muted">
-        {token.description || 'A TosiDrop token distribution program.'}
-      </p>
+      <MarkdownContent content={token.description || 'A TosiDrop token distribution program.'} className="mt-4 h-[4.5rem] overflow-hidden text-text-muted" />
       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-border-subtle py-3">
         <div>
           <p className="label-eyebrow">Market price</p>
@@ -66,6 +68,7 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
           {info?.decimals !== undefined ? `${info.decimals} decimal places` : 'Token metadata'}
         </p>
       </div>
+      <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="mt-4 text-xs font-medium text-accent-light hover:underline">View token details</Link>
       {token.website && (
         <a
           href={token.website}
