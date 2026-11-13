@@ -30,10 +30,10 @@ export function RewardsSummary({ tokenCount, estimate }: RewardsSummaryProps) {
       <Card className="p-5">
         <div className="border-b border-border-subtle pb-4">
           <p className="label-eyebrow">Estimated market value</p>
-          <p className="mt-2 text-sm text-text-muted">Select tokens to see an indexed estimate.</p>
+          <p className="mt-2 text-sm text-text-muted">Select assets to see an indexed estimate.</p>
         </div>
         <h3 className="text-sm font-semibold text-text-secondary">Fee breakdown</h3>
-        <p className="mt-3 text-xs text-text-muted">Select tokens to see the deposit required.</p>
+        <p className="mt-3 text-xs text-text-muted">Select assets to see the deposit required.</p>
       </Card>
     );
   }

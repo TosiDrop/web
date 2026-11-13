@@ -1,0 +1,21 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "tosidrop-reward-reminders",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": {
+    "VITE_NETWORK": "preview",
+    "REWARD_REMINDERS_ENABLED": "false"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "configure-reward-reminders-db",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "../../migrations"
+  }]
+  // Activation requires the matching deployment D1 binding, VAPID secrets,
+  // VAPID_PUBLIC_KEY and VAPID_SUBJECT, then REWARD_REMINDERS_ENABLED=true.
+}

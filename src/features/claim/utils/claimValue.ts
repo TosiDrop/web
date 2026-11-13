@@ -15,7 +15,7 @@ export function estimateClaimValue(
   prices: Record<string, PublicMarketPrice>,
 ): ClaimValueEstimate {
   const estimate = tokens.reduce<Omit<ClaimValueEstimate, 'usd' | 'ada'>>((result, token) => {
-    const price = prices[token.assetId];
+    const price = token.assetType === 'nft' ? undefined : prices[token.assetId];
     const hasUsd = price?.priceUsd !== null && price?.priceUsd !== undefined && Number.isFinite(price.priceUsd);
     const hasAda = price?.priceAda !== null && price?.priceAda !== undefined && Number.isFinite(price.priceAda);
     return {
@@ -27,11 +27,11 @@ export function estimateClaimValue(
   }, { usdPricedCount: 0, adaPricedCount: 0, pricedCount: 0, totalCount: 0 });
 
   const usd = tokens.reduce((total, token) => {
-    const value = prices[token.assetId]?.priceUsd;
+    const value = token.assetType === 'nft' ? undefined : prices[token.assetId]?.priceUsd;
     return value !== null && value !== undefined && Number.isFinite(value) ? total + value * token.amount : total;
   }, 0);
   const ada = tokens.reduce((total, token) => {
-    const value = prices[token.assetId]?.priceAda;
+    const value = token.assetType === 'nft' ? undefined : prices[token.assetId]?.priceAda;
     return value !== null && value !== undefined && Number.isFinite(value) ? total + value * token.amount : total;
   }, 0);
 

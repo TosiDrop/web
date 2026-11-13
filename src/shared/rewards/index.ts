@@ -6,6 +6,8 @@ export interface ClaimableToken {
   amount: number;
   premium: boolean;
   native: boolean;
+  assetType?: 'nft';
+  nft?: NftRewardMetadata;
 }
 
 export interface TokenInfo {
@@ -29,3 +31,13 @@ export function isNativeToken(assetId: string): boolean {
   return normalized === '' || normalized === 'lovelace' || normalized === 'ada';
 }
 
+
+export interface NftRewardMetadata {
+  name: string | null;
+  image: string | null;
+  collection: string | null;
+  /** Classification evidence from the catalog; this is not on-chain authenticity verification. */
+  identitySource: 'provider' | 'cip68';
+}
+
+export { nftRewardMetadata, nftImageUrl } from './nft';

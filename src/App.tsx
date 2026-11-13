@@ -13,6 +13,8 @@ const TeamPage = lazy(() => import('@/pages/TeamPage'));
 const TokensPage = lazy(() => import('@/pages/TokensPage'));
 const TokenDetailPage = lazy(() => import('@/pages/TokenDetailPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
+const CalendarPage = lazy(() => import('@/pages/CalendarPage'));
+const WatchlistPage = lazy(() => import('@/pages/WatchlistPage'));
 const ApiTesterPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/ApiTesterPage'))
   : null;
@@ -47,6 +49,8 @@ export default function App() {
                 <Route path="/tokens/:assetId" element={<TokenDetailPage />} />
                 <Route path="/token" element={<TokensPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/watchlist" element={<WatchlistPage />} />
                 <Route path="/network" element={<Navigate to="/analytics" replace />} />
                 <Route path="/history" element={<Navigate to="/profile#activity" replace />} />
                 <Route path="/preferences" element={<Navigate to="/profile#account" replace />} />

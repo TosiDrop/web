@@ -1,5 +1,6 @@
 import {
   isNativeToken,
+  nftRewardMetadata,
   type ClaimableToken,
   type GetRewardsDto,
   type TokenInfo,
@@ -35,6 +36,7 @@ function toClaimableTokens(
     .map(([assetId, rawAmount]) => {
       const { decimals: tokenDecimals = 0, logo = '', ticker = '' } = tokens[assetId];
       const decimals = Number(tokenDecimals);
+      const nft = nftRewardMetadata(assetId, tokens[assetId]);
       return {
         assetId,
         ticker,
@@ -43,6 +45,7 @@ function toClaimableTokens(
         amount: rawAmount / Math.pow(10, decimals),
         premium,
         native: premium ? isNativeToken(assetId) : false,
+        ...(nft ? { assetType: 'nft' as const, nft } : {}),
       };
     });
 }

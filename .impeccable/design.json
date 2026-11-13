@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T21:42:04.659298+00:00",
+  "title": "Design System: TosiDrop",
+  "extensions": {
+    "colorMeta": {
+      "surface-base": {
+        "displayName": "Surface Base",
+        "role": "neutral"
+      },
+      "surface-raised": {
+        "displayName": "Surface Raised",
+        "role": "neutral"
+      },
+      "surface-overlay": {
+        "displayName": "Surface Overlay",
+        "role": "neutral"
+      },
+      "surface-inset": {
+        "displayName": "Surface Inset",
+        "role": "neutral"
+      },
+      "surface-sidebar": {
+        "displayName": "Surface Sidebar",
+        "role": "neutral"
+      },
+      "border-subtle": {
+        "displayName": "Border Subtle",
+        "role": "neutral"
+      },
+      "border-default": {
+        "displayName": "Border Default",
+        "role": "neutral"
+      },
+      "border-strong": {
+        "displayName": "Border Strong",
+        "role": "neutral"
+      },
+      "text-primary": {
+        "displayName": "Text Primary",
+        "role": "neutral"
+      },
+      "text-secondary": {
+        "displayName": "Text Secondary",
+        "role": "neutral"
+      },
+      "text-muted": {
+        "displayName": "Text Muted",
+        "role": "neutral"
+      },
+      "text-faint": {
+        "displayName": "Text Faint",
+        "role": "neutral"
+      },
+      "cream": {
+        "displayName": "Cream",
+        "role": "neutral"
+      },
+      "cream-light": {
+        "displayName": "Cream Light",
+        "role": "neutral"
+      },
+      "accent": {
+        "displayName": "Accent",
+        "role": "primary"
+      },
+      "accent-light": {
+        "displayName": "Accent Light",
+        "role": "primary"
+      },
+      "accent-deep": {
+        "displayName": "Accent Deep",
+        "role": "primary"
+      },
+      "accent-contrast": {
+        "displayName": "Accent Contrast",
+        "role": "primary"
+      },
+      "status-success": {
+        "displayName": "Status Success",
+        "role": "neutral"
+      },
+      "status-error": {
+        "displayName": "Status Error",
+        "role": "neutral"
+      },
+      "status-pending": {
+        "displayName": "Status Pending",
+        "role": "neutral"
+      },
+      "status-pending-light": {
+        "displayName": "Status Pending Light",
+        "role": "neutral"
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 30px -22px rgba(0, 0, 0, 0.7)",
+        "purpose": "Existing card elevation."
+      },
+      {
+        "name": "pop",
+        "value": "0 24px 48px -24px rgba(0, 0, 0, 0.75)",
+        "purpose": "Existing pop elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "skeleton-shimmer",
+        "value": "tdshimmer 1.4s infinite linear",
+        "purpose": "Loading skeleton; shortened by reduced-motion preference."
+      },
+      {
+        "name": "reduced-motion-duration",
+        "value": "0.01ms",
+        "purpose": "Global reduced-motion animation and transition duration."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Shared content action variant from src/lib/button.ts.",
+      "html": "<button class=\"ds-item ds-button\">Primary action</button>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-button{height:44px;padding:0 20px;border-radius:12px;font-weight:600;background:var(--color-accent);color:var(--color-accent-contrast);border:0}.ds-button:hover{background:var(--color-accent-light)}.ds-button:disabled{opacity:.4;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "description": "Shared content action variant from src/lib/button.ts.",
+      "html": "<button class=\"ds-item ds-button\">Secondary action</button>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-button{height:44px;padding:0 20px;border-radius:12px;font-weight:600;background:rgba(255,255,255,.04);color:var(--color-text-secondary);border:1px solid var(--color-border-default)}.ds-button:hover{background:rgba(255,255,255,.07);color:var(--color-text-primary)}.ds-button:disabled{opacity:.4;cursor:not-allowed}"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "description": "Shared content action variant from src/lib/button.ts.",
+      "html": "<button class=\"ds-item ds-button\">Ghost action</button>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-button{height:44px;padding:0 20px;border-radius:12px;font-weight:600;background:transparent;color:var(--color-text-muted);border:0}.ds-button:hover{background:rgba(255,255,255,.04);color:var(--color-text-primary)}.ds-button:disabled{opacity:.4;cursor:not-allowed}"
+    },
+    {
+      "name": "Danger button",
+      "kind": "button",
+      "description": "Shared content action variant from src/lib/button.ts.",
+      "html": "<button class=\"ds-item ds-button\">Danger action</button>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-button{height:44px;padding:0 20px;border-radius:12px;font-weight:600;background:rgba(239,68,68,.08);color:var(--color-status-error-light);border:1px solid rgba(239,68,68,.3)}.ds-button:hover{background:rgba(239,68,68,.14)}.ds-button:disabled{opacity:.4;cursor:not-allowed}"
+    },
+    {
+      "name": "Raised card",
+      "kind": "card",
+      "description": "Shared raised navy panel.",
+      "html": "<article class=\"ds-item ds-card\">Reward details</article>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-card{padding:20px;border-radius:16px;background:linear-gradient(180deg,#161B2E,#121726);border:1px solid var(--color-border-subtle);color:var(--color-text-secondary);box-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 14px 30px -22px rgba(0,0,0,.7)}"
+    },
+    {
+      "name": "Calendar field",
+      "kind": "input",
+      "description": "Inset field used by calendar controls.",
+      "html": "<label class=\"ds-item ds-label\">Project <input class=\"ds-item ds-field\" placeholder=\"All projects\"></label>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-label{color:var(--color-text-muted)}.ds-field{min-height:44px;border-radius:8px;border:1px solid var(--color-border-default);background:var(--color-surface-inset);padding:0 12px;color:var(--color-text-primary)}"
+    },
+    {
+      "name": "Active navigation link",
+      "kind": "nav",
+      "description": "Sidebar current-page treatment.",
+      "html": "<nav aria-label=\"Main\"><a class=\"ds-item ds-nav\" href=\"/calendar\" aria-current=\"page\">Reward calendar</a></nav>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-nav{display:flex;padding:10px 12px;border-radius:8px;background:rgba(34,211,238,.12);color:var(--color-text-primary);font-weight:500;text-decoration:none}.ds-nav:hover{color:var(--color-accent-light)}"
+    },
+    {
+      "name": "Network label",
+      "kind": "chip",
+      "description": "Noninteractive network badge from the top bar.",
+      "html": "<span class=\"ds-item ds-network\">Mainnet</span>",
+      "css": ".ds-item{font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;transition:background-color .15s,color .15s}.ds-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-item{transition-duration:.01ms}}.ds-network{display:inline-flex;border-radius:9999px;border:1px solid var(--color-border-subtle);background:var(--color-surface-inset);padding:6px 10px;font-size:10px;font-weight:500;letter-spacing:.025em;text-transform:uppercase;color:var(--color-text-muted)}"
+    }
+  ],
+  "narrative": {
+    "overview": "Existing navy depth layers, cream identity and cyan actions with Geist typography. Scan-derived extension documentation; full UI review remains pending.",
+    "keyCharacteristics": [
+      "Navy layered surfaces",
+      "Cream brand identity",
+      "Cyan actions",
+      "Monospaced values"
+    ],
+    "dos": [
+      "Preserve the existing logo and palette.",
+      "Maintain keyboard focus and reduced-motion support."
+    ],
+    "donts": [
+      "Replace the incumbent visual identity.",
+      "Claim mobile or production verification from synthetic desktop flows."
+    ]
+  }
+}
