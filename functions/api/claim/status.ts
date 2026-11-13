@@ -16,7 +16,7 @@ function normalizeStatus(raw: unknown): {
   reason?: string;
 } {
   if (raw === null || raw === undefined || typeof raw !== 'object') {
-    return { kind: 'processing' };
+    throw new Error('Missing VM claim status');
   }
 
   const r = raw as Record<string, unknown>;
@@ -34,10 +34,7 @@ function normalizeStatus(raw: unknown): {
     case 3:
       return { kind: 'success', txHash: txHash ?? '' };
     default:
-      return {
-        kind: 'failure',
-        reason: `Unknown status code: ${code ?? 'missing'}${txHash ? ` (tx: ${txHash})` : ''}`,
-      };
+      throw new Error(`Unknown VM claim status: ${code ?? 'missing'}`);
   }
 }
 

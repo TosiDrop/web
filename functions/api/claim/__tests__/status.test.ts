@@ -58,13 +58,11 @@ describe('GET /api/claim/status', () => {
     expect(await res.json()).toEqual({ kind: 'success', txHash: 'final' });
   });
 
-  it('maps unknown status codes to failure', async () => {
-    vmGet.mockResolvedValueOnce({ status: 9, tx_hash: 'abc' });
+  it.each([null, undefined, '', [], {}, { status: 9 }, { status: '1' }])('returns a retriable error for malformed status %j', async (raw) => {
+    vmGet.mockResolvedValueOnce(raw);
     const res = await onRequestGet(makeContext(url()));
-    expect(await res.json()).toEqual({
-      kind: 'failure',
-      reason: 'Unknown status code: 9 (tx: abc)',
-    });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: 'Failed to fetch claim status' });
   });
 
   it('returns 400 when requestId is missing', async () => {
