@@ -3,11 +3,13 @@ import {
   vmConfig,
   vmGet,
   deploymentCacheKey,
+  deploymentNetwork,
   vmConfigurationErrorResponse,
   errorResponse,
   optionsResponse,
 } from '../services/vmClient';
 import { readResponseBodyWithLimit } from '../../src/shared/readLimitedBody';
+import { fetchRegistryLogo } from '../../src/shared/tokenRegistry';
 
 const MAX_ID_LEN = 120;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -23,6 +25,22 @@ function hasBucket(env: Env): env is Env & { TOKEN_IMAGES: R2Bucket } {
 
 function redirect(location: string): Response {
   return new Response(null, { status: 302, headers: { Location: location } });
+}
+
+const IMMUTABLE = 'public, max-age=31536000, immutable';
+
+function image(body: BodyInit, contentType: string): Response {
+  return new Response(body, { headers: { 'Content-Type': contentType, 'Cache-Control': IMMUTABLE } });
+}
+
+// Fallback for logos that are missing from VM metadata or broken upstream.
+async function registryLogo(env: Env, assetId: string): Promise<ArrayBuffer | null> {
+  try {
+    return await fetchRegistryLogo(assetId, deploymentNetwork(env), MAX_IMAGE_BYTES);
+  } catch (err) {
+    console.error('tokenImage registry error:', err);
+    return null;
+  }
 }
 
 // Only URLs registered in token metadata are ever fetched — the caller cannot
@@ -56,52 +74,52 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     console.error('tokenImage metadata error:', err);
     return errorResponse('Failed to resolve token', 500, origin);
   }
-  if (!logo) {
-    return errorResponse('Unknown token or no image', 404, origin);
-  }
-
-  if (!hasBucket(env)) {
-    return redirect(logo);
-  }
+  const bucket = hasBucket(env) ? env.TOKEN_IMAGES : null;
+  // Without a cache there is nothing to fill, so send known logos straight to their source.
+  if (logo && !bucket) return redirect(logo);
 
   const objectKey = deploymentCacheKey(env, id);
 
-  try {
-    const cached = await env.TOKEN_IMAGES.get(objectKey);
-    if (cached) {
-      return new Response(cached.body, {
-        headers: {
-          'Content-Type': cached.httpMetadata?.contentType ?? 'application/octet-stream',
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
-      });
+  if (bucket) {
+    try {
+      const cached = await bucket.get(objectKey);
+      if (cached) return image(cached.body, cached.httpMetadata?.contentType ?? 'application/octet-stream');
+    } catch (err) {
+      console.error('tokenImage R2 read error:', err);
     }
-  } catch (err) {
-    console.error('tokenImage R2 read error:', err);
   }
 
-  try {
-    const upstream = await fetch(logo, { signal: AbortSignal.timeout(10_000) });
-    const contentType = upstream.headers.get('Content-Type') ?? '';
-    if (!upstream.ok || !contentType.startsWith('image/')) {
-      return redirect(logo);
+  if (logo && bucket) {
+    try {
+      const upstream = await fetch(logo, { signal: AbortSignal.timeout(10_000) });
+      const contentType = upstream.headers.get('Content-Type') ?? '';
+      if (upstream.ok && contentType.startsWith('image/')) {
+        const bytes = await readResponseBodyWithLimit(upstream, MAX_IMAGE_BYTES);
+        // An oversized logo is still a real logo; let the browser load it from the source.
+        if (!bytes) return redirect(logo);
+        await bucket.put(objectKey, bytes, { httpMetadata: { contentType } });
+        return image(bytes, contentType);
+      }
+    } catch (err) {
+      console.error('tokenImage upstream error:', err);
     }
-    const bytes = await readResponseBodyWithLimit(upstream, MAX_IMAGE_BYTES);
-    if (!bytes) {
-      return redirect(logo);
-    }
-
-    await env.TOKEN_IMAGES.put(objectKey, bytes, { httpMetadata: { contentType } });
-    return new Response(bytes, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
-  } catch (err) {
-    console.error('tokenImage upstream error:', err);
-    return redirect(logo);
   }
+
+  const registered = await registryLogo(env, id);
+  if (registered) {
+    try {
+      await bucket?.put(objectKey, registered, { httpMetadata: { contentType: 'image/png' } });
+    } catch (err) {
+      console.error('tokenImage R2 write error:', err);
+    }
+    return image(registered, 'image/png');
+  }
+
+  if (logo) return redirect(logo);
+  const missing = errorResponse('Unknown token or no image', 404, origin);
+  // Tokens without any image ask again at most daily.
+  missing.headers.set('Cache-Control', 'public, max-age=86400');
+  return missing;
 };
 
 export const onRequestOptions: PagesFunction<Env> = async ({ request }) =>
