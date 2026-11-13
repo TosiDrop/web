@@ -7,6 +7,8 @@ import { StateMessage } from '@/features/profile/components/StateMessage';
 import { useTokenMap } from '@/features/projects/api/projects.queries';
 import { tickerFor, type TokenInfo } from '@/features/history/api/history.queries';
 import { usePublicTokens, type PublicMarketPrice } from '../api/tokens.queries';
+import { discoverSources, sortTokens, tokenActivity, assetKey, type DiscoverSort } from '../utils/discover';
+import { usePoolData } from '@/features/analytics/hooks/usePoolData';
 import { describeDistribution } from '@/features/projects/utils/describeDistribution';
 import { truncateHash } from '@/utils/format';
 import { MarkdownContent } from '@/components/common/MarkdownContent';
@@ -84,19 +86,35 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
   );
 }
 
+const SORT_LABELS: Record<DiscoverSort, string> = {
+  popular: 'Most popular',
+  recent: 'Recently added',
+  name: 'Name',
+};
+const CONTROL = 'h-11 rounded-xl border border-border-subtle bg-surface-inset px-3 text-sm text-text-primary outline-none focus:border-accent/50';
+
 export function TokenCatalog() {
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<DiscoverSort>('popular');
+  const [sourceId, setSourceId] = useState('');
   const { data, isLoading, error, refetch } = usePublicTokens();
   const { data: fallbackTokens } = useTokenMap();
+  // Distribution data drives ranking and the pool/project filter; without it the catalog stays searchable.
+  const { data: poolData } = usePoolData();
   const tokens = data?.tokens ?? fallbackTokens;
+  const activity = useMemo(() => poolData && tokenActivity(poolData.distributions), [poolData]);
+  const sources = useMemo(() => (poolData ? discoverSources(poolData.rows) : []), [poolData]);
+  const source = sources.find((s) => s.id === sourceId);
   const visibleTokens = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return (data?.projects ?? []).filter((token) => {
+    const matches = (data?.projects ?? []).filter((token) => {
+      if (source && !source.tokens.has(assetKey(token.tokenId))) return false;
       if (!query) return true;
       const ticker = tickerFor(token.tokenId, tokens?.[token.tokenId]);
       return [token.name, token.description, ticker, token.tokenId].some((value) => value.toLowerCase().includes(query));
     });
-  }, [data?.projects, search, tokens]);
+    return activity ? sortTokens(matches, sort, activity) : matches;
+  }, [data?.projects, search, tokens, source, activity, sort]);
 
   if (isLoading) {
     return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading tokens">{[0, 1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton-shimmer h-56 rounded-2xl" />)}</div>;
@@ -113,11 +131,37 @@ export function TokenCatalog() {
 
   return (
     <div className="space-y-5">
-      <label className="relative block max-w-md">
-        <span className="sr-only">Search tokens</span>
-        <IconSearch size={16} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50" />
-      </label>
+      <div className="flex flex-wrap gap-3">
+        <label className="relative block w-full max-w-md">
+          <span className="sr-only">Search tokens</span>
+          <IconSearch size={16} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50" />
+        </label>
+        {activity && (
+          <>
+            <label>
+              <span className="sr-only">Sort tokens</span>
+              <select value={sort} onChange={(event) => setSort(event.target.value as DiscoverSort)} className={CONTROL}>
+                {(Object.keys(SORT_LABELS) as DiscoverSort[]).map((key) => <option key={key} value={key}>{SORT_LABELS[key]}</option>)}
+              </select>
+            </label>
+            <label>
+              <span className="sr-only">Filter by pool or project</span>
+              <select value={sourceId} onChange={(event) => setSourceId(event.target.value)} className={`${CONTROL} max-w-[16rem]`}>
+                <option value="">All pools and projects</option>
+                {(['pool', 'project'] as const).map((kind) => {
+                  const group = sources.filter((s) => s.kind === kind);
+                  return group.length > 0 && (
+                    <optgroup key={kind} label={kind === 'pool' ? 'Pools' : 'Projects'}>
+                      {group.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                    </optgroup>
+                  );
+                })}
+              </select>
+            </label>
+          </>
+        )}
+      </div>
       {data.metadataDegraded && (
         <p role="status" className="text-xs text-text-muted">
           Some token details are temporarily unavailable; the catalog is showing the data it could retrieve.
@@ -128,7 +172,7 @@ export function TokenCatalog() {
           {visibleTokens.map((token) => <TokenCard key={token.id} token={token} ticker={tickerFor(token.tokenId, tokens?.[token.tokenId])} info={tokens?.[token.tokenId]} marketPrice={data.marketPrices?.[token.tokenId]} />)}
         </div>
       ) : (
-        <StateMessage title="No matching tokens" message="Try a different name, ticker, or token ID." />
+        <StateMessage title="No matching tokens" message={source ? 'Try a different search, pool, or project.' : 'Try a different name, ticker, or token ID.'} />
       )}
     </div>
   );
