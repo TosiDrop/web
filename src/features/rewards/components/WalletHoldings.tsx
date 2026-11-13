@@ -71,7 +71,7 @@ export function WalletHoldings({ summary, walletLovelace, stakeAddress, totalUsd
     <section id="holdings" aria-labelledby="wallet-holdings-title" className="@container mt-6 border-t border-border-subtle pt-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h3 id="wallet-holdings-title" className="text-base font-medium text-text-primary">
-          Your tokens <span className="ml-1 font-mono text-sm text-text-muted">{summary.sources?.assets === false ? '—' : summary.holdings.length}</span>
+          Your tokens <span className="ml-1 text-sm text-text-muted tabular-nums">{summary.sources?.assets === false ? '—' : summary.holdings.length}</span>
         </h3>
         <button type="button" disabled={summary.sources?.assets === false && walletLovelace === null}
           onClick={() => downloadCsv(`tosidrop-wallet-holdings-${new Date().toISOString().slice(0, 10)}.csv`, walletHoldingsCsvRows({

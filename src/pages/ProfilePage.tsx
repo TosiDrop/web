@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { IconArrowRight, IconBookmark, IconChartLine, IconClock, IconGift, IconSettings, IconWallet } from '@tabler/icons-react';
+import { IconBookmark, IconChartLine, IconClock, IconGift, IconSettings, IconWallet } from '@tabler/icons-react';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { GradientButton } from '@/components/common/GradientButton';
@@ -52,11 +52,11 @@ function SectionHeading({
 }) {
   return (
     <div className="mb-4 flex items-start gap-3">
-      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent/[0.1] text-accent-light">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-light">
         <Icon size={18} stroke={1.6} aria-hidden />
       </span>
       <div>
-        <h2 id={id} className="text-xl font-semibold tracking-tight text-text-primary">{title}</h2>
+        <h2 id={id} className="text-xl font-semibold text-text-primary">{title}</h2>
         {description && <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">{description}</p>}
       </div>
     </div>
@@ -80,18 +80,18 @@ function AccountSection() {
       />
       <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <Card as="section" className="p-5">
-          <p className="label-eyebrow">Connected wallet</p>
+          <p className="field-label">Connected wallet</p>
           <p className="mt-2 text-base font-medium text-text-primary">
             {connected ? walletName ?? 'Wallet' : 'Not connected'}
           </p>
           {connected && stakeAddress ? (
             <dl className="mt-5 space-y-4">
               <div>
-                <dt className="label-eyebrow">Network</dt>
+                <dt className="field-label">Network</dt>
                 <dd className="mt-1.5 font-mono text-xs text-text-secondary">{getNetworkLabel(networkId)}</dd>
               </div>
               <div>
-                <dt className="label-eyebrow">Stake address</dt>
+                <dt className="field-label">Stake address</dt>
                 <dd className="mt-1.5 flex items-center gap-2">
                   <span className="min-w-0 break-all font-mono text-xs leading-5 text-text-secondary">{stakeAddress}</span>
                   <CopyButton value={stakeAddress} ariaLabel="Copy stake address" />
@@ -125,7 +125,7 @@ function AccountSection() {
             <>
               {profile?.value?.name && (
                 <div className="mb-4 flex items-center justify-between rounded-lg bg-surface-inset px-3 py-2">
-                  <span className="label-eyebrow">Current</span>
+                  <span className="field-label">Current</span>
                   <span className="text-sm font-medium text-text-primary">{profile.value.name}</span>
                 </div>
               )}
@@ -143,9 +143,9 @@ function AccountSection() {
 function ConnectPortfolioPrompt() {
   const openModal = useOnboardingStore((state) => state.openModal);
   return (
-    <Card className="relative overflow-hidden border-accent/20 bg-[radial-gradient(circle_at_85%_0%,rgba(103,232,249,0.12),transparent_34%),rgba(17,26,47,0.78)] px-6 py-10 sm:px-10 sm:py-14">
-      <div className="relative max-w-2xl">
-        <h2 className="text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">Connect your wallet</h2>
+    <Card className="px-6 py-10 sm:px-10 sm:py-14">
+      <div className="max-w-2xl">
+        <h2 className="text-2xl font-semibold text-text-primary sm:text-3xl sm:tracking-tight">Connect your wallet</h2>
         <p className="mt-3 max-w-xl text-sm leading-6 text-text-secondary">
           Connect a wallet to view your holdings, claim history, and saved tokens.
         </p>
@@ -200,23 +200,12 @@ export default function ProfilePage() {
 
   return (
     <div ref={pageRef} className="space-y-8 [&_section]:scroll-mt-24">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">Your profile</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
               Wallet balances, claim history, and saved tokens.
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link to="/claim" className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-contrast transition hover:bg-accent-light">
-              <IconGift size={13} aria-hidden /> Claim rewards
-            </Link>
-            <Link to="/analytics" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
-              Analytics <IconArrowRight size={13} aria-hidden />
-            </Link>
-            <Link to="/profile#saved-assets" className="inline-flex items-center gap-1.5 rounded-full border border-border-default px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent/40 hover:text-text-primary">
-              <IconBookmark size={13} aria-hidden /> Favorites
-            </Link>
           </div>
       </header>
 
@@ -230,7 +219,7 @@ export default function ProfilePage() {
         ))}
       </nav>
       {rewardTokenCount > 0 && (
-        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/30 bg-accent/[0.08] px-4 py-3">
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-line bg-accent-soft px-4 py-3">
           <p className="flex items-center gap-2 text-sm text-text-primary">
             <IconGift size={18} stroke={1.7} className="text-accent-light" aria-hidden />
             {rewardTokenCount} reward token{rewardTokenCount === 1 ? '' : 's'} ready to claim

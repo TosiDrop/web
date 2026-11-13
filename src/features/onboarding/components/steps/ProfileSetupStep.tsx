@@ -15,7 +15,7 @@ const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const AVATAR_TARGET_SIZE = 256; // square crop
 
 const FIELD_CLASS =
-  'w-full rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
+  'w-full rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 async function resizeAvatar(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file);
@@ -95,7 +95,7 @@ export function ProfileSetupStep() {
 
   async function handleFinish() {
     if (!wallet || !stakeAddress) {
-      setSaveError('Wallet disconnected — reconnect and try again.');
+      setSaveError('Wallet disconnected. Reconnect and try again.');
       return;
     }
     setSaving(true);
@@ -145,7 +145,7 @@ export function ProfileSetupStep() {
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadingAvatar}
             aria-label="Upload profile picture"
-            className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border-default bg-surface-inset transition hover:border-accent/50 disabled:opacity-60"
+            className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border-default bg-surface-inset transition hover:border-accent-line disabled:opacity-60"
           >
             {profileAvatar ? (
               <img src={profileAvatar} alt="" className="h-full w-full object-cover" />
@@ -157,7 +157,7 @@ export function ProfileSetupStep() {
               />
             )}
             {profileAvatar && (
-              <span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
+              <span className="absolute inset-0 flex items-center justify-center bg-scrim opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
                 <IconCamera size={20} className="text-text-primary" aria-hidden />
               </span>
             )}
@@ -178,7 +178,7 @@ export function ProfileSetupStep() {
 
           {uploadingAvatar && (
             <div
-              className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50"
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-scrim"
               role="status"
               aria-label="Processing image"
             >

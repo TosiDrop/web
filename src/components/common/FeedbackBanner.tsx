@@ -22,19 +22,19 @@ const toneStyles: Record<NonNullable<FeedbackBannerProps['tone']>, ToneStyle> = 
   error: {
     icon: IconAlertTriangle,
     color: 'text-status-error-light',
-    border: 'border-status-error/20',
+    border: 'border-status-error-line',
     message: 'text-status-error-light',
   },
   success: {
     icon: IconCircleCheck,
     color: 'text-status-success-light',
-    border: 'border-status-success/20',
+    border: 'border-status-success-line',
     message: 'text-status-success-light',
   },
   info: {
     icon: IconInfoCircle,
     color: 'text-accent-light',
-    border: 'border-accent/25',
+    border: 'border-accent-line',
     message: 'text-accent-light',
   },
 };

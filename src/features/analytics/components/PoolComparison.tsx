@@ -24,25 +24,25 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
       {row.logo && !failed ? (
         <img src={row.logo} alt="" onError={() => setFailed(true)} className="h-9 w-9 shrink-0 rounded-full border border-border-subtle bg-surface-inset object-cover" />
       ) : (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-[10px] text-slate-300">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset text-2xs text-text-secondary">
           {initials}
         </span>
       )}
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 text-sm font-medium text-white">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-text-primary">
           <span className="truncate">{row.ticker || row.name || 'Pool'}</span>
           {row.kind === 'project' && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-violet-500/30 bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-medium text-violet-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border-subtle bg-surface-inset px-1.5 py-0.5 text-2xs font-medium text-text-secondary">
               <IconBriefcase size={11} stroke={1.8} /> Project
             </span>
           )}
           {row.kind === 'pool' && row.partner === true && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-status-success-line bg-status-success-soft px-1.5 py-0.5 text-2xs font-medium text-status-success-light">
               <IconShieldCheck size={11} stroke={1.8} /> Partner
             </span>
           )}
         </p>
-        <p className="truncate text-xs text-slate-500">{row.name}</p>
+        <p className="truncate text-xs text-text-muted">{row.name}</p>
       </div>
     </div>
   );
@@ -54,7 +54,7 @@ function PoolCell({ row }: { row: PoolComparisonRow }) {
 }
 
 function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] }) {
-  if (!offerings.length) return <span className="text-xs text-slate-600">—</span>;
+  if (!offerings.length) return <span className="text-xs text-text-muted">—</span>;
   return (
     <ul className="flex flex-wrap gap-1.5">
       {offerings.map((o) => {
@@ -62,14 +62,14 @@ function Offerings({ offerings }: { offerings: PoolComparisonRow['offerings'] })
         return (
           <li
             key={o.id}
-            className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-[11px] text-slate-200"
+            className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-2xs text-text-secondary"
             title={`Rule ${o.id}${o.target ? ` · ${o.target}` : ''}${o.model ? ` · model ${o.model}` : ''} · ${
               o.promise ? 'promised' : 'distributed'
             } per epoch${eligibility ? ` · ${eligibility}` : ''}`}
           >
-            <span className="text-emerald-300/95">{fmt(o.amountPerEpoch)}</span>
+            <span className="text-status-success-light">{fmt(o.amountPerEpoch)}</span>
             {o.ticker}
-            {eligibility && <span className="text-slate-500">· {eligibility}</span>}
+            {eligibility && <span className="text-text-muted">· {eligibility}</span>}
           </li>
         );
       })}
@@ -87,7 +87,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
         if (!group.length) return null;
         return (
           <section key={kind} aria-label={kind === 'pool' ? 'Stake pools' : 'Projects'} className="space-y-2.5">
-            <h3 className="label-eyebrow">{kind === 'pool' ? 'Stake pools' : 'Projects'}</h3>
+            <h3 className="field-label">{kind === 'pool' ? 'Stake pools' : 'Projects'}</h3>
             {group.map((row) => {
               const delegators = row.delegators;
               const scale = delegators === null ? null : (delegators / maxDelegators) * 100;
@@ -96,7 +96,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
                   <PoolCell row={row} />
                   <div>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="label-eyebrow">Delegators</span>
+                      <span className="field-label">Delegators</span>
                       <span className="font-mono text-xs tabular-nums text-text-primary">
                         {delegators === null ? 'Not indexed' : delegators.toLocaleString()}
                       </span>
@@ -115,7 +115,7 @@ export function PoolComparisonTable({ rows }: { rows: PoolComparisonRow[] }) {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="label-eyebrow mb-2">Tokens per epoch</p>
+                    <p className="field-label mb-2">Tokens per epoch</p>
                     <Offerings offerings={row.offerings} />
                   </div>
                 </article>
@@ -157,27 +157,27 @@ export function PoolComparison() {
   return (
     <div className="space-y-4">
       <label className="relative block max-w-xs">
-        <IconSearch size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <IconSearch size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter pools or tokens"
           aria-label="Filter pools"
-          className="w-full rounded-lg border border-border-subtle bg-surface-inset py-2 pl-9 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none"
+          className="w-full rounded-lg border border-border-subtle bg-surface-inset py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-line focus:outline-none"
         />
       </label>
       {data && data.unavailable.length > 0 && (
-        <p role="status" className="text-xs text-slate-500">
-          {data.unavailable.join(', ')} unavailable right now — those columns show “—”.
+        <p role="status" className="text-xs text-text-muted">
+          {data.unavailable.join(', ')} unavailable right now, so those columns show “—”.
         </p>
       )}
       {rows.length ? (
         <>
           {rows.some((row) => row.kind === 'pool' && row.delegators !== null) && (
             <section className="card-premium overflow-hidden" aria-labelledby="delegator-distribution">
-              <div className="border-b border-border-subtle/60 px-5 py-4">
-                <p className="label-eyebrow">Network shape</p>
+              <div className="border-b border-border-subtle px-5 py-4">
+                <p className="field-label">Network shape</p>
                 <h3 id="delegator-distribution" className="mt-1 text-base font-medium text-text-primary">
                   Delegators across tracked pools
                 </h3>
@@ -206,7 +206,7 @@ export function PoolComparison() {
           <PoolComparisonTable rows={rows} />
         </>
       ) : (
-        <p className="card-premium px-6 py-10 text-center text-sm text-slate-400">
+        <p className="card-premium px-6 py-10 text-center text-sm text-text-muted">
           {allRows.length ? 'No pools match that filter.' : 'No pools are registered on this network yet.'}
         </p>
       )}

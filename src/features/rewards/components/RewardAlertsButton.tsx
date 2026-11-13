@@ -14,7 +14,7 @@ export function RewardAlertsButton({ stakeAddress }: { stakeAddress: string }) {
       <PopoverButton
         type="button"
         aria-label={buttonLabel}
-        className="relative flex h-10 min-w-10 items-center justify-center rounded-full border border-border-default bg-white/[0.03] px-2 text-text-secondary transition hover:bg-white/[0.06] hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="relative flex h-10 min-w-10 items-center justify-center rounded-full border border-border-default bg-tint px-2 text-text-secondary transition hover:bg-tint-strong hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <IconBell size={17} stroke={1.7} aria-hidden />
         {count !== null && count > 0 && (
@@ -43,7 +43,7 @@ export function RewardAlertsButton({ stakeAddress }: { stakeAddress: string }) {
           <button
             type="button"
             onClick={() => { if (browserEnabled) disableBrowserAlerts(); else void enableBrowserAlerts(); }}
-            className="mt-3 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+            className="mt-3 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent-line hover:text-text-primary"
           >
             {browserEnabled ? 'Disable browser alerts' : 'Enable browser alerts'}
           </button>

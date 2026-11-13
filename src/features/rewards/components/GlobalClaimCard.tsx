@@ -60,7 +60,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
   return (
     <Card className="p-5">
       <form onSubmit={handleSubmit} noValidate>
-        <label htmlFor="address-input" className="label-eyebrow">
+        <label htmlFor="address-input" className="field-label">
           Stake address or $handle
         </label>
         <div className="mt-2.5 flex flex-col gap-2.5 sm:flex-row">
@@ -75,7 +75,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
             placeholder="$handle or stake1…"
             aria-invalid={!!error}
             aria-describedby={error ? 'address-error' : undefined}
-            className="h-11 min-w-0 rounded-xl sm:flex-1 border border-border-subtle bg-surface-inset px-4 text-sm text-text-primary placeholder:text-text-muted focus:border-accent/50 aria-invalid:border-status-error/60"
+            className="h-11 min-w-0 rounded-xl sm:flex-1 border border-border-subtle bg-surface-inset px-4 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-line aria-invalid:border-status-error"
           />
           <GradientButton type="submit" disabled={isLoading || !manualInput.trim()}>
             {isLoading ? 'Looking up…' : 'Look up rewards'}
@@ -106,7 +106,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
                 >
                   Previous
                 </button>
-                <span className="text-[11px] text-text-muted">Page {handlePage + 1} of {handlePageCount}</span>
+                <span className="text-2xs text-text-muted">Page {handlePage + 1} of {handlePageCount}</span>
                 <button
                   type="button"
                   className="text-xs text-accent-light disabled:text-text-muted"
@@ -130,7 +130,7 @@ export function GlobalClaimCard({ onLookup, isLoading, activeAddress, displayNam
         <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3">
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-text-secondary">{displayName ?? walletName ?? 'Connected wallet'}</p>
-            <p className="font-mono text-[11px] text-text-muted">{truncateHash(stakeAddress, 10, 6)}</p>
+            <p className="font-mono text-2xs text-text-muted">{truncateHash(stakeAddress, 10, 6)}</p>
           </div>
           <GradientButton variant="ghost" size="sm" onClick={handleWalletLookup} disabled={isLoading}>
             Use connected wallet
