@@ -58,7 +58,7 @@
     "oxlint": "^1.90.0",
     "oxlint-tsgolint": "^7.0.2003",
     "typescript": "~7.0.2",
-    "vite": "^8.3.5",
+    "vite": "^8.3.7",
     "vite-plugin-node-polyfills": "^0.28.0",
     "vitest": "^4.1.12"
   },
