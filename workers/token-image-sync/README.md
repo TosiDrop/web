@@ -6,7 +6,9 @@ Pages cannot run cron triggers (see issue #189).
 
 Each run fetches at most 40 new images, resuming alphabetically from a KV
 cursor (`__internal:image_sync_cursor`), so the cache converges over a few
-nights; the proxy lazy-fills any gaps in the meantime.
+nights; the proxy lazy-fills any gaps in the meantime. When a token has no
+logo, or its logo URL is broken, the logo registered in the Cardano Token
+Registry is stored instead.
 
 ## Deploy
 

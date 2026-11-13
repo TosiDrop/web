@@ -6,8 +6,10 @@ export function MarkdownContent({ content, className }: { content: string; class
     <div className={cn('space-y-3 break-words text-sm leading-6 text-text-secondary [overflow-wrap:anywhere]', className)}>
       <ReactMarkdown
         skipHtml
+        unwrapDisallowed
         allowedElements={['p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'code', 'pre', 'blockquote', 'h2', 'h3', 'h4', 'br', 'hr']}
         components={{
+          pre: ({ children }) => <pre className="max-w-full overflow-x-auto">{children}</pre>,
           a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-light underline underline-offset-2 hover:text-text-primary">{children}</a>,
           ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
           ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,

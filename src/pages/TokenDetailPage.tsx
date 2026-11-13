@@ -4,6 +4,7 @@ import { useWalletStore } from '@/store/wallet-state';
 import type { WalletSummary } from '@/features/rewards/types/walletSummary';
 import { Link, useParams } from 'react-router-dom';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
+import { DataUnavailable } from '@/components/common/DataUnavailable';
 import { Card } from '@/components/common/Card';
 import { CopyButton } from '@/components/common/CopyButton';
 import { MarkdownContent } from '@/components/common/MarkdownContent';
@@ -25,7 +26,7 @@ export default function TokenDetailPage() {
   const stakeAddress = useWalletStore((state) => state.stakeAddress);
   const walletData = queryClient.getQueryData<{ summary: WalletSummary }>(['wallet-summary', DEPLOYMENT_NETWORK, stakeAddress]);
   const holding = walletData?.summary.holdings.find((item) => item.unit === unit);
-  const { data: catalog, isLoading } = usePublicTokens();
+  const { data: catalog, isLoading, isError, refetch } = usePublicTokens();
   const { data: tokenMap } = useTokenMap();
   const { data: prices } = useMarketPrices(assetId ? [assetId, unit] : []);
   const preferences = usePreferences();
@@ -85,7 +86,9 @@ export default function TokenDetailPage() {
         </p>
       </Card>
 
-      {project ? (
+      {isError ? (
+        <DataUnavailable title="Token program details unavailable" message="Could not load the token catalog." onRetry={() => { void refetch(); }} />
+      ) : project ? (
         <Card className="space-y-4 p-5">
           <h2 className="text-lg font-semibold text-text-primary">About this token</h2>
           <MarkdownContent content={project.description} />

@@ -10,4 +10,9 @@ describe('MarkdownContent', () => {
     expect(screen.getByText('item').tagName).toBe('LI');
     expect(document.querySelector('img')).toBeNull();
   });
+  it('preserves unsupported heading text', () => {
+    render(<MarkdownContent content={'# Eligibility'} />);
+    expect(screen.getByText('Eligibility')).toBeInTheDocument();
+  });
+
 });

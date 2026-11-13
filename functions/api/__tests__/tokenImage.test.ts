@@ -11,10 +11,13 @@ import { onRequestGet } from '../tokenImage';
 
 type Ctx = Parameters<typeof onRequestGet>[0];
 
+const ASSET = `${'ab'.repeat(28)}.4d494e`;
 const TOKENS = {
   'pol.aaaa': { logo: 'https://img.example/aaaa.png' },
   'pol.data': { logo: 'data:image/png;base64,xyz' },
+  [ASSET]: { logo: 'https://img.example/broken.png' },
 };
+const REGISTRY_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function fakeKv(tokens: unknown = TOKENS) {
   return {
@@ -148,6 +151,61 @@ describe('GET /api/tokenImage', () => {
     expect(bucket.put).not.toHaveBeenCalled();
     expect(cancel).toHaveBeenCalledTimes(1);
     expect(pulls).toBeLessThan(6);
+  });
+
+  describe('Cardano Token Registry fallback', () => {
+    function stubFetch(registryHasLogo: boolean) {
+      const fetchMock = vi.fn(async (url: string) => {
+        if (url.includes('/metadata/')) {
+          return registryHasLogo
+            ? new Response(JSON.stringify({ logo: { value: btoa(String.fromCharCode(...REGISTRY_PNG)) } }))
+            : new Response(null, { status: 204 });
+        }
+        return new Response('not found', { status: 404 });
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    }
+
+    it('stores and serves the registry logo when the token logo is broken', async () => {
+      const fetchMock = stubFetch(true);
+      const bucket = fakeR2();
+      const res = await onRequestGet(ctx(`?id=${ASSET}`, { TOKEN_IMAGES: bucket }));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('image/png');
+      expect(new Uint8Array(await res.arrayBuffer())).toEqual(REGISTRY_PNG);
+      expect(fetchMock).toHaveBeenCalledWith(
+        `https://metadata.world.dev.cardano.org/metadata/${ASSET.replace('.', '')}/properties/logo`,
+        expect.anything(),
+      );
+      expect(bucket.put).toHaveBeenCalledWith(`${ASSET}:preview`, expect.anything(), {
+        httpMetadata: { contentType: 'image/png' },
+      });
+    });
+
+    it('serves a registry logo for a token with no logo, even without R2', async () => {
+      stubFetch(true);
+      const res = await onRequestGet(ctx(`?id=${'cd'.repeat(28)}.4d494e`, {}));
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Content-Type')).toBe('image/png');
+    });
+
+    it('302s to the broken logo when the registry has nothing', async () => {
+      stubFetch(false);
+      const bucket = fakeR2();
+      const res = await onRequestGet(ctx(`?id=${ASSET}`, { TOKEN_IMAGES: bucket }));
+      expect(res.status).toBe(302);
+      expect(res.headers.get('Location')).toBe('https://img.example/broken.png');
+      expect(bucket.put).not.toHaveBeenCalled();
+    });
+
+    it('404s for a day when neither source has an image', async () => {
+      stubFetch(false);
+      const res = await onRequestGet(ctx(`?id=${'cd'.repeat(28)}.4d494e`, { TOKEN_IMAGES: fakeR2() }));
+      expect(res.status).toBe(404);
+      expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+    });
   });
 
   it('falls back to the VM API when the KV tokens cache is empty', async () => {

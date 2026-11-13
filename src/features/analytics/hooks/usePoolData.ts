@@ -3,12 +3,19 @@ import { apiClient } from '@/api/client';
 import { DEPLOYMENT_NETWORK } from '@/config/network';
 import type { TokenMap } from '@/features/history/api/history.queries';
 import type { GetPoolsResponse } from '@/features/rewards/api/pools.queries';
-import { buildPoolComparison, type PoolComparisonRow } from '@/features/analytics/utils/poolComparison';
+import {
+  buildPoolComparison,
+  flattenDistributions,
+  type PoolComparisonRow,
+  type VmDistribution,
+} from '@/features/analytics/utils/poolComparison';
 
 export type OptionalSource = 'partnerPools' | 'tokens';
 
 export interface PoolData {
   rows: PoolComparisonRow[];
+  /** Every distribution rule, enabled or not, for views that rank tokens. */
+  distributions: VmDistribution[];
   /** Optional sources that failed this fetch; their columns render as unknown. */
   unavailable: OptionalSource[];
 }
@@ -46,6 +53,7 @@ export function usePoolData() {
           tokens,
           network: DEPLOYMENT_NETWORK,
         }),
+        distributions: flattenDistributions(distributions),
         unavailable,
       };
     },

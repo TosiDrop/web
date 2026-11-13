@@ -73,6 +73,7 @@ export function FavoritesTab() {
     toggleDislike,
     isLoading,
     hasLocalDraft,
+    preferencesReady,
   } = usePreferences();
   const { error: loadError, refetch } = usePreferencesQuery(stakeAddress);
 
@@ -91,7 +92,7 @@ export function FavoritesTab() {
         <DataUnavailable title="Saved assets are catching up" message="Your saved token preferences are not available yet. We will keep retrying this view." onRetry={() => { void refetch(); }} />
       ) : (
         <>
-          {loadError && <p role="status" className="rounded-lg border border-border-default px-4 py-3 text-xs text-text-muted">Showing changes saved in this browser. Save them to your wallet profile when the preferences service returns.</p>}
+          {loadError && <p role="status" className="rounded-lg border border-border-default px-4 py-3 text-xs text-text-muted">Showing changes saved in this browser. Save them to your wallet profile when the preferences service returns. <button type="button" className="underline" onClick={() => { void refetch(); }}>Retry</button></p>}
           <FavoritesSaveBar />
           {isLoading ? (
             <SkeletonRows />
@@ -110,6 +111,7 @@ export function FavoritesTab() {
                       token={token}
                       control={
                         <FavoriteStarButton
+                          disabled={!preferencesReady}
                           active={isFavorite(token.assetId)}
                           onToggle={() => toggleFavorite(token)}
                         />
@@ -136,6 +138,7 @@ export function FavoritesTab() {
                         token={token}
                         control={
                           <DislikeButton
+                            disabled={!preferencesReady}
                             active={isDisliked(token.assetId)}
                             onToggle={() => toggleDislike(token)}
                           />

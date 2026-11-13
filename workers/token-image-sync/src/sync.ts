@@ -21,11 +21,17 @@ export interface SyncDeps {
   fetchImage: (
     url: string,
   ) => Promise<{ ok: boolean; contentType: string; bytes: ArrayBuffer } | null>;
+  /** Cardano Token Registry logo (PNG) for tokens whose own logo is missing or broken. */
+  fetchRegistryLogo?: (assetId: string) => Promise<ArrayBuffer | null>;
   network?: string;
   limit?: number;
 }
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function remoteLogo(logo: unknown): string | null {
+  return typeof logo === 'string' && /^https?:\/\//i.test(logo) ? logo : null;
+}
 const MAX_SCANS_PER_RUN = 500;
 
 /** Stores a bounded, rotating batch of uncached token logos in the network-specific object bucket. */
@@ -34,6 +40,7 @@ export async function syncTokenImages({
   bucket,
   fetchTokens,
   fetchImage,
+  fetchRegistryLogo,
   network,
   limit = 40,
 }: SyncDeps): Promise<{ scanned: number; stored: number }> {
@@ -48,10 +55,7 @@ export async function syncTokenImages({
   const tokens = cached ?? (await fetchTokens());
 
   const ids = Object.keys(tokens ?? {})
-    .filter((id) => {
-      const logo = tokens[id]?.logo;
-      return typeof logo === 'string' && /^https?:\/\//i.test(logo);
-    })
+    .filter((id) => fetchRegistryLogo !== undefined || remoteLogo(tokens[id]?.logo) !== null)
     .sort();
   if (ids.length === 0) return { scanned: 0, stored: 0 };
 
@@ -73,16 +77,16 @@ export async function syncTokenImages({
     try {
       if (await bucket.head(objectKey)) continue;
       fetched += 1;
-      const img = await fetchImage(tokens[id]!.logo!);
-      if (
-        !img ||
-        !img.ok ||
-        !img.contentType.startsWith('image/') ||
-        img.bytes.byteLength > MAX_IMAGE_BYTES
-      ) {
+      const logo = remoteLogo(tokens[id]?.logo);
+      const img = logo ? await fetchImage(logo).catch(() => null) : null;
+      if (img?.ok && img.contentType.startsWith('image/') && img.bytes.byteLength <= MAX_IMAGE_BYTES) {
+        await bucket.put(objectKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
+        stored += 1;
         continue;
       }
-      await bucket.put(objectKey, img.bytes, { httpMetadata: { contentType: img.contentType } });
+      const registered = await fetchRegistryLogo?.(id);
+      if (!registered) continue;
+      await bucket.put(objectKey, registered, { httpMetadata: { contentType: 'image/png' } });
       stored += 1;
     } catch (err) {
       console.error(`image sync failed for ${id}:`, err);

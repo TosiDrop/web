@@ -9,8 +9,9 @@ const assetName = '544f5349';
 const unit = `${policy}${assetName}`;
 const assetId = `${policy}.${assetName}`;
 const toggleFavorite = vi.fn();
+const catalogFailure = vi.hoisted(() => ({ active: false, retry: vi.fn() }));
 vi.mock('@/store/wallet-state', () => ({ useWalletStore: (select: (value: { stakeAddress: string }) => unknown) => select({ stakeAddress: 'stake_test1example' }) }));
-vi.mock('@/features/tokens/api/tokens.queries', () => ({ usePublicTokens: () => ({ data: { projects: [{ tokenId: `${'ab'.repeat(28)}.544f5349`, name: 'Tosi program', description: 'Program description' }] } }) }));
+vi.mock('@/features/tokens/api/tokens.queries', () => ({ usePublicTokens: () => ({ isError: catalogFailure.active, refetch: catalogFailure.retry, data: { projects: [{ tokenId: `${'ab'.repeat(28)}.544f5349`, name: 'Tosi program', description: 'Program description' }] } }) }));
 vi.mock('@/features/projects/api/projects.queries', () => ({ useTokenMap: () => ({ data: { [`${'ab'.repeat(28)}.544f5349`]: { ticker: 'TOSI' } } }) }));
 vi.mock('@/features/market/api/market.queries', () => ({ useMarketPrices: () => ({ data: {} }) }));
 vi.mock('@/features/favorites/hooks/usePreferences', () => ({ usePreferences: () => ({ connected: true, preferencesReady: true, isFavorite: () => false, toggleFavorite }) }));
@@ -30,4 +31,13 @@ describe('wallet token detail links', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Favorite TOSI' }));
     expect(toggleFavorite).toHaveBeenCalledWith({ assetId, ticker: 'TOSI', logo: '' });
   });
+  it('shows a retry action when the catalog fails', () => {
+    catalogFailure.active = true;
+    render(<QueryClientProvider client={new QueryClient()}><MemoryRouter initialEntries={[`/tokens/${assetId}`]}><Routes><Route path="/tokens/:assetId" element={<TokenDetailPage />} /></Routes></MemoryRouter></QueryClientProvider>);
+    expect(screen.getByRole('alert')).toHaveTextContent('Token program details unavailable');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(catalogFailure.retry).toHaveBeenCalledTimes(1);
+    catalogFailure.active = false;
+  });
+
 });

@@ -15,7 +15,9 @@ describe('tokenImageSrc', () => {
     );
   });
 
-  it('returns undefined for a missing logo', () => {
+  it('asks the proxy for a missing logo only when the registry could have one', () => {
+    const assetId = `${'ab'.repeat(28)}.4d494e`;
+    expect(tokenImageSrc(assetId, undefined)).toBe(`/api/tokenImage?id=${assetId}`);
     expect(tokenImageSrc('pol.aaaa', undefined)).toBeUndefined();
     expect(tokenImageSrc('pol.aaaa', '')).toBeUndefined();
   });

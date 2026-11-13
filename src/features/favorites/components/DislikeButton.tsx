@@ -3,15 +3,17 @@ import { cn } from '@/lib/utils';
 
 interface DislikeButtonProps {
   active: boolean;
+  disabled?: boolean;
   onToggle: () => void;
   ticker?: string;
   className?: string;
 }
 
-export function DislikeButton({ active, onToggle, ticker, className }: DislikeButtonProps) {
+export function DislikeButton({ active, onToggle, ticker, className, disabled }: DislikeButtonProps) {
   return (
     <button
       type="button"
+      disabled={disabled}
       aria-pressed={active}
       aria-label={ticker ? `Hide ${ticker}` : 'Hide token'}
       onClick={(e) => {
