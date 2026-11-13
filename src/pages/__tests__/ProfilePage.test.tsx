@@ -1,5 +1,5 @@
 import { MemoryRouter } from 'react-router-dom';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const profileMock = vi.fn();
@@ -88,4 +88,18 @@ describe('ProfilePage', () => {
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(scroll).toHaveBeenCalledTimes(1);
   });
+  it('ignores malformed hash escapes', () => {
+    profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
+    render(<MemoryRouter initialEntries={['/profile#%']}><ProfilePage /></MemoryRouter>);
+    expect(screen.getByRole('heading', { name: 'Your profile' })).toBeInTheDocument();
+  });
+
+  it('scrolls again when navigating to the current section hash', async () => {
+    profileMock.mockReturnValue({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
+    render(<MemoryRouter initialEntries={['/profile#portfolio-visuals']}><ProfilePage /></MemoryRouter>);
+    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('link', { name: 'Overview' }));
+    await waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
+  });
+
 });

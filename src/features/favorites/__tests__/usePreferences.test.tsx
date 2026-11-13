@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { cleanup, renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
@@ -32,6 +32,7 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe('usePreferences', () => {
+  afterEach(cleanup);
   beforeEach(() => {
     localStorage.clear();
     walletState.stakeAddress = 'stake1' + 'u'.repeat(40);
@@ -224,4 +225,15 @@ describe('usePreferences', () => {
     rerender();
     await waitFor(() => expect(result.current.isFavorite('a2')).toBe(true));
   });
+  it('removes a redundant draft when edits return to the saved preferences', async () => {
+    getMock.mockResolvedValue({ favorites: [], dislikes: [] });
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.preferencesReady).toBe(true));
+    const token = { assetId: 'a', ticker: 'A', logo: '' };
+    act(() => result.current.toggleFavorite(token));
+    act(() => result.current.toggleFavorite(token));
+    expect(result.current.hasLocalDraft).toBe(false);
+    expect(localStorage.length).toBe(0);
+  });
+
 });
