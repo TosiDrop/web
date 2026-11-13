@@ -169,7 +169,11 @@ export default function ProfilePage() {
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get('tab');
     const aliases: Record<string, string> = { history: 'activity', analytics: 'claim-analytics', favorites: 'saved-assets', settings: 'account' };
-    const targetId = location.hash ? decodeURIComponent(location.hash.slice(1)) : tab ? aliases[tab] : null;
+    let targetId = tab ? aliases[tab] : null;
+    if (location.hash) {
+      try { targetId = decodeURIComponent(location.hash.slice(1)); }
+      catch { return undefined; }
+    }
     if (!targetId) return undefined;
     let frame: number;
     const observer = new MutationObserver(() => {
@@ -192,7 +196,7 @@ export default function ProfilePage() {
     if (pageRef.current) observer.observe(pageRef.current, { childList: true, subtree: true });
     frame = requestAnimationFrame(scrollToSection);
     return () => { cancelAnimationFrame(frame); observer.disconnect(); };
-  }, [connected, location.hash, location.search]);
+  }, [connected, location.hash, location.key, location.search]);
 
   return (
     <div ref={pageRef} className="space-y-8 [&_section]:scroll-mt-24">

@@ -18,7 +18,7 @@ interface ClaimState {
   toggleAsset: (id: string) => void;
   setRequest: (info: ClaimRequestInfo) => void;
   setLookupAddress: (address: string | null) => void;
-  initSelectionFor: (address: string, initialIds: string[], validIds?: string[]) => void;
+  initSelectionFor: (address: string, initialIds: string[], validIds?: string[], maxAssets?: number) => void;
   reset: () => void;
 }
 
@@ -37,11 +37,11 @@ export const useClaimStore = create<ClaimState>((set) => ({
     })),
   setRequest: (request) => set({ request }),
   setLookupAddress: (lookupAddress) => set({ lookupAddress }),
-  initSelectionFor: (address, initialIds, validIds = initialIds) =>
+  initSelectionFor: (address, initialIds, validIds = initialIds, maxAssets = Infinity) =>
     set((s) => {
       if (s.initializedFor !== address)
         return { initializedFor: address, selectedAssetIds: initialIds };
-      const pruned = s.selectedAssetIds.filter((id) => validIds.includes(id));
+      const pruned = s.selectedAssetIds.filter((id) => validIds.includes(id)).slice(0, maxAssets);
       return pruned.length === s.selectedAssetIds.length ? s : { selectedAssetIds: pruned };
     }),
   reset: () => set({ selectedAssetIds: [], request: null, initializedFor: null }),

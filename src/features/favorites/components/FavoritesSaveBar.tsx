@@ -5,7 +5,7 @@ import { usePreferences } from '@/features/favorites/hooks/usePreferences';
 import { toast } from '@/store/toast-state';
 
 export function FavoritesSaveBar() {
-  const { isDirty, persist, reset, saving, error, connected } = usePreferences();
+  const { isDirty, persist, reset, saving, error, connected, preferencesReady } = usePreferences();
 
   // Surface save failures (e.g. "user declined sign data") as a transient
   // toast rather than a persistent inline banner.
@@ -27,7 +27,7 @@ export function FavoritesSaveBar() {
         <GradientButton variant="secondary" onClick={reset} disabled={saving}>
           Discard
         </GradientButton>
-        <GradientButton onClick={persist} disabled={saving || !connected}>
+        <GradientButton onClick={persist} disabled={saving || !connected || !preferencesReady}>
           {saving ? 'Saving…' : 'Save changes'}
         </GradientButton>
       </div>

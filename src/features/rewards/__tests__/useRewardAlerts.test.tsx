@@ -98,4 +98,18 @@ describe('useRewardAlerts', () => {
     expect(toastInfo).toHaveBeenCalledWith('1 new reward token ready to claim', 'Rewards ready');
     vi.restoreAllMocks();
   });
+  it('does not repeat an increase when storage writes fail but reads still succeed', async () => {
+    vi.stubGlobal('Notification', { permission: 'granted', requestPermission: vi.fn() });
+    rewards = [reward('a', 1)];
+    const { result, rerender } = renderHook(() => useRewardAlerts('stake_test1a'));
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('full'); });
+    rewards = [reward('a', 1), reward('b', 2)];
+    rerender();
+    expect(toastInfo).toHaveBeenCalledTimes(1);
+    await act(async () => { await result.current.enableBrowserAlerts(); });
+    expect(toastInfo).toHaveBeenCalledTimes(1);
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
 });

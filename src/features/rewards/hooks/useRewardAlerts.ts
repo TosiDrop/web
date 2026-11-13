@@ -37,7 +37,7 @@ export function useRewardAlerts(stakeAddress: string | null) {
   useEffect(() => {
     if (!key || !data) return;
     const current = rewardSnapshot(data);
-    const previous = readSnapshot(key) ?? memorySnapshots.current.get(key) ?? null;
+    const previous = memorySnapshots.current.get(key) ?? readSnapshot(key) ?? null;
     const { newCount } = compareRewardSnapshots(previous, current);
     memorySnapshots.current.set(key, current);
     try { localStorage.setItem(key, JSON.stringify(current)); } catch { /* alerts still work for this render */ }

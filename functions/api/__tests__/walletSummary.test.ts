@@ -50,7 +50,7 @@ describe('GET /api/wallet/summary', () => {
         }]));
       }
       if (new URL(url).pathname.endsWith('/account_reward_history')) {
-        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id_bech32: 'pool1abc', type: 'member' }]));
+        return new Response(JSON.stringify([{ earned_epoch: 500, amount: '99', pool_id_bech32: 'pool1abc', type: 'member' }, { earned_epoch: 501, amount: '1000000', type: 'proposal_refund' }]));
       }
       if (new URL(url).pathname.endsWith('/asset_info')) {
         return new Response(JSON.stringify([{

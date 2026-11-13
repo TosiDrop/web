@@ -61,7 +61,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     ]);
     const accounts = accountResult.status === 'fulfilled' ? accountResult.value : [];
     const assets = assetsResult.status === 'fulfilled' ? assetsResult.value : [];
-    const rewards = rewardsResult.status === 'fulfilled' ? rewardsResult.value : [];
+    const rewards = rewardsResult.status === 'fulfilled' ? rewardsResult.value.filter((reward) => reward.type !== 'proposal_refund') : [];
     const sources = {
       account: accountResult.status === 'fulfilled',
       assets: assetsResult.status === 'fulfilled',
