@@ -62,9 +62,9 @@ export function CopyButton({
       onClick={handleClick}
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle bg-surface-inset/60 text-text-muted transition hover:border-accent/40 hover:text-accent',
-        copied && 'border-status-success/40 text-status-success-light hover:text-status-success-light',
-        copyError && 'border-status-error/60 text-status-error-light hover:border-status-error hover:text-status-error-light',
+        'inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle bg-surface-inset text-text-muted transition hover:border-accent-line hover:text-accent',
+        copied && 'border-status-success-line text-status-success-light hover:text-status-success-light',
+        copyError && 'border-status-error text-status-error-light hover:border-status-error hover:text-status-error-light',
         className,
       )}
     >

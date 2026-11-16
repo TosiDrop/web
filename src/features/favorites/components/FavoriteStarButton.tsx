@@ -23,8 +23,8 @@ export function FavoriteStarButton({ active, onToggle, ticker, className, disabl
       className={cn(
         'flex h-10 w-10 items-center justify-center rounded-lg transition',
         active
-          ? 'text-cream hover:bg-cream/[0.1]'
-          : 'text-text-muted hover:bg-white/[0.06] hover:text-cream',
+          ? 'text-cream hover:bg-tint'
+          : 'text-text-muted hover:bg-tint-strong hover:text-cream',
         className,
       )}
     >

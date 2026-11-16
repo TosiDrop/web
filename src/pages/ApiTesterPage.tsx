@@ -181,7 +181,7 @@ export default function ApiTesterPage() {
                     <p className="animate-pulse text-sm text-text-muted">Loading...</p>
                   )}
                   {api.result.status === 'error' && (
-                    <pre className="overflow-auto rounded-lg bg-status-error/10 p-3 text-xs text-status-error-light">
+                    <pre className="overflow-auto rounded-lg bg-status-error-soft p-3 text-xs text-status-error-light">
                       {api.result.error}
                     </pre>
                   )}

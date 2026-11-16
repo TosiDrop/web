@@ -10,9 +10,9 @@ const ada = (lovelace: number) =>
 function Metric({ label, value, detail }: { label: string; value: string; detail?: React.ReactNode }) {
   return (
     <div className="min-w-0 bg-surface-raised px-5 py-5">
-      <p className="label-eyebrow">{label}</p>
-      <p className="mt-3 font-mono text-2xl font-medium tracking-tight tabular-nums text-white">{value}</p>
-      {detail && <div className="mt-1 text-xs text-slate-500">{detail}</div>}
+      <p className="field-label">{label}</p>
+      <p className="mt-3 text-2xl font-semibold tabular-nums text-text-primary">{value}</p>
+      {detail && <div className="mt-1 text-xs text-text-muted">{detail}</div>}
     </div>
   );
 }
@@ -20,7 +20,7 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
 function StatusDot({ up, label }: { up: boolean; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={cn('h-1.5 w-1.5 rounded-full', up ? 'bg-emerald-400' : 'bg-rose-400')} aria-hidden="true" />
+      <span className={cn('h-1.5 w-1.5 rounded-full', up ? 'bg-status-success' : 'bg-status-error')} aria-hidden="true" />
       {label} {up ? 'up' : 'down'}
     </span>
   );
@@ -31,8 +31,8 @@ function WithdrawalsBar({ processed, failed }: { processed: number; failed: numb
   return (
     <div className="mt-2">
       <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-inset" aria-hidden="true">
-        <div className="bg-emerald-400" style={{ width: `${(processed / total) * 100}%` }} />
-        <div className="bg-rose-400" style={{ width: `${(failed / total) * 100}%` }} />
+        <div className="bg-status-success" style={{ width: `${(processed / total) * 100}%` }} />
+        <div className="bg-status-error" style={{ width: `${(failed / total) * 100}%` }} />
       </div>
       <p className="mt-1">
         {num(processed)} processed · {num(failed)} failed
@@ -44,7 +44,7 @@ function WithdrawalsBar({ processed, failed }: { processed: number; failed: numb
 /** Summarizes indexed platform totals, reported service health, and uptime values. */
 export function PlatformStatsGrid({ stats }: { stats: Stats }) {
   return (
-    <div className="card-premium grid grid-cols-1 gap-px overflow-hidden bg-border-subtle/50 min-[380px]:grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6">
+    <div className="card-premium grid grid-cols-1 gap-px overflow-hidden bg-border-subtle min-[380px]:grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6">
       <Metric label="Rewards delivered" value={num(stats.delivered_rewards)} detail="All-time token deliveries" />
       <Metric label="Delegators tracked" value={num(stats.tracked_delegators)} detail={ada(stats.tracked_stake) + ' tracked stake'} />
       <Metric
@@ -83,7 +83,7 @@ export function PlatformStats() {
 
   if (isLoading) {
     return (
-      <div className="card-premium grid grid-cols-1 gap-px overflow-hidden bg-border-subtle/50 min-[380px]:grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6" aria-busy="true" aria-label="Loading platform statistics">
+      <div className="card-premium grid grid-cols-1 gap-px overflow-hidden bg-border-subtle min-[380px]:grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6" aria-busy="true" aria-label="Loading platform statistics">
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-surface-raised px-5 py-5">
             <div className="skeleton-shimmer h-2.5 w-20 rounded" />

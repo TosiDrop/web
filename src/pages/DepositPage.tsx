@@ -82,8 +82,8 @@ export default function DepositPage() {
 
         <div className="w-full space-y-3">
           <div>
-            <p className="label-eyebrow">Amount due</p>
-            <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">
+            <p className="field-label">Amount due</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-text-primary">
               {formatAda(totalDue)} ADA
             </p>
             <dl className="mt-2 space-y-1 text-xs text-text-muted">
@@ -93,7 +93,7 @@ export default function DepositPage() {
           </div>
 
           <div>
-            <p className="label-eyebrow">Withdrawal address</p>
+            <p className="field-label">Withdrawal address</p>
             <div className="mt-1 flex items-start gap-2">
               <p className="min-w-0 break-all font-mono text-xs leading-relaxed text-text-secondary">
                 {withdrawalAddress}
@@ -103,7 +103,7 @@ export default function DepositPage() {
           </div>
 
           <div>
-            <p className="label-eyebrow">Request ID</p>
+            <p className="field-label">Request ID</p>
             <div className="mt-1 flex items-start gap-2">
               <p className="min-w-0 break-all font-mono text-xs text-text-muted">{requestId}</p>
               <CopyButton value={requestId} ariaLabel="Copy request ID" />
@@ -132,8 +132,8 @@ export default function DepositPage() {
         )}
         {!canSend && !hasSubmitted && !isTerminal && (
           <p className="mt-3 text-xs text-text-muted">
-            Connect your wallet here, or send the deposit manually from another wallet — either
-            way the status below updates once the deposit is detected.
+            Connect your wallet here, or send the deposit manually from another wallet. Either
+            way, the status below updates once the deposit is detected.
           </p>
         )}
       </div>
@@ -188,7 +188,7 @@ export default function DepositPage() {
         <Card as="section" className="space-y-3 p-5">
           {txHash && (
             <div>
-              <p className="label-eyebrow">Your deposit transaction</p>
+              <p className="field-label">Your deposit transaction</p>
               <div className="mt-1 flex items-start gap-2">
                 <p className="min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-text-secondary">
                   {txHash}

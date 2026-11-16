@@ -9,7 +9,7 @@ interface DataUnavailableProps {
 
 export function DataUnavailable({ title, message, onRetry }: DataUnavailableProps) {
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset/45 px-4 py-3">
+    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3">
       <IconDatabaseOff size={18} stroke={1.6} className="shrink-0 text-text-muted" aria-hidden />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-text-primary">{title}</p>

@@ -82,7 +82,7 @@ export function ConnectingStep() {
     <div className="flex flex-col items-center py-12 text-center" role="status" aria-live="polite">
       <span
         aria-hidden
-        className="mb-6 inline-block h-8 w-8 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light"
+        className="mb-6 inline-block h-8 w-8 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-border-default border-t-accent-light"
       />
 
       <StepHeading className="mb-2 text-xl font-semibold text-text-primary">
@@ -96,7 +96,7 @@ export function ConnectingStep() {
         <div className="mt-6 w-full text-left">
           <FeedbackBanner
             tone="error"
-            message="Couldn't load your profile — continuing as a new user."
+            message="Couldn't load your profile. Continuing as a new user."
           />
         </div>
       )}

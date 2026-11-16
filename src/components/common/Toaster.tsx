@@ -7,22 +7,23 @@ import {
   type Icon,
 } from '@tabler/icons-react';
 import { useToastStore, type ToastTone } from '@/store/toast-state';
+import { EASE_OUT } from '@/lib/motion';
 
 const TONE: Record<ToastTone, { icon: Icon; color: string; border: string }> = {
   error: {
     icon: IconAlertTriangle,
     color: 'text-status-error-light',
-    border: 'border-status-error/25',
+    border: 'border-status-error-line',
   },
   success: {
     icon: IconCircleCheck,
     color: 'text-status-success-light',
-    border: 'border-status-success/25',
+    border: 'border-status-success-line',
   },
   info: {
     icon: IconInfoCircle,
     color: 'text-accent-light',
-    border: 'border-accent/25',
+    border: 'border-accent-line',
   },
 };
 
@@ -46,8 +47,8 @@ export function Toaster() {
               layout
               initial={{ opacity: 0, y: 14, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 40, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
+              exit={{ opacity: 0, x: 40, scale: 0.98, transition: { duration: 0.18, ease: EASE_OUT } }}
+              transition={{ duration: 0.22, ease: EASE_OUT }}
               className={`card-premium pointer-events-auto flex items-start gap-3 ${tone.border} px-4 py-3.5 shadow-pop`}
               role={t.tone === 'error' ? 'alert' : undefined}
             >

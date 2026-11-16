@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import {
   IconExternalLink,
   IconX,
@@ -17,7 +17,7 @@ const SOCIAL_LINKS = [
 ];
 
 const LINK_BASE = 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition';
-const LINK_IDLE = 'text-text-muted hover:bg-white/[0.03] hover:text-text-primary';
+const LINK_IDLE = 'text-text-muted hover:bg-tint hover:text-text-primary';
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const location = useLocation();
@@ -36,7 +36,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-4">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="mb-6 last:mb-0">
-            <p className="mb-2 px-3 text-2xs font-medium uppercase tracking-[0.16em] text-text-faint">{group.label}</p>
+            <p className="mb-2 px-3 text-xs font-medium text-text-muted">{group.label}</p>
             <ul className="space-y-0.5">
               {group.links.map((link) => {
             const Icon = link.icon;
@@ -78,7 +78,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     LINK_BASE,
-                    isActive ? 'bg-accent/[0.12] font-medium text-text-primary' : LINK_IDLE,
+                    isActive ? 'bg-accent-soft font-medium text-text-primary' : LINK_IDLE,
                   )}
                 >
                   <Icon size={18} stroke={1.7} className={isActive ? 'text-accent-light' : undefined} />
@@ -100,7 +100,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${label} (opens in new tab)`}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-white/[0.03] hover:text-accent-light"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-tint hover:text-accent-light"
           >
             <Icon />
           </a>
@@ -120,14 +120,17 @@ export function Sidebar() {
       </aside>
 
       <Dialog open={isOpen} onClose={close} className="relative z-50 lg:hidden">
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" aria-hidden="true" />
-        <DialogPanel className="fixed inset-y-0 left-0 w-60 shadow-pop">
+        <DialogBackdrop transition className="fixed inset-0 bg-scrim backdrop-blur-sm transition-opacity duration-[280ms] ease-out data-[leave]:duration-[220ms] data-[closed]:opacity-0" />
+        <DialogPanel
+          transition
+          className="fixed inset-y-0 left-0 w-60 shadow-pop transition duration-[280ms] ease-out data-[leave]:duration-[220ms] data-[closed]:-translate-x-full"
+        >
           <DialogTitle className="sr-only">Menu</DialogTitle>
           <button
             type="button"
             onClick={close}
             aria-label="Close menu"
-            className="absolute right-2 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-white/[0.04] hover:text-text-primary"
+            className="absolute right-2 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-text-muted transition hover:bg-tint hover:text-text-primary"
           >
             <IconX size={18} />
           </button>

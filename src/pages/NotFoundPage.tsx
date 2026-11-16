@@ -6,8 +6,7 @@ export default function NotFoundPage() {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
       <UmbrellaMark className="h-12 w-12 opacity-60" stroke="#DCCFA8" strokeWidth={2.4} />
-      <p className="label-eyebrow mt-6">404</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">
+      <h1 className="mt-6 text-2xl font-semibold text-text-primary">
         There's nothing here
       </h1>
       <p className="mt-2 max-w-sm text-sm text-text-muted">

@@ -55,7 +55,7 @@ export function SelectWalletStep() {
               key={w.name}
               type="button"
               onClick={() => handleSelect(w.name)}
-              className="group flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3.5 transition hover:border-accent/40 hover:bg-surface-overlay focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+              className="group flex w-full items-center gap-3 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3.5 transition hover:border-accent-line hover:bg-surface-overlay focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <img
                 src={w.icon}

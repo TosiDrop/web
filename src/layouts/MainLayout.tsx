@@ -19,12 +19,12 @@ function WalletLoading() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-scrim backdrop-blur-sm"
     >
       <div className="flex items-center gap-3 rounded-2xl border border-border-default bg-surface-raised px-5 py-4 text-sm text-text-secondary shadow-pop">
         <span
           aria-hidden
-          className="inline-block h-4 w-4 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-white/15 border-t-accent-light"
+          className="inline-block h-4 w-4 animate-[tdspin_0.8s_linear_infinite] rounded-full border-2 border-border-default border-t-accent-light"
         />
         Loading wallet…
       </div>

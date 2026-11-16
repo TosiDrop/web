@@ -43,7 +43,7 @@ function LoadingState() {
       aria-label="Loading personal analytics"
       aria-busy="true"
     >
-      <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4">
+      <div className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle md:grid-cols-4">
         {[0, 1, 2, 3].map((item) => (
           <div key={item} className="min-w-0 bg-surface-raised p-4 sm:p-6">
             <div className="skeleton-shimmer h-2.5 w-20 rounded" />
@@ -71,7 +71,7 @@ function Metric({
   return (
     <div className="min-w-0 bg-surface-raised p-4 sm:p-6">
       <p className="text-xs text-text-muted">{label}</p>
-      <p className="mt-2 break-words font-mono text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]">
+      <p className="mt-2 break-words text-xl font-medium tabular-nums text-text-primary [overflow-wrap:anywhere]">
         {value}
       </p>
       {detail && <p className="mt-1 text-xs text-text-muted">{detail}</p>}
@@ -135,13 +135,13 @@ export function PersonalAnalytics() {
         <button
           type="button"
           onClick={() => downloadCsv(`tosidrop-personal-analytics-${new Date().toISOString().slice(0, 10)}.csv`, personalAnalyticsCsvRows(data))}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent/50 hover:text-text-primary"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-2 text-xs font-medium text-text-secondary hover:border-accent-line hover:text-text-primary"
         >
           <IconDownload size={14} aria-hidden /> Export CSV
         </button>
       </div>
       <section
-        className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle/50 md:grid-cols-4"
+        className="card-premium grid grid-cols-2 gap-px overflow-hidden bg-border-subtle md:grid-cols-4"
         aria-label="Claim summary"
       >
         <Metric label="Claims delivered" value={String(data.summary.totalClaims)} />
@@ -169,9 +169,9 @@ export function PersonalAnalytics() {
       {activeSince && <p className="text-xs text-text-muted">Claim history since {activeSince}</p>}
 
       <section className="card-premium overflow-hidden">
-        <header className="flex flex-col gap-4 border-b border-border-subtle/60 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+        <header className="flex flex-col gap-4 border-b border-border-subtle px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-base font-medium text-white">
+            <h3 className="text-base font-medium text-text-primary">
               Reward accumulation
             </h3>
             <p className="mt-1 text-xs text-text-muted">
@@ -250,8 +250,8 @@ export function PersonalAnalytics() {
 
       <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
         <section className="card-premium overflow-hidden">
-          <header className="border-b border-border-subtle/60 px-5 py-4">
-            <h3 className="text-sm font-medium text-white">
+          <header className="border-b border-border-subtle px-5 py-4">
+            <h3 className="text-sm font-medium text-text-primary">
               Claim frequency
             </h3>
           </header>
@@ -288,8 +288,8 @@ export function PersonalAnalytics() {
         </section>
 
         <section className="card-premium overflow-hidden">
-          <header className="border-b border-border-subtle/60 px-5 py-4">
-            <h3 className="text-sm font-medium text-white">
+          <header className="border-b border-border-subtle px-5 py-4">
+            <h3 className="text-sm font-medium text-text-primary">
               Tokens claimed
             </h3>
           </header>
@@ -324,8 +324,8 @@ export function PersonalAnalytics() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-mono text-xl text-white">{totalRewards}</span>
-                <span className="label-eyebrow mt-0.5">rewards</span>
+                <span className="text-xl text-text-primary tabular-nums">{totalRewards}</span>
+                <span className="field-label mt-0.5">rewards</span>
               </div>
             </div>
             <ul className="space-y-3">
@@ -351,7 +351,7 @@ export function PersonalAnalytics() {
       </div>
 
       {(!feesKnown || data.feeCoverage.incomplete || !data.fresh) && (
-        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset/50 px-4 py-3 text-xs text-text-muted">
+        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-inset px-4 py-3 text-xs text-text-muted">
           <IconChartDots3 size={15} stroke={1.6} className="mt-0.5 shrink-0 text-accent" />
           <span>
             {!data.fresh && 'The latest deliveries could not be fetched; this is the archived history. '}

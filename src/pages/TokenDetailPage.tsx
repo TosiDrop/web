@@ -72,11 +72,11 @@ export default function TokenDetailPage() {
         <div className="grid gap-4 border-t border-border-subtle pt-4 sm:grid-cols-2">
           <div>
             <p className="text-xs text-text-muted">Indexed USD price</p>
-            <p className="mt-1 font-mono text-lg tabular-nums text-text-primary">{formatMarketPrice(price?.priceUsd, 'USD')}</p>
+            <p className="mt-1 text-lg tabular-nums text-text-primary">{formatMarketPrice(price?.priceUsd, 'USD')}</p>
           </div>
           <div>
             <p className="text-xs text-text-muted">Indexed ADA price</p>
-            <p className="mt-1 font-mono text-lg tabular-nums text-text-primary">{formatMarketPrice(price?.priceAda, 'ADA')}</p>
+            <p className="mt-1 text-lg tabular-nums text-text-primary">{formatMarketPrice(price?.priceAda, 'ADA')}</p>
           </div>
         </div>
         <p className="text-xs leading-5 text-text-muted">

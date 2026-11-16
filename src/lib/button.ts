@@ -11,10 +11,10 @@ const SIZES: Record<ButtonSize, string> = {
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-accent text-accent-contrast hover:bg-accent-light',
   secondary:
-    'border border-border-default bg-white/[0.04] text-text-secondary hover:bg-white/[0.07] hover:text-text-primary',
-  ghost: 'text-text-muted hover:bg-white/[0.04] hover:text-text-primary',
+    'border border-border-default bg-tint text-text-secondary hover:bg-tint-strong hover:text-text-primary',
+  ghost: 'text-text-muted hover:bg-tint hover:text-text-primary',
   danger:
-    'border border-status-error/30 bg-status-error/[0.08] text-status-error-light hover:bg-status-error/[0.14]',
+    'border border-status-error-line bg-status-error-soft text-status-error-light hover:border-status-error',
 };
 
 /**
@@ -22,8 +22,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
  */
 export function buttonClassName(variant: ButtonVariant = 'primary', size: ButtonSize = 'md', className?: string) {
   return cn(
-    'inline-flex shrink-0 items-center justify-center whitespace-nowrap font-semibold transition',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
+    'inline-flex shrink-0 items-center justify-center whitespace-nowrap font-semibold transition duration-[120ms] ease-out active:scale-[0.97]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base',
     'disabled:cursor-not-allowed disabled:opacity-40',
     SIZES[size],
     VARIANTS[variant],

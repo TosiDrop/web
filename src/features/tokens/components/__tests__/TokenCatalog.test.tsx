@@ -49,7 +49,7 @@ describe('TokenCatalog', () => {
 
   it('distinguishes degraded storage from an empty catalog', () => {
     publicTokensMock.mockReturnValue({ data: { projects: [], degraded: true, scope: 'public' }, isLoading: false, error: null });
-    render(<TokenCatalog />);
+    render(<MemoryRouter><TokenCatalog /></MemoryRouter>);
     expect(screen.getByText('Token catalog unavailable')).toBeInTheDocument();
     expect(screen.queryByText('No tokens listed yet')).not.toBeInTheDocument();
   });
@@ -68,7 +68,7 @@ describe('TokenCatalog', () => {
       ],
       unavailable: [],
     } } as never);
-    render(<TokenCatalog />);
+    render(<MemoryRouter><TokenCatalog /></MemoryRouter>);
     const headings = () => screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
 
     expect(headings()).toEqual(['Min Rewards', 'Tosi Rewards']);

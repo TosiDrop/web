@@ -101,7 +101,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
           <dl className="grid gap-4 sm:grid-cols-3">
             <div>
               <dt className="text-xs text-text-muted">Total rewards earned</dt>
-              <dd className="mt-2 break-words font-mono text-lg text-text-primary [overflow-wrap:anywhere]">
+              <dd className="mt-2 break-words text-lg text-text-primary [overflow-wrap:anywhere] tabular-nums">
                 {ada(summary.rewards?.totalLovelace)}
               </dd>
             </div>
@@ -109,7 +109,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
               <dt className="text-xs text-text-muted">
                 Latest earned epoch {latestEpoch ?? ''}
               </dt>
-              <dd className="mt-2 font-mono text-lg text-text-primary">
+              <dd className="mt-2 text-lg text-text-primary tabular-nums">
                 {points.length
                   ? `₳ ${points[points.length - 1].amountAda.toLocaleString('en-US', { maximumFractionDigits: 4 })}`
                   : '—'}
@@ -119,7 +119,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
               <dt className="text-xs text-text-muted">
                 Average per recorded epoch
               </dt>
-              <dd className="mt-2 font-mono text-lg text-text-primary">
+              <dd className="mt-2 text-lg text-text-primary tabular-nums">
                 {average === null
                   ? '—'
                   : `₳ ${average.toLocaleString('en-US', { maximumFractionDigits: 4 })}`}
@@ -141,7 +141,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
                   type="button"
                   aria-pressed={range === value}
                   onClick={() => setRange(value)}
-                  className={`min-h-8 rounded-md px-2 text-xs ${range === value ? 'bg-accent/15 text-accent-light' : 'text-text-muted hover:text-text-primary'}`}
+                  className={`min-h-8 rounded-md px-2 text-xs ${range === value ? 'bg-accent-soft text-accent-light' : 'text-text-muted hover:text-text-primary'}`}
                 >
                   {value === 'all' ? 'All' : `${value} epochs`}
                 </button>
@@ -211,7 +211,7 @@ export function WalletStaking({ summary }: { summary: WalletSummary }) {
           </p>
         </div>
         <aside
-          className="min-w-0 rounded-xl bg-surface-inset/60 p-4"
+          className="min-w-0 rounded-xl bg-surface-inset p-4"
           aria-label="Delegation details"
         >
           <h4 className="text-sm font-medium text-text-primary">

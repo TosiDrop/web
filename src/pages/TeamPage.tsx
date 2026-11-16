@@ -27,7 +27,7 @@ function PoolLogo({ logo, ticker }: { logo?: string; ticker: string }) {
   }
   return (
     <div
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-2xs font-medium uppercase tracking-tight text-text-secondary"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset text-2xs font-medium uppercase text-text-secondary"
       aria-hidden
     >
       {ticker.slice(0, 4)}
@@ -60,7 +60,7 @@ function PoolCard({
               {pool.ticker || 'Unnamed pool'}
             </p>
             {pool.partner && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-status-success/25 bg-status-success/10 px-2 py-0.5 text-2xs font-medium text-status-success-light">
+              <span className="inline-flex items-center gap-1 rounded-full border border-status-success-line bg-status-success-soft px-2 py-0.5 text-2xs font-medium text-status-success-light">
                 <IconShieldCheck size={11} stroke={1.8} aria-hidden />
                 TosiDrop partner
               </span>
@@ -77,7 +77,7 @@ function PoolCard({
       </div>
       {connected && (
         <div className="flex justify-end border-t border-border-subtle px-4 py-3">
-          <Suspense fallback={<span role="status" aria-label="Loading delegation" className="text-2xs text-text-faint">Loading…</span>}>
+          <Suspense fallback={<span role="status" aria-label="Loading delegation" className="text-2xs text-text-muted">Loading…</span>}>
             <DelegationCard
               poolId={pool.poolId}
               currentPoolId={currentPoolId}
@@ -92,7 +92,7 @@ function PoolCard({
         href={poolExplorerUrl(pool.poolId)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mx-4 mb-4 mt-0 inline-flex min-w-0 items-center justify-center gap-2 break-all rounded-lg border border-border-default px-3 py-2 text-center text-xs text-text-secondary transition hover:border-accent/50 hover:text-text-primary"
+        className="mx-4 mb-4 mt-0 inline-flex min-w-0 items-center justify-center gap-2 break-all rounded-lg border border-border-default px-3 py-2 text-center text-xs text-text-secondary transition hover:border-accent-line hover:text-text-primary"
       >
         View pool details
         <IconExternalLink size={14} stroke={1.6} aria-hidden />
@@ -191,8 +191,7 @@ export default function TeamPage() {
   return (
     <div className="space-y-7">
       <header>
-        <p className="label-eyebrow">Participate in the network</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text-primary">Participating pools</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Participating pools</h1>
         <p className="mt-2 max-w-md text-sm text-text-muted">
           Discover the Cardano stake pools participating in TosiDrop token distribution.
         </p>
@@ -216,7 +215,7 @@ export default function TeamPage() {
       <section className="space-y-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold tracking-tight text-text-primary">Pool directory</h2>
+            <h2 className="text-xl font-semibold text-text-primary">Pool directory</h2>
             <p className="mt-1 text-sm text-text-muted">
               Explore the pools tracked by TosiDrop. Participating status marks
               pools eligible for distributions; partner pools do not pay claim
@@ -233,7 +232,7 @@ export default function TeamPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search pools"
-                  className="h-9 w-full rounded-lg border border-border-default bg-surface-inset pl-9 pr-3 text-xs text-text-primary placeholder:text-text-faint focus:border-accent/60 focus:outline-none"
+                  className="h-9 w-full rounded-lg border border-border-default bg-surface-inset pl-9 pr-3 text-xs text-text-primary placeholder:text-text-faint focus:border-accent-line focus:outline-none"
                 />
               </label>
               <button
@@ -241,8 +240,8 @@ export default function TeamPage() {
                 aria-pressed={partnerOnly}
                 onClick={() => setPartnerOnly((value) => !value)}
                 className={`h-9 rounded-lg border px-3 text-xs font-medium transition ${partnerOnly
-                  ? 'border-status-success/40 bg-status-success/10 text-status-success-light'
-                  : 'border-border-default text-text-muted hover:border-accent/40 hover:text-text-primary'}`}
+                  ? 'border-status-success-line bg-status-success-soft text-status-success-light'
+                  : 'border-border-default text-text-muted hover:border-accent-line hover:text-text-primary'}`}
               >
                 Partners only
               </button>
@@ -251,7 +250,7 @@ export default function TeamPage() {
         </div>
 
         {!isLoading && !error && pools && pools.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-text-faint">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-text-muted">
             <span aria-label={`${filteredPools.length} of ${pools.length} pools shown`}>
               <strong className="font-medium text-text-secondary">{filteredPools.length}</strong> of {pools.length} pools shown
             </span>
@@ -267,7 +266,7 @@ export default function TeamPage() {
           <Card variant="inset" className="px-6 py-16 text-center">
             <p className="text-sm font-semibold text-text-primary">No pools listed</p>
             <p className="mx-auto mt-1.5 max-w-sm text-sm text-text-muted">
-              No partner pools are listed right now — check back soon.
+              No partner pools are listed right now. Check back soon.
             </p>
           </Card>
         ) : filteredPools.length === 0 ? (

@@ -34,7 +34,7 @@ export function ClaimHero({
       <div className="relative flex flex-wrap items-end justify-between gap-6">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h2 id="claim-hero-title" className="label-eyebrow">Ready to claim</h2>
+            <h2 id="claim-hero-title" className="field-label">Ready to claim</h2>
           </div>
           <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span role="status" aria-live="polite" className="text-5xl font-semibold leading-none tracking-tight tabular-nums text-text-primary">

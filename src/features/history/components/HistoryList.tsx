@@ -55,7 +55,7 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
     );
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset font-mono text-2xs font-medium uppercase tracking-tight text-text-secondary">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-inset text-2xs font-medium uppercase text-text-secondary">
       {ticker.slice(0, 3)}
     </div>
   );
@@ -63,7 +63,7 @@ function TokenAvatar({ assetId, logo, ticker }: { assetId: string; logo?: string
 
 function HistoryRow({ row }: { row: DeliveredReward }) {
   return (
-    <li className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 transition hover:bg-white/[0.015] sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:px-6">
+    <li className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 transition hover:bg-tint sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:px-6">
       <TokenAvatar assetId={row.token} logo={row.logo} ticker={row.ticker} />
       <div className="min-w-0 flex-1">
         <Link to={`/tokens/${encodeURIComponent(row.token)}`} className="break-words text-sm font-medium text-text-primary hover:text-accent-light [overflow-wrap:anywhere]">{row.ticker}</Link>
@@ -208,8 +208,8 @@ export function HistoryList() {
     <Card as="section" className="overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-4 py-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <p className="label-eyebrow">Delivered</p>
-          <span className="rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 font-mono text-2xs tabular-nums text-text-secondary">
+          <p className="field-label">Delivered</p>
+          <span className="text-xs tabular-nums text-text-muted">
             {count}
           </span>
         </div>
@@ -258,7 +258,7 @@ export function HistoryList() {
           >
             <IconChevronLeft size={14} stroke={2} aria-hidden /> Previous
           </GradientButton>
-          <p className="font-mono text-2xs uppercase tracking-wider tabular-nums text-text-muted">
+          <p className="text-xs tabular-nums text-text-muted">
             Page {page} / {totalPages}
           </p>
           <GradientButton

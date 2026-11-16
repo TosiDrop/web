@@ -20,7 +20,7 @@ function TokenMark({ token }: { token: Project }) {
     return <img src={token.logoUrl} alt="" onError={() => setFailed(true)} className="h-12 w-12 rounded-2xl border border-border-subtle bg-surface-inset object-cover" />;
   }
   return (
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border-subtle bg-surface-inset font-mono text-xs font-medium uppercase text-text-secondary">
+    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border-subtle bg-surface-inset text-xs font-medium uppercase text-text-secondary">
       {token.name.slice(0, 3)}
     </span>
   );
@@ -44,7 +44,7 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
           <h2 className="break-words text-base font-semibold text-text-primary [overflow-wrap:anywhere]">
             <Link to={`/tokens/${encodeURIComponent(token.tokenId)}`} className="hover:text-accent-light">{token.name}</Link>
           </h2>
-          <p className="mt-1 font-mono text-[11px] text-text-muted">
+          <p className="mt-1 font-mono text-2xs text-text-muted">
             {ticker} · {truncateHash(token.tokenId, 10, 6)}
           </p>
         </div>
@@ -52,21 +52,21 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
       <MarkdownContent content={token.description || 'A TosiDrop token distribution program.'} className="mt-4 h-[4.5rem] overflow-hidden text-text-muted" />
       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-border-subtle py-3">
         <div>
-          <p className="label-eyebrow">Market price</p>
+          <p className="field-label">Market price</p>
           <p className="mt-1 font-mono text-sm tabular-nums text-text-primary">{formatPrice(marketPrice?.priceUsd, 'USD')}</p>
-          <p className="mt-0.5 font-mono text-2xs text-text-faint">{formatPrice(marketPrice?.priceAda, 'ADA')}</p>
+          <p className="mt-0.5 font-mono text-2xs text-text-muted">{formatPrice(marketPrice?.priceAda, 'ADA')}</p>
         </div>
         <div className="text-right">
-          <p className="label-eyebrow">24h</p>
+          <p className="field-label">24h</p>
           <p className={`mt-1 font-mono text-sm tabular-nums ${marketPrice?.priceChange24h === null || marketPrice?.priceChange24h === undefined ? 'text-text-faint' : marketPrice.priceChange24h >= 0 ? 'text-status-success-light' : 'text-status-error-light'}`}>
             {marketPrice?.priceChange24h === null || marketPrice?.priceChange24h === undefined ? '—' : `${marketPrice.priceChange24h >= 0 ? '+' : ''}${marketPrice.priceChange24h.toFixed(2)}%`}
           </p>
-          <p className="mt-0.5 text-2xs text-text-faint">multi-source index</p>
+          <p className="mt-0.5 text-2xs text-text-muted">multi-source index</p>
         </div>
       </div>
       <div className="mt-4 border-t border-border-subtle pt-3 text-xs text-text-muted">
         <p>{hasDistribution ? describeDistribution(token, ticker) : 'Platform token · no active distribution'}</p>
-        <p className="mt-2 font-mono text-2xs text-text-faint">
+        <p className="mt-2 font-mono text-2xs text-text-muted">
           {info?.decimals !== undefined ? `${info.decimals} decimal places` : 'Token metadata'}
         </p>
       </div>
@@ -76,7 +76,7 @@ function TokenCard({ token, ticker, info, marketPrice }: { token: Project; ticke
           href={token.website}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-accent-light hover:text-white"
+          className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-accent-light hover:text-text-primary"
         >
           Visit token website <IconExternalLink size={13} stroke={1.7} aria-hidden />
           <span className="sr-only">(opens in new tab)</span>
@@ -91,7 +91,7 @@ const SORT_LABELS: Record<DiscoverSort, string> = {
   recent: 'Recently added',
   name: 'Name',
 };
-const CONTROL = 'h-11 rounded-xl border border-border-subtle bg-surface-inset px-3 text-sm text-text-primary outline-none focus:border-accent/50';
+const CONTROL = 'h-11 rounded-xl border border-border-subtle bg-surface-inset px-3 text-sm text-text-primary outline-none focus:border-accent-line';
 
 export function TokenCatalog() {
   const [search, setSearch] = useState('');
@@ -135,7 +135,7 @@ export function TokenCatalog() {
         <label className="relative block w-full max-w-md">
           <span className="sr-only">Search tokens</span>
           <IconSearch size={16} stroke={1.7} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search tokens" className="h-11 w-full rounded-xl border border-border-subtle bg-surface-inset pl-10 pr-3 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent-line" />
         </label>
         {activity && (
           <>

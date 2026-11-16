@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
       {connected && (
         <section aria-labelledby="wallet-insights">
           <div className="mb-4">
-            <h2 id="wallet-insights" className="text-2xl font-semibold tracking-tight text-text-primary">
+            <h2 id="wallet-insights" className="text-2xl font-semibold text-text-primary">
               Personal claim analytics
             </h2>
           </div>
@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
 
       <section className="space-y-4" aria-labelledby="platform-stats">
         <div>
-          <h2 id="platform-stats" className="text-2xl font-semibold tracking-tight text-text-primary">
+          <h2 id="platform-stats" className="text-2xl font-semibold text-text-primary">
             Platform statistics
           </h2>
           <p className="mt-1 text-sm text-text-muted">Latest counters from the reward distributor.</p>
@@ -43,7 +43,7 @@ export default function AnalyticsPage() {
 
       <section className="space-y-4" aria-labelledby="platform-usage">
         <div>
-          <h2 id="platform-usage" className="text-2xl font-semibold tracking-tight text-text-primary">Platform usage</h2>
+          <h2 id="platform-usage" className="text-2xl font-semibold text-text-primary">Platform usage</h2>
           <p className="mt-1 text-sm text-text-muted">Delivered claims observed in the synced wallet archive.</p>
         </div>
         <PlatformAudience />
@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
 
       <section className="space-y-4" aria-labelledby="pool-comparison">
         <div>
-          <h2 id="pool-comparison" className="text-2xl font-semibold tracking-tight text-text-primary">
+          <h2 id="pool-comparison" className="text-2xl font-semibold text-text-primary">
             Pool comparison
           </h2>
           <p className="mt-1 text-sm text-text-muted">

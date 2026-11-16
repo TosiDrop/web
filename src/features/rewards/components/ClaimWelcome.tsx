@@ -47,7 +47,7 @@ export function ClaimWelcome() {
       <ol className="relative mt-8 max-w-xl divide-y divide-border-subtle border-t border-border-subtle">
         {STEPS.map(([text], i) => (
           <li key={text} className="flex gap-4 py-3 text-sm">
-            <span className="w-4 shrink-0 font-mono text-text-faint tabular-nums">{i + 1}</span>
+            <span className="w-4 shrink-0 text-text-muted tabular-nums">{i + 1}</span>
             <span className="text-text-secondary">{text}</span>
           </li>
         ))}

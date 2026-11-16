@@ -37,9 +37,9 @@ function Stepper({ current }: { current: number }) {
             <li className="flex items-center gap-2" aria-current={state === 'active' ? 'step' : undefined}>
               <span
                 className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold',
+                  'flex h-7 w-7 items-center justify-center rounded-full text-2xs font-semibold',
                   state === 'done' && 'bg-accent text-accent-contrast',
-                  state === 'active' && 'bg-accent/15 text-accent-light ring-1 ring-accent/50',
+                  state === 'active' && 'bg-accent-soft text-accent-light ring-1 ring-accent',
                   state === 'todo' && 'bg-surface-inset text-[#5A6075] ring-1 ring-[rgba(56,78,128,0.4)]',
                 )}
               >
@@ -103,20 +103,20 @@ function TokenStep({ value, onChange }: { value: string; onChange: (tokenId: str
                 className={cn(
                   'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition',
                   value === o.id
-                    ? 'border-accent/50 bg-accent/[0.08]'
-                    : 'border-border-subtle bg-surface-inset hover:border-brand-cyan/40',
+                    ? 'border-accent-line bg-accent-soft'
+                    : 'border-border-subtle bg-surface-inset hover:border-accent-line',
                 )}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle font-mono text-[10px] uppercase text-slate-300">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle text-2xs uppercase text-text-secondary">
                   {o.ticker.slice(0, 3)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-white">{o.ticker}</span>
-                  <span className="block font-mono text-[10px] text-slate-500">{truncateHash(o.id, 12, 6)}</span>
+                  <span className="block truncate text-sm font-medium text-text-primary">{o.ticker}</span>
+                  <span className="block font-mono text-2xs text-text-muted">{truncateHash(o.id, 12, 6)}</span>
                 </span>
-                <span className="font-mono text-[11px] text-slate-400">{o.quantity}</span>
+                <span className="font-mono text-2xs text-text-muted">{o.quantity}</span>
                 {o.registered && (
-                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-300">
+                  <span className="rounded-full border border-status-success-line bg-status-success-soft px-2 py-0.5 text-2xs text-status-success-light">
                     Listed
                   </span>
                 )}
@@ -125,10 +125,10 @@ function TokenStep({ value, onChange }: { value: string; onChange: (tokenId: str
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-500">No native tokens found in the connected wallet.</p>
+        <p className="text-sm text-text-muted">No native tokens found in the connected wallet.</p>
       )}
       <label className="block">
-        <span className="label-eyebrow">Or enter a token id</span>
+        <span className="field-label">Or enter a token id</span>
         <input
           className={`${INPUT_CLASS} mt-1.5 font-mono text-xs`}
           value={value}
@@ -180,9 +180,8 @@ export default function OnboardingPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-7">
       <header>
-        <p className="label-eyebrow">Token onboarding</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Register a token</h1>
-        <p className="mt-2 max-w-md text-sm text-slate-400">
+        <h1 className="text-3xl font-semibold tracking-tight text-text-primary">Register a token</h1>
+        <p className="mt-2 max-w-md text-sm text-text-muted">
           Tell us about your token and how you want to reward delegators. You sign the
           registration with your wallet; nothing leaves your wallet.
         </p>
@@ -191,17 +190,17 @@ export default function OnboardingPage() {
       <Stepper current={step} />
 
       <section className="card-premium px-6 py-6">
-        <h2 className="mb-5 text-lg font-medium text-white">{STEPS[step]}</h2>
+        <h2 className="mb-5 text-lg font-medium text-text-primary">{STEPS[step]}</h2>
 
         {step === 0 && (
           <div className="space-y-4">
             {walletReady ? (
-              <p className="text-sm text-slate-300">
-                Connected as <span className="font-medium text-white">{walletName}</span>{' '}
-                <span className="font-mono text-xs text-slate-500">{truncateHash(stakeAddress!, 10, 6)}</span>
+              <p className="text-sm text-text-secondary">
+                Connected as <span className="font-medium text-text-primary">{walletName}</span>{' '}
+                <span className="font-mono text-xs text-text-muted">{truncateHash(stakeAddress!, 10, 6)}</span>
               </p>
             ) : (
-              <p className="text-sm text-slate-400">Connect the wallet that owns the token.</p>
+              <p className="text-sm text-text-muted">Connect the wallet that owns the token.</p>
             )}
             {!walletReady && (
               <GradientButton size="sm" onClick={openModal}>
@@ -217,27 +216,27 @@ export default function OnboardingPage() {
         )}
         {step === 4 && (
           <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-            <dt className="label-eyebrow">Owner</dt>
-            <dd className="font-mono text-xs text-slate-300">{stakeAddress}</dd>
-            <dt className="label-eyebrow">Name</dt>
-            <dd className="text-white">{normalized.name}</dd>
+            <dt className="field-label">Owner</dt>
+            <dd className="font-mono text-xs text-text-secondary">{stakeAddress}</dd>
+            <dt className="field-label">Name</dt>
+            <dd className="text-text-primary">{normalized.name}</dd>
             {normalized.website && (
               <>
-                <dt className="label-eyebrow">Website</dt>
-                <dd className="text-slate-300">{normalized.website}</dd>
+                <dt className="field-label">Website</dt>
+                <dd className="text-text-secondary">{normalized.website}</dd>
               </>
             )}
-            <dt className="label-eyebrow">Token</dt>
-            <dd className="text-slate-300">
-              {ticker} <span className="font-mono text-xs text-slate-500">{normalized.tokenId}</span>
+            <dt className="field-label">Token</dt>
+            <dd className="text-text-secondary">
+              {ticker} <span className="font-mono text-xs text-text-muted">{normalized.tokenId}</span>
             </dd>
-            <dt className="label-eyebrow">Distribution</dt>
-            <dd className="text-slate-300">{describeDistribution(normalized, ticker)}</dd>
+            <dt className="field-label">Distribution</dt>
+            <dd className="text-text-secondary">{describeDistribution(normalized, ticker)}</dd>
           </dl>
         )}
 
         {error && (
-          <p role="alert" className="mt-4 flex items-center gap-2 text-xs text-rose-300">
+          <p role="alert" className="mt-4 flex items-center gap-2 text-xs text-status-error-light">
             <IconAlertCircle size={14} /> {error}
           </p>
         )}
@@ -247,28 +246,18 @@ export default function OnboardingPage() {
             type="button"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
-            className="flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-slate-300 disabled:invisible"
+            className="flex items-center gap-1.5 text-xs text-text-muted transition hover:text-text-secondary disabled:invisible"
           >
             <IconArrowLeft size={14} /> Back
           </button>
           {step < STEPS.length - 1 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              disabled={!canContinue}
-              className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-            >
+            <GradientButton onClick={() => setStep((s) => s + 1)} disabled={!canContinue}>
               Continue
-            </button>
+            </GradientButton>
           ) : (
-            <button
-              type="button"
-              onClick={finish}
-              disabled={!canContinue || isPending}
-              className="rounded-lg bg-brand-cyan px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-            >
+            <GradientButton onClick={finish} disabled={!canContinue || isPending}>
               {isPending ? 'Waiting for signature…' : 'Sign & submit'}
-            </button>
+            </GradientButton>
           )}
         </div>
       </section>

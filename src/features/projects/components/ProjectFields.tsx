@@ -1,16 +1,16 @@
 import type { DistributionConfig, ProjectInput } from '@/shared/projects';
 
 export const INPUT_CLASS =
-  'w-full rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-brand-cyan/40 focus:outline-none';
+  'w-full rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent-line focus:outline-none';
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block">
-        <span className="label-eyebrow">{label}</span>
+        <span className="field-label">{label}</span>
         <div className="mt-1.5">{children}</div>
       </label>
-      {hint && <p className="mt-1 text-[11px] text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1 text-2xs text-text-muted">{hint}</p>}
     </div>
   );
 }
