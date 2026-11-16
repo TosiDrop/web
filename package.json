@@ -40,7 +40,7 @@
     "three": "^0.186.1",
     "vite-plugin-wasm": "^3.6.0",
     "vm-sdk": "git+https://github.com/TosiDrop/vm-sdk.git#7d9da848fe07b4b2094452e464ce25b097c07cb1",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260925.1",
